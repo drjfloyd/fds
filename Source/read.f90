@@ -11549,6 +11549,16 @@ INIT_LOOP: DO N=1,N_INIT_READ+N_INIT_RESERVED
       ENDIF
    ENDIF
 
+   ! Check if domain information is provided for particle INIT
+   IF (PART_ID/='null') THEN
+      IF (ALL(ABS(XB)>1.E5_EB) .AND. ALL(XYZ<-1.E5_EB) .AND. DB=='null' .AND. BULK_DENSITY_FILE=='null' .AND. &
+         (TRIM(PATH_RAMP(1))=='null' .OR. TRIM(PATH_RAMP(2))=='null' .OR. TRIM(PATH_RAMP(3))=='null')) THEN
+            WRITE(MESSAGE,'(A,I0,A,A)') 'ERROR: Problem with INIT number ',N,&
+            '. XYZ, XB, DB, BULK_DENSITY_FILE, or PATH_RAMP must be specified with PART_ID'
+            CALL SHUTDOWN(MESSAGE) ; RETURN
+      ENDIF
+   ENDIF
+
    ! Check if domain boundary has been set as the INIT volume
 
    IF (DB/='null') THEN
@@ -11729,6 +11739,7 @@ INIT_LOOP: DO N=1,N_INIT_READ+N_INIT_RESERVED
                ENDIF
                ZZ_GET(1:N_TRACKED_SPECIES) = IN%MASS_FRACTION(1:N_TRACKED_SPECIES)
                CALL GET_SPECIFIC_GAS_CONSTANT(ZZ_GET,RR_SUM)
+               IN%ADJUST_SPECIES_CONCENTRATION = .TRUE.
 
             ELSEIF (ANY(VOLUME_FRACTION>=0._EB)) THEN SPEC_INIT_IF
                MASS_FRACTION = 0._EB
@@ -11766,6 +11777,7 @@ INIT_LOOP: DO N=1,N_INIT_READ+N_INIT_RESERVED
                IN%MASS_FRACTION(1:N_TRACKED_SPECIES) = MASS_FRACTION(1:N_TRACKED_SPECIES)/SUM(MASS_FRACTION(1:N_TRACKED_SPECIES))
                ZZ_GET(1:N_TRACKED_SPECIES) = IN%MASS_FRACTION(1:N_TRACKED_SPECIES)
                CALL GET_SPECIFIC_GAS_CONSTANT(ZZ_GET,RR_SUM)
+               IN%ADJUST_SPECIES_CONCENTRATION = .TRUE.
 
             ELSE SPEC_INIT_IF
 
@@ -11779,15 +11791,9 @@ INIT_LOOP: DO N=1,N_INIT_READ+N_INIT_RESERVED
             IF (IN%TEMPERATURE > 0._EB .AND. IN%DENSITY < 0._EB) THEN
                IN%DENSITY        = P_INF/(IN%TEMPERATURE*RR_SUM)
                IN%ADJUST_DENSITY = .TRUE.
-            ENDIF
-            IF (IN%TEMPERATURE < 0._EB .AND. IN%DENSITY > 0._EB) THEN
+            ELSEIF (IN%TEMPERATURE < 0._EB .AND. IN%DENSITY > 0._EB) THEN
                IN%TEMPERATURE        = P_INF/(IN%DENSITY*RR_SUM)
                IN%ADJUST_TEMPERATURE = .TRUE.
-            ENDIF
-            IF (IN%TEMPERATURE < 0._EB .AND. IN%DENSITY < 0._EB) THEN
-               IN%TEMPERATURE    = TMPA
-               IN%DENSITY        = P_INF/(IN%TEMPERATURE*RR_SUM)
-               IN%ADJUST_DENSITY = .TRUE.
             ENDIF
 
             ! Special case where INIT is used to introduce a block of particles
@@ -14528,7 +14534,7 @@ READ_BNDF_LOOP: DO N=1,N_BNDF
 
    CALL GET_QUANTITY_INDEX(BF%SMOKEVIEW_LABEL,BF%SMOKEVIEW_BAR_LABEL,BF%INDEX,I_DUM(1), &
                            BF%Y_INDEX,BF%Z_INDEX,BF%PART_INDEX,I_DUM(2),I_DUM(3),I_DUM(4),I_DUM(5),'BNDF', &
-                           QUANTITY,'null',SPEC_ID,PART_ID,'null','null','null','null',-1._EB,I_DUM(6))
+                           QUANTITY,'null',SPEC_ID,PART_ID,'null','null','null',MATL_ID,-1._EB,I_DUM(6))
    BF%MATL_ID = MATL_ID
 
    BF%UNITS = OUTPUT_QUANTITY(BF%INDEX)%UNITS

@@ -127,6 +127,7 @@ $QFDS -o 2 -d Complex_Geometry rotated_cube_45deg_320_stm.fds
 $QFDS -d Complex_Geometry cone_1mesh.fds
 $QFDS -d Complex_Geometry geom_mass_file_test.fds
 $QFDS -p 5 -d Complex_Geometry geom_stretched_grid.fds
+$QFDS -p 3 -d Complex_Geometry thin_object_mass.fds
 
 $QFDS -d Controls activate_vents.fds
 $QFDS -d Controls control_test.fds
@@ -311,6 +312,7 @@ $QFDS -d Miscellaneous obst_box_mass_flux.fds
 $QFDS -p 2 -d Miscellaneous part_path_ramp_jog.fds
 $QFDS -d Miscellaneous devc_interpolation_velocity.fds
 $QFDS -d Miscellaneous devc_interpolation_temperature.fds
+$QFDS -d Miscellaneous init_overlap.fds
 
 $QFDS -d NS_Analytical_Solution ns2d_16.fds
 $QFDS -d NS_Analytical_Solution ns2d_16_nupt1.fds
@@ -505,6 +507,7 @@ $QFDS -d Species burke_schumann.fds
 $QFDS -d Species FED_FIC.fds
 $QFDS -d Species FED_FIC_SMIX.fds
 $QFDS -d Species FED_CO_HCN.fds
+$QFDS -d Species FED_moving.fds
 $QFDS -d Species mass_flux_comparison.fds
 $QFDS -d Species methane_flame_simple.fds
 $QFDS -d Species methane_flame_simple_2.fds
