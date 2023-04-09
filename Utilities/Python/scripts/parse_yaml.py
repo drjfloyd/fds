@@ -29,7 +29,6 @@ for i2 in range(n_species):
       i=i2-1
    elif (i2>bg_index):
       i=i2
-   print(i,i2,gas.species(i).name,gas.species(i2).name)
    name = gas.species(i).name
    element_list = list(gas.species(i).composition.keys())
    atoms_list = list(gas.species(i).composition.values())
@@ -67,7 +66,7 @@ for i2 in range(n_species):
    if (poly=='NASA7'):
       poly_len=7
    for j in range(band_l-1):
-     if (j==0 and temp_bands[j]>t_tr):
+     if (j==0 and temp_bands[j]>t_r):
         t_r2 = t_r
         t_r = temp_bands[j]
         if (poly=='NASA7'):
