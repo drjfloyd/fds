@@ -30,6 +30,7 @@ INTEGER, PARAMETER :: EXPLICIT_EULER=1           !< Flag for COMBUSTION_ODE_SOLV
 INTEGER, PARAMETER :: RK2=2                      !< Flag for COMBUSTION_ODE_SOLVER: second-order Runge-Kutta
 INTEGER, PARAMETER :: RK3=3                      !< Flag for COMBUSTION_ODE_SOLVER: third-order Runge-Kutta
 INTEGER, PARAMETER :: RK2_RICHARDSON=4           !< Flag for COMBUSTION_ODE_SOLVER: second-order Runge-Kutta, Richardson extrap.
+INTEGER, PARAMETER :: DASSL_SOLVER=5             !< Flag for COMBUSTION_ODE_SOLVER: DASSL.
 
 INTEGER, PARAMETER :: EXTINCTION_1=1             !< Flag for EXTINCT_MOD (EXTINCTION MODEL 1)
 INTEGER, PARAMETER :: EXTINCTION_2=2             !< Flag for EXTINCT_MOD (EXTINCTION MODEL 2)
@@ -715,6 +716,18 @@ LOGICAL :: IBLANK_SMV=.TRUE.  !< Parameter passed to smokeview (in .smv file) to
 
 END MODULE GLOBAL_CONSTANTS
 
+!> \brief Variables for DASSL
+MODULE DASSL_CONSTANTS
+USE PRECISION_PARAMETERS, ONLY: EB
+IMPLICIT NONE (TYPE,EXTERNAL)
+
+INTEGER :: JACCOL
+INTEGER :: JACDIM
+LOGICAL :: CALC_AE_FLAG = .FALSE.
+REAL(EB), ALLOCATABLE, DIMENSION(:) :: RN_AE, RN_ZZ
+REAL(EB) :: RN_RHO, RN_TMP
+
+END MODULE DASSL_CONSTANTS
 
 !> \brief Clocks for output file dumps
 

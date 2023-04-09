@@ -2145,24 +2145,63 @@ TYPE(ELEMENT_TYPE):: ELEMENT(118)
 
 CONTAINS
 
-SUBROUTINE THERMO_TABLE_GAS(I_TMP,CP,SPEC_INDEX,RCON,G_F)
+SUBROUTINE THERMO_TABLE_GAS(I_TMP,CP,PROP_INDEX,SPEC_INDEX,RCON,G_F)
 
 USE GLOBAL_CONSTANTS, ONLY: GAMMA,CONSTANT_SPECIFIC_HEAT_RATIO,R0
-INTEGER,INTENT(IN) ::SPEC_INDEX, I_TMP
+USE TYPES, ONLY : SPECIES_TYPE, SPECIES
+INTEGER,INTENT(IN) ::PROP_INDEX,SPEC_INDEX, I_TMP
 REAL(EB),INTENT(IN) :: RCON
 REAL(EB),INTENT(OUT) :: CP,G_F
 REAL(EB) :: TE,H,S
 INTEGER :: B
 TYPE (THERMO_DATA_TYPE), POINTER :: TD=>NULL()
+TYPE (SPECIES_TYPE), POINTER :: SS=>NULL()
 
 G_F = 0._EB !kJ/mol
-IF (SPEC_INDEX==-1 .OR. CONSTANT_SPECIFIC_HEAT_RATIO) THEN
+IF (PROP_INDEX==-1 .OR. CONSTANT_SPECIFIC_HEAT_RATIO) THEN
    CP = RCON*GAMMA/(GAMMA-1._EB) !J/kg/K
    RETURN
 ENDIF
 
-TD=>THERMO_DATA(SPEC_INDEX)
 TE = REAL(I_TMP,EB)
+
+! Check for a SPECIES POLY_ID
+IF (SPEC_INDEX > 0) THEN
+   SS=>SPECIES(SPEC_INDEX)
+   IF(SS%POLY_ID/='null') THEN
+      SELECT CASE(SS%POLY_ID)
+         CASE ('NASA9')
+            TE = MIN(MAXVAL(SS%POLY_T),MAX(SS%POLY_T(1),TE))
+            DO B=1,SS%BANDS
+               IF (TE<=SS%POLY_T(B+1)) EXIT
+            ENDDO
+            CP = SS%POLY_A(1,B)/TE**2 + SS%POLY_A(2,B)/TE + SS%POLY_A(3,B) + SS%POLY_A(4,B)*TE + SS%POLY_A(5,B)*TE**2 + &
+                 SS%POLY_A(6,B)*TE**3 + SS%POLY_A(7,B)*TE**4
+            CP = CP * RCON
+            H =  -SS%POLY_A(1,B)/TE + SS%POLY_A(2,B)*LOG(TE) + SS%POLY_A(3,B)*TE + 0.5_EB*SS%POLY_A(4,B)*TE**2 + &
+                 ONTH*SS%POLY_A(5,B)*TE**3 + 0.25_EB*SS%POLY_A(6,B)*TE**4 + 0.2_EB*SS%POLY_A(7,B)*TE**5 + SS%POLY_A(8,B)
+            S =  -0.5_EB*SS%POLY_A(1,B)/TE**2 - SS%POLY_A(2,B)/TE + SS%POLY_A(3,B)*LOG(TE) + SS%POLY_A(4,B)*TE + &
+                 0.5_EB*SS%POLY_A(5,B)*TE**2 + ONTH*SS%POLY_A(6,B)*TE**3 + 0.25_EB*SS%POLY_A(7,B)*TE**4 + SS%POLY_A(9,B)
+            G_F = (H - TE * S)*R0*1.E-6_EB !R0 kmol to mol and G_F J to kJ
+         CASE ('NASA7')
+            TE = MIN(MAXVAL(SS%POLY_T),MAX(SS%POLY_T(1),TE))
+            DO B=1,SS%BANDS
+               IF (TE<=SS%POLY_T(B+1)) EXIT
+            ENDDO
+            CP = SS%POLY_A(1,B) + SS%POLY_A(2,B)*TE + SS%POLY_A(3,B)*TE**2 + SS%POLY_A(4,B)*TE**3 + SS%POLY_A(5,B)*TE**4
+            CP = CP * RCON
+            H =  SS%POLY_A(1,B)*TE + 0.5_EB*SS%POLY_A(2,B)*TE**2 + ONTH*SS%POLY_A(3,B)*TE**3 + 0.25_EB*SS%POLY_A(4,B)*TE**4 + &
+                 0.2_EB*SS%POLY_A(5,B)*TE**5 + SS%POLY_A(6,B)
+            S =  SS%POLY_A(1,B)*LOG(TE) + SS%POLY_A(2,B)*TE + 0.5_EB*SS%POLY_A(3,B)*TE**2 + ONTH*SS%POLY_A(4,B)*TE**3 + &
+                 0.25_EB*SS%POLY_A(5,B)*TE**4 + SS%POLY_A(7,B)
+            G_F = (H - TE * S)*R0*1.E-6_EB !R0 kmol to mol and G_F J to kJ
+      END SELECT
+      RETURN
+   ENDIF
+ENDIF
+
+! No SPECIES POLY, use PROP_INDEX 
+TD=>THERMO_DATA(PROP_INDEX)
 
 SELECT CASE (TD%POLY)
    CASE ('NASA9')
@@ -2173,9 +2212,9 @@ SELECT CASE (TD%POLY)
       CP = TD%A(1,B)/TE**2 + TD%A(2,B)/TE + TD%A(3,B) + TD%A(4,B)*TE + TD%A(5,B)*TE**2 + TD%A(6,B)*TE**3 + TD%A(7,B)*TE**4
       CP = CP * RCON
       H =  -TD%A(1,B)/TE + TD%A(2,B)*LOG(TE) + TD%A(3,B)*TE + 0.5_EB*TD%A(4,B)*TE**2 + ONTH*TD%A(5,B)*TE**3 + &
-           0.25_EB*TD%A(6,B)*TE**4 + 0.2_EB*TD%A(7,B)*TE**5 + TD%B(1,B)
+            0.25_EB*TD%A(6,B)*TE**4 + 0.2_EB*TD%A(7,B)*TE**5 + TD%B(1,B)
       S =  -0.5_EB*TD%A(1,B)/TE**2 - TD%A(2,B)/TE + TD%A(3,B)*LOG(TE) + TD%A(4,B)*TE + 0.5_EB*TD%A(5,B)*TE**2 + &
-           ONTH*TD%A(6,B)*TE**3 + 0.25_EB*TD%A(7,B)*TE**4 + TD%B(2,B)
+            ONTH*TD%A(6,B)*TE**3 + 0.25_EB*TD%A(7,B)*TE**4 + TD%B(2,B)
       G_F = (H - TE * S)*R0*1.E-6_EB !R0 kmol to mol and G_F J to kJ
    CASE ('NASA7')
       TE = MIN(MAXVAL(TD%T),MAX(TD%T(1),TE))
@@ -2185,7 +2224,7 @@ SELECT CASE (TD%POLY)
       CP = TD%A(1,B) + TD%A(2,B)*TE + TD%A(3,B)*TE**2 + TD%A(4,B)*TE**3 + TD%A(5,B)*TE**4
       CP = CP * RCON
       H =  TD%A(1,B)*TE + 0.5_EB*TD%A(2,B)*TE**2 + ONTH*TD%A(3,B)*TE**3 + 0.25_EB*TD%A(4,B)*TE**4 + &
-           0.2_EB*TD%A(5,B)*TE**5 + TD%B(1,B)
+            0.2_EB*TD%A(5,B)*TE**5 + TD%B(1,B)
       S =  TD%A(1,B)*LOG(TE) + TD%A(2,B)*TE + 0.5_EB*TD%A(3,B)*TE**2 + ONTH*TD%A(4,B)*TE**3 + 0.25_EB*TD%A(5,B)*TE**4 + TD%B(2,B)
       G_F = (H - TE * S)*R0*1.E-6_EB !R0 kmol to mol and G_F J to kJ
    CASE ('MOSKVA')
@@ -2288,7 +2327,7 @@ RADCAL_NAME = 'null'
 LISTED  = .TRUE.
 ATOM_COUNTS = 0._EB
 
-IF (GAS_INDEX==-1) THEN
+IF (GAS_INDEX<0) THEN
    ! NITROGEN VALUES
    SIGMA = 3.798_EB
    EPSOK = 71.4_EB
@@ -2404,7 +2443,7 @@ ENDIF
 IF (SS%SPECIFIC_HEAT > 0._EB) THEN
    CP_TMP = SS%SPECIFIC_HEAT
 ELSE
-   CALL THERMO_TABLE_GAS(J,CP_TMP,SS%PROP_INDEX,SS%RCON,G_F_TMP)
+   CALL THERMO_TABLE_GAS(J,CP_TMP,SS%PROP_INDEX,N,SS%RCON,G_F_TMP)
 ENDIF
 
 IF (SS%K_USER>=0._EB) THEN

@@ -1,82 +1,108 @@
-# This script is under development. It uses cantera to convert a cantera chemistry file to a set of FDS inputs.
-# CAUTION: At this point scaling factors for A and E need to be verified and ensure handling of A for third body and catalytic reactions is correct.
-# The cantera file for gas can be either cti or yaml format. Change the file name to the file to be converted.
-# The output is a stream of txt to the terminal. Use > to redirect to a file.
-# The spec_list needs to have all the species present in the cti or yaml file. Major species are there, but not some species may be identified by different names.
-# For example the ISOPROPYL RADICAL could be C3H7, iC3H7, i-C3H7, or something else.
-# Long term plans are to allow FDS to read in polynomial coeffiicents on a SPEC line.  Then the spec_list here would not be needed.
+#Converts a yaml file into FDS SPEC and REAC inputs.
+#yaml file must have thermodynamic data inlcuding NASA7 or NASA9 polynomial and diameter and well-depth.
+#run from command line as:
+#python cantera2fds.py yamlfile.yaml background_species> fdsfile.fds
+# where yamlfile.yaml is the name of the yaml file to process and background spcecies is the species name to set as BACKGROUND
+
 import cantera as ct
 import numpy as np
+import sys
+import math
 
-gas=ct.Solution('smooke.yaml')
+gas = ct.Solution(sys.argv[1])
+bg = sys.argv[2]
+k_b = 1.380649E-23
+t_r = 298.15
+r0 = 8.314472
+
+n_species = len(gas.species())
+
+for i in range(n_species):
+   if (bg==gas.species(i).name):
+      bg_index = i
+      break
+
+for i2 in range(n_species):
+   if (i2==0):
+      i=bg_index
+   elif (i2<=bg_index):
+      i=i2-1
+   elif (i2>bg_index):
+      i=i2
+   print(i,i2,gas.species(i).name,gas.species(i2).name)
+   name = gas.species(i).name
+   element_list = list(gas.species(i).composition.keys())
+   atoms_list = list(gas.species(i).composition.values())
+   sigma = gas.species(i).transport.diameter*1E10
+   epsok = gas.species(i).transport.well_depth / k_b
+   n_elem = len(atoms_list)
+   formula = ''
+   for j in range(n_elem):
+      formula += element_list[j]+str(atoms_list[j])
+
+   gas_list = list(gas.species(i).thermo.input_data.values())
+   gasinit=gas.species(i).name+':1'
+   gas.TPX=293.15,101325,gasinit
+
+   Pr = gas.cp_mass * gas.viscosity / gas.thermal_conductivity
+   poly = gas_list[0]
+   temp_bands= gas_list[1]
+   outstr="&SPEC ID='"+name+"',"
+   if (i2==0):
+      outstr+="BACKGROUND=T,"
+   print(outstr)
+   print("      PR_GAS=",int(Pr*1000)/1000,",")
+   outstr="      FORMULA='"+formula+"',"
+   print(outstr)
+   print("      SIGMALJ=",int(sigma*1000)/1000,",")
+   print("      EPSILONKLJ=",epsok,",")
+   outstr="      POLYNOMIAL='"+poly+"',"
+   print(outstr)
+   band_l = len(temp_bands)
+   outstr = ''
+   for j in range(band_l):
+      outstr+=str(temp_bands[j])+','
+   print("      POLYNOMIAL_TEMP=",outstr)
+   poly_len=9
+   if (poly=='NASA7'):
+      poly_len=7
+   for j in range(band_l-1):
+     if (j==0 and temp_bands[j]>t_tr):
+        t_r2 = t_r
+        t_r = temp_bands[j]
+        if (poly=='NASA7'):
+           c_p = gas_list[2][j][0]+gas_list[2][j][1]*t_r+\
+           gas_list[2][j][2]*t_r**2+gas_list[2][j][3]*t_r**3+gas_list[2][j][4]*t_r**4
+           h_f = gas_list[2][j][0]*t_r+0.5*gas_list[2][j][1]*t_r**2+\
+           1./3.*gas_list[2][j][2]*t_r**3+0.25*gas_list[2][j][3]*t_r**4+0.2*gas_list[2][j][4]*t_r**5+gas_list[2][j][5]
+           h_f = h_f - c_p * (t_r - t_r2)
+           h_f = int(h_f * r0 * 100)/100000.
+           t_r = t_r2
+        else:
+           c_p = gas_list[2][j][0]/t_r**2+gas_list[2][j][1]/t_R+gas_list[2][j][2]+gas_list[2][j][3]*t_r+\
+           gas_list[2][j][4]*t_r**2+gas_list[2][j][5]*t_r**3+gas_list[2][j][6]*t_r**4
+           h_f = -0.5*gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
+           1./3.*gas_list[2][j][4]*t_r**3+0.25*gas_list[2][j][5]*t_r**4+0.2*gas_list[2][j][6]*t_r**5+gas_list[2][j][7]
+           h_f = h_f - c_p * (t_r - t_r2)
+           h_f = int(h_f * r0 * 100)/100000.
+           t_r = t_r2
+     if (temp_bands[j]<t_r):
+        if (poly=='NASA7'):
+           h_f = gas_list[2][j][0]*t_r+0.5*gas_list[2][j][1]*t_r**2+\
+           1./3.*gas_list[2][j][2]*t_r**3+0.25*gas_list[2][j][3]*t_r**4+0.2*gas_list[2][j][4]*t_r**5+gas_list[2][j][5]
+           h_f = int(h_f * r0 * 100)/100000.
+        else:
+           h_f = -0.5*gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
+           1./3.*gas_list[2][j][4]*t_r**3.+0.25*gas_list[2][j][5]*t_r**4+0.2*gas_list[2][j][6]*t_r**5+gas_list[2][j][7]
+           h_f = int(h_f * r0 * 100)/100000.
+     outstr = ''
+     for k in range(poly_len):
+        outstr+=str(gas_list[2][j][k])+','
+     namestr='      POLYNOMIAL_COEFF(1:'+str(k+1)+','+str(j+1)+")="
+     print(namestr,outstr)
+   print("      ENTHALPY_OF_FORMATION=",h_f,"/")
 
 numreac = len(gas.reactions())
-
-spec_list=[]
-
-spec_list.append(['AR','ARGON'])
-spec_list.append(['aC3H4','ALLENE'])
-spec_list.append(['aC3H5','ALLYL RADICAL'])
-spec_list.append(['C','SOOT'])
-spec_list.append(['C2H','ETHYNYL RADICAL'])
-spec_list.append(['C2H2','ACETYLENE'])
-spec_list.append(['C2H3','VINYL RADICAL'])
-spec_list.append(['C2H3CHO','ACROLEIN'])
-spec_list.append(['C2H4','ETHYLENE'])
-spec_list.append(['C2H5','ETHYL RADICAL'])
-spec_list.append(['C2H6','ETHANE'])
-spec_list.append(['C3H2','CYCLOPROPENYLIDENE'])
-spec_list.append(['C3H3','1-PROPENYL'])
-spec_list.append(['C3H6','CYCLOPROPANE'])
-spec_list.append(['C3H8','PROPANE'])
-spec_list.append(['C4H2','BUTADIYNE'])
-spec_list.append(['C4H81','1-BUTENE'])
-spec_list.append(['CH','METHYLIDYNE'])
-spec_list.append(['CH2','METHYLENE'])
-spec_list.append(['CH2*','METHYLENEs'])
-spec_list.append(['CH2CHO','CH2CHO'])
-spec_list.append(['CH2CO','KETENE'])
-spec_list.append(['CH2O','FORMALDEHYDE'])
-spec_list.append(['CH2OH','HYDROXYMETHYL RADICAL'])
-spec_list.append(['CH3','METHYL RADICAL'])
-spec_list.append(['CH3CCH2','CYCLOPROPYL'])
-spec_list.append(['CH3CHO','ETHANAL'])
-spec_list.append(['CH3O','METHOXY RADICAL'])
-spec_list.append(['CH3OH','METHANOL'])
-spec_list.append(['CH4','METHANE'])
-spec_list.append(['CO','CARBON MONOXIDE'])
-spec_list.append(['CO2','CARBON DIOXIDE'])
-spec_list.append(['H','HYDROGEN ATOM'])
-spec_list.append(['H2','HYDROGEN'])
-spec_list.append(['H2O','WATER VAPOR'])
-spec_list.append(['H2O2','HYDROGEN PEROXIDE'])
-spec_list.append(['HCCO','ETHYNYLOXY RADICAL'])
-spec_list.append(['HCO','FORMYL RADICAL'])
-spec_list.append(['HNO','NITROSYL HYDRIDE'])
-spec_list.append(['HO2','HYDROPEROXY RADICAL'])
-spec_list.append(['iC3H7','ISOPROPYL RADICAL'])
-spec_list.append(['N','NITROGEN ATOM'])
-spec_list.append(['N2','NITROGEN'])
-spec_list.append(['N2O','NITROUS OXIDE'])
-spec_list.append(['NA','SODIUM'])
-spec_list.append(['NAH','SODIUM HYDRIDE'])
-spec_list.append(['NAO','SODIUM OXIDE'])
-spec_list.append(['NAO2','SODIUM SUPEROXIDE'])
-spec_list.append(['NAOH','SODIUM HYDROXIDE'])
-spec_list.append(['nC3H7','PROPYL RADICAL'])
-spec_list.append(['NH','IMIDOGEN'])
-spec_list.append(['NNH','NNH'])
-spec_list.append(['NO','NITRIC OXIDE'])
-spec_list.append(['O','OXYGEN ATOM'])
-spec_list.append(['O2','OXYGEN'])
-spec_list.append(['OH','HYDROXYL RADICAL'])
-spec_list.append(['pC3H4','PROPYNE'])
-
-dumpspec=[False]*len(spec_list)
-
-#for i in range(len(spec_list)):
-#	outstr="&SPEC ID='"+spec_list[i][1]+",FYI='"+spec_list[i][0]+"'/"
-#	print(outstr)
 
 A=[]
 Ea=[]
@@ -105,33 +131,6 @@ for i in range(numreac):
 	else:
 		three.append(True)
 		efflist.append(list(gas.reaction(i).efficiencies.items()))
-		for j in range(len(efflist[i])):
-			for k in range(len(spec_list)):
-				if(efflist[i][j][0]==spec_list[k][0]):
-					x=list(efflist[i][j])
-					dumpspec[k]=True
-					x[0]=spec_list[k][1]
-					efflist[i][j]=tuple(x)
-					break
-
-for i in range(len(spec_list)):
-	for j in range(len(rlist)):
-		for k in range(len(rlist[j])):
-			rlist[j][k]=list(rlist[j][k])
-			if rlist[j][k][0]==spec_list[i][0]:
-				dumpspec[i]=True
-				rlist[j][k][0]=spec_list[i][1]
-	for j in range(len(plist)):
-		for k in range(len(plist[j])):
-			plist[j][k]=list(plist[j][k])
-			if plist[j][k][0]==spec_list[i][0]:
-				dumpspec[i]=True
-				plist[j][k][0]=spec_list[i][1]
-
-for i in range(len(spec_list)):
-	if dumpspec[i]:
-		outstr="&SPEC ID='"+spec_list[i][1]+"',FYI='"+spec_list[i][0]+"'/"
-		print(outstr)
 
 for i in range(len(rlist)):
 	print(f"&REAC ID='R{i+1}',")
@@ -148,8 +147,8 @@ for i in range(len(rlist)):
 			print("     THIRD_EFF_ID=",effs,",")
 			print("     THIRD_EFF=",effn,",")
 	else:
-		print("     A=",A[i]*1E3,",")
-	print("     E=",Ea[i]*0.001,",")
+		print("     A=",int(A[i]*1E5)/1E2,",")
+	print("     E=",int(Ea[i]*1E6)/1E9,",")
 	if (b[i]!=0): print("     N_T=",b[i],",")
 	rlist2=str(np.array(rlist[i])[:,0])
 	plist2=str(np.array(plist[i])[:,0])
@@ -161,4 +160,22 @@ for i in range(len(rlist)):
 	rlist2=rlist2.replace('[','-').replace(']','').replace(" ",",-").replace("'","")
 	plist2=plist2.replace('[','').replace(']','').replace(" ",",").replace("'","")
 	print("     NU=",rlist2,",",plist2,"/")
+
+
+
+#gas.species(1).name
+#gas.species(1).composition
+#{'element':val}
+#list(gas.species().composition)
+#len elements
+#gas.speces().thermo.coeffs
+#gas.species().thermo.min_temp  max_temp
+#gas.species().transport.diameter * 1E10
+#gas.species().transport.well_depth / k_b
+
+
+#x=list(gas.species().thermo.input_data)
+#x[0]=poly
+#x[1]=temp range
+#x[2][0:N] = poly data for range
 

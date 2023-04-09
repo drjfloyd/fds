@@ -496,8 +496,9 @@ TYPE SPECIES_TYPE
    CHARACTER(LABEL_LENGTH) :: RAMP_MU             !< Name of viscosity rame
    CHARACTER(LABEL_LENGTH) :: RAMP_D              !< Name of diffusivity ramp
    CHARACTER(LABEL_LENGTH) :: RADCAL_ID           !< Name of closest species with RADCAL properties
-   CHARACTER(LABEL_LENGTH) :: RAMP_G_F
+   CHARACTER(LABEL_LENGTH) :: RAMP_G_F            !< Name of ramp for Gibbs energy
    CHARACTER(LABEL_LENGTH) :: PROP_ID             !< Name of PROPerty parameters
+   CHARACTER(LABEL_LENGTH) :: POLY_ID             !< Type of polynomial
    CHARACTER(FORMULA_LENGTH) :: FORMULA           !< Chemical formula
    INTEGER :: MODE=2
    INTEGER :: RAMP_CP_INDEX=-1                    !< Index of specific heat ramp
@@ -509,6 +510,9 @@ TYPE SPECIES_TYPE
    INTEGER :: RAMP_G_F_INDEX=-1                   !< Index of Gibbs energy ramp
    INTEGER :: PROP_INDEX=-1                       !< Index of species in THERMO_DAT
    INTEGER :: AWM_INDEX=-1                        !< Index of species in wall deposition arrays
+   INTEGER :: BANDS=-1                            !< Number of polynomial temperature bands
+   REAL(EB), ALLOCATABLE, DIMENSION(:) :: POLY_T    !< Band temperature limits for polynomial coefficients
+   REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: POLY_A  !< Polynomial coefficients
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: H_V       !< Heat of vaporization as a function of temperature
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: C_P_L     !< Liquid specific heat as a function of temperature
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: C_P_L_BAR !< Average liquid specific heat as a function of temperture
