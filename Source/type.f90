@@ -496,9 +496,8 @@ TYPE SPECIES_TYPE
    CHARACTER(LABEL_LENGTH) :: RAMP_MU             !< Name of viscosity rame
    CHARACTER(LABEL_LENGTH) :: RAMP_D              !< Name of diffusivity ramp
    CHARACTER(LABEL_LENGTH) :: RADCAL_ID           !< Name of closest species with RADCAL properties
-   CHARACTER(LABEL_LENGTH) :: RAMP_G_F            !< Name of ramp for Gibbs energy
+   CHARACTER(LABEL_LENGTH) :: RAMP_G_F
    CHARACTER(LABEL_LENGTH) :: PROP_ID             !< Name of PROPerty parameters
-   CHARACTER(LABEL_LENGTH) :: POLY_ID             !< Type of polynomial
    CHARACTER(FORMULA_LENGTH) :: FORMULA           !< Chemical formula
    INTEGER :: MODE=2
    INTEGER :: RAMP_CP_INDEX=-1                    !< Index of specific heat ramp
@@ -510,9 +509,6 @@ TYPE SPECIES_TYPE
    INTEGER :: RAMP_G_F_INDEX=-1                   !< Index of Gibbs energy ramp
    INTEGER :: PROP_INDEX=-1                       !< Index of species in THERMO_DAT
    INTEGER :: AWM_INDEX=-1                        !< Index of species in wall deposition arrays
-   INTEGER :: BANDS=-1                            !< Number of polynomial temperature bands
-   REAL(EB), ALLOCATABLE, DIMENSION(:) :: POLY_T    !< Band temperature limits for polynomial coefficients
-   REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: POLY_A  !< Polynomial coefficients
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: H_V       !< Heat of vaporization as a function of temperature
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: C_P_L     !< Liquid specific heat as a function of temperature
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: C_P_L_BAR !< Average liquid specific heat as a function of temperture
@@ -598,6 +594,9 @@ TYPE AIT_EXCLUSION_ZONE_TYPE
    REAL(EB) :: Z1            !< Lower z bound of Auto-Ignition Exclusion Zone
    REAL(EB) :: Z2            !< Upper z bound of Auto-Ignition Exclusion Zone
    INTEGER :: DEVC_INDEX=0   !< Index of device controlling the status of the zone
+   INTEGER :: CTRL_INDEX=0   !< Index of control controlling the status of the zone
+   CHARACTER(LABEL_LENGTH) :: DEVC_ID='null'  !< Name of device controlling the status of the zone
+   CHARACTER(LABEL_LENGTH) :: CTRL_ID='null'  !< Name of controller controlling the status of the zone
 END TYPE AIT_EXCLUSION_ZONE_TYPE
 
 
@@ -835,7 +834,7 @@ TYPE SURFACE_TYPE
    REAL(EB), DIMENSION(2) :: VEL_T,EMBER_GENERATION_HEIGHT=-1._EB
    INTEGER, DIMENSION(2) :: LEAK_PATH,DUCT_PATH
    INTEGER :: THERMAL_BC_INDEX,NPPC,SPECIES_BC_INDEX,VELOCITY_BC_INDEX,SURF_TYPE,N_CELLS_INI,N_CELLS_MAX=0, &
-              PART_INDEX,PROP_INDEX=-1
+              PART_INDEX,PROP_INDEX=-1,RAMP_T_I_INDEX=-1
    INTEGER, DIMENSION(10) :: INIT_INDICES=0
    INTEGER :: PYROLYSIS_MODEL
    INTEGER :: N_LAYERS,N_MATL,SUBSTEP_POWER=2,N_SPEC=0,N_LPC=0
@@ -1009,7 +1008,7 @@ TYPE GEOMETRY_TYPE
    CHARACTER(LABEL_LENGTH) :: ID,MATL_ID,DEVC_ID,MOVE_ID
    CHARACTER(LABEL_LENGTH), ALLOCATABLE, DIMENSION(:) :: SURF_ID
    CHARACTER(LABEL_LENGTH) :: GEOC_FILENAME='null',TEXTURE_MAPPING
-   LOGICAL :: COMPONENT_ONLY,IS_DYNAMIC=.TRUE.,HAVE_SURF,HAVE_MATL,AUTO_TEXTURE,HIDDEN,REMOVEABLE,SHOW_BNDF=.TRUE., &
+   LOGICAL :: COMPONENT_ONLY,IS_DYNAMIC=.TRUE.,HAVE_SURF,HAVE_MATL,HIDDEN,REMOVEABLE,SHOW_BNDF=.TRUE., &
               READ_BINARY=.FALSE.,IS_TERRAIN=.FALSE.
    INTEGER :: N_VERTS_BASE,N_FACES_BASE,N_VOLUS_BASE,N_VERTS,N_EDGES,N_FACES,N_VOLUS,NSUB_GEOMS,GEOM_TYPE,IJK(3),N_LEVELS,&
               DEVC_INDEX=-1,CTRL_INDEX=-1,PROP_INDEX=-1,DEVC_INDEX_O=-1,CTRL_INDEX_O=-1,MATL_INDEX=-1,&
