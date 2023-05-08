@@ -2631,7 +2631,7 @@
         END IF
 
 !       Check for errors in MF.
-        MFA = IABS(MF)
+        MFA = ABS(MF)
         MOSS = MFA/100
         METH = (MFA-100*MOSS)/10
         MITER = MFA - 100*MOSS - 10*METH
@@ -3522,7 +3522,7 @@
         END IF
 
 !       Check for errors in MF.
-        MFA = IABS(MF)
+        MFA = ABS(MF)
         MOSS = MFA/100
         METH = (MFA-100*MOSS)/10
         MITER = MFA - 100*MOSS - 10*METH
@@ -4752,7 +4752,7 @@
      END IF
 
 !    Check for errors in MF.
-     MFA = IABS(MF)
+     MFA = ABS(MF)
      MOSS = MFA/100
      METH = (MFA-100*MOSS)/10
      MITER = MFA - 100*MOSS - 10*METH
@@ -5607,16 +5607,16 @@
           IF (ABS(RJ)<=ZERO) GOTO 30
           Y(J) = YPJ
           CALL DFN(NEQ,T,Y,FPTEMP)
-          DO 20 I = 1, NEQ
+          DO  I = 1, NEQ
 !           Estimate the Jacobian element.
             AIJ = ABS(FPTEMP(I)-FTEMP(I))/RJ
-            IF ((AIJ<=EMIN) .AND. (I/=J)) GOTO 20
+            IF ((AIJ<=EMIN) .AND. (I/=J)) CYCLE
 !           Need more storage for JA.
             IF (K>JADIM) GOTO 10
             JMIN = K
             JA(K) = I
             K = K + 1
-20        CONTINUE
+          ENDDO
           JP1 = J + 1
           IA(JP1) = K
           Y(J) = YJSAVE
@@ -5821,7 +5821,14 @@
             MAXORD = MORD(METH)
           ELSE
             MAXORD = IUSER(5)
-            IF (MAXORD<0) GOTO 520
+            IF (MAXORD<0) THEN
+              MSG = 'MAXORD(=I1) < 0.'
+              CALL XERRDV(MSG,1130,1,1,MAXORD,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
             IF (MAXORD==0) MAXORD = 100
             MAXORD = MIN(MAXORD,MORD(METH))
           END IF
@@ -5881,7 +5888,14 @@
             MAXORD = MORD(METH)
           ELSE
             MAXORD = IUSER(5)
-            IF (MAXORD<0) GOTO 520
+            IF (MAXORD<0)  THEN
+              MSG = 'MAXORD(=I1) < 0.'
+              CALL XERRDV(MSG,1130,1,1,MAXORD,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
             IF (MAXORD==0) MAXORD = 100
             MAXORD = MIN(MAXORD,MORD(METH))
           END IF
@@ -5899,14 +5913,42 @@
           ELSE IF (MF==14 .OR. MF==15) THEN
             ML = IUSER(1)
             MU = IUSER(2)
-            IF (ML<0 .OR. ML>=NEQ) GOTO 500
-            IF (MU<0 .OR. MU>=NEQ) GOTO 510
+            IF (ML<0 .OR. ML>=NEQ) THEN
+              MSG = 'ML(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1110,1,2,ML,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
+            IF (MU<0 .OR. MU>=NEQ) THEN
+              MSG = 'MU(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1120,1,2,MU,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
             LWMDIM = (3*ML+2*MU+2)*NEQ
           ELSE IF (MF==-14 .OR. MF==-15) THEN
             ML = IUSER(1)
             MU = IUSER(2)
-            IF (ML<0 .OR. ML>=NEQ) GOTO 500
-            IF (MU<0 .OR. MU>=NEQ) GOTO 510
+            IF (ML<0 .OR. ML>=NEQ) THEN
+              MSG = 'ML(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1110,1,2,ML,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
+            IF (MU<0 .OR. MU>=NEQ) THEN
+              MSG = 'MU(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1120,1,2,MU,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
             LWMDIM = (2*ML+MU+1)*NEQ
           ELSE IF (MF==16 .OR. MF==17) THEN
             LWMDIM = 0
@@ -5923,14 +5965,42 @@
           ELSE IF (MF==24 .OR. MF==25) THEN
             ML = IUSER(1)
             MU = IUSER(2)
-            IF (ML<0 .OR. ML>=NEQ) GOTO 500
-            IF (MU<0 .OR. MU>=NEQ) GOTO 510
+            IF (ML<0 .OR. ML>=NEQ) THEN
+              MSG = 'ML(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1110,1,2,ML,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
+            IF (MU<0 .OR. MU>=NEQ) THEN
+              MSG = 'MU(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1120,1,2,MU,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
             LWMDIM = (3*ML+2*MU+2)*NEQ
           ELSE IF (MF==-24 .OR. MF==-25) THEN
             ML = IUSER(1)
             MU = IUSER(2)
-            IF (ML<0 .OR. ML>=NEQ) GOTO 500
-            IF (MU<0 .OR. MU>=NEQ) GOTO 510
+            IF (ML<0 .OR. ML>=NEQ) THEN
+              MSG = 'ML(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1110,1,2,ML,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
+            IF (MU<0 .OR. MU>=NEQ) THEN
+              MSG = 'MU(=I1) illegal: < 0 or >= NEQ (=I2)'
+              CALL XERRDV(MSG,1120,1,2,MU,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+            ENDIF
             LWMDIM = (2*ML+MU+1)*NEQ
           ELSE IF (MF==26 .OR. MF==27) THEN
             LWMDIM = 0
@@ -5992,19 +6062,48 @@
 
         RWORK(1:LRWUSER) = RUSER(1:LRWUSER)
         IWORK(1:LIWUSER) = IUSER(1:LIWUSER)
-        IF (ISTATE<1 .OR. ISTATE>3) GOTO 420
-        IF (ITASK<1 .OR. ITASK>5) GOTO 430
+        IF (ISTATE<1 .OR. ISTATE>3) THEN
+           MSG = 'ISTATE(=I1) is illegal.'
+           CALL XERRDV(MSG,1020,1,1,ISTATE,0,0,ZERO,ZERO)
+           IF (ISTATE<0) THEN
+              MSG = 'Run aborted:  apparent infinite loop.'
+              CALL XERRDV(MSG,1350,2,0,0,0,0,ZERO,ZERO)
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           ELSE
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           ENDIF
+           RETURN
+        ENDIF
+        IF (ITASK<1 .OR. ITASK>5) THEN
+           MSG = 'ITASK(=I1) is illegal.'
+           CALL XERRDV(MSG,1030,1,1,ITASK,0,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
         ITASKC = ITASK
-        IF (ISTATE==1) GOTO 10
-        IF (INIT/=1) GOTO 440
-        IF (ISTATE==2) GOTO 130
-        GOTO 20
-10      INIT = 0
-        IF (ABS(TOUT-T)<=ZERO) THEN
-          RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
-          IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
-          RETURN
-        END IF
+        IF (ISTATE==1) THEN
+           INIT = 0
+           IF (ABS(TOUT-T)<=ZERO) THEN
+             RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+             IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+             RETURN
+           END IF
+        ELSE
+           IF (INIT/=1) THEN
+              MSG = 'ISTATE(=I1) > 1 but DVODE is not initialized.'
+              CALL XERRDV(MSG,1040,1,1,ISTATE,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           IF (ISTATE==2) GOTO 130
+        ENDIF
 
 ! Block B.
 ! The next code block is executed for the initial call (ISTATE = 1),
@@ -6014,192 +6113,345 @@
 !       First check legality of the non-optional input NEQ, ITOL, IOPT,
 !       MF, ML, and MU.
 
-20      IF (NEQ<=0) GOTO 450
-        IF (ISTATE==1) GOTO 30
-        IF (NEQ>N) GOTO 460
-        IF (NEQ/=N) GOTO 465
-30      N = NEQ
-        IF (ITOL<1 .OR. ITOL>4) GOTO 470
-        IF (IOPT<0 .OR. IOPT>1) GOTO 480
+        IF (NEQ<=0) THEN
+           MSG = 'NEQ (=I1) < 1.'
+           CALL XERRDV(MSG,1050,1,1,NEQ,0,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
+        IF (ISTATE==1) THEN
+           N = NEQ
+        ELSE
+           IF (NEQ>N) THEN
+              MSG = 'ISTATE = 3 and NEQ increased (I1 to I2).'
+              CALL XERRDV(MSG,1060,1,2,N,NEQ,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           IF (NEQ/=N) THEN
+              MSG = 'This version of DVODE requires does not allow NEQ to be reduced.'
+              CALL XERRDV(MSG,1070,2,0,0,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+        ENDIF
+        N = NEQ
+        IF (ITOL<1 .OR. ITOL>4) THEN
+           MSG = 'ITOL(=I1) is illegal.'
+           CALL XERRDV(MSG,1080,1,1,ITOL,0,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
+        IF (IOPT<0 .OR. IOPT>1) THEN
+           MSG = 'IOPT(=I1) is illegal.'
+           CALL XERRDV(MSG,1090,1,1,IOPT,0,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
         JSV = SIGN(1,MF)
         INEWJ = (1-JSV)/2
         MFA = ABS(MF)
         METH = MFA/10
         MITER = MFA - 10*METH
-        IF (METH<1 .OR. METH>2) GOTO 490
-        IF (MITER<0 .OR. MITER>7) GOTO 490
-        IF (MITER<=3) GOTO 40
-        IF (MITER<=5) THEN
-          ML = IWORK(1)
-          MU = IWORK(2)
-          IF (ML<0 .OR. ML>=N) GOTO 500
-          IF (MU<0 .OR. MU>=N) GOTO 510
-        END IF
-40      CONTINUE
-        IF (NG<0) GOTO 700
-        IF (ISTATE==1) GOTO 50
-        IF (IRFND==0 .AND. NG/=NGC) GOTO 710
-50      NGC = NG
+        IF (METH<1 .OR. METH>2 .OR. MITER<0 .OR. MITER>7) THEN
+           MSG = 'MF(=I1) is illegal.'
+           CALL XERRDV(MSG,1100,1,1,MF,0,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
+        IF (MITER>3) THEN
+           IF (MITER<=5) THEN
+             ML = IWORK(1)
+             MU = IWORK(2)
+             IF (ML<0 .OR. ML>=N) THEN
+                MSG = 'ML(=I1) illegal: < 0 or >= NEQ (=I2)'
+                CALL XERRDV(MSG,1110,1,2,ML,NEQ,0,ZERO,ZERO)
+                ISTATE = -3
+                RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                RETURN
+              ENDIF
+             IF (MU<0 .OR. MU>=N) THEN
+               MSG = 'MU(=I1) illegal: < 0 or >= NEQ (=I2)'
+               CALL XERRDV(MSG,1120,1,2,MU,NEQ,0,ZERO,ZERO)
+               ISTATE = -3
+               RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+               IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+               RETURN
+             ENDIF
+           END IF
+        ENDIF
+        IF (NG<0) THEN
+           MSG = 'NG(=I1) < 0.'
+           CALL XERRDV(MSG,1310,0,1,NG,0,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
+        IF (ISTATE/=1) THEN
+           IF (IRFND==0 .AND. NG/=NGC) THEN
+              MSG = 'NG changed (from I1 to I2) illegally, i.e.,'
+              CALL XERRDV(MSG,1320,1,0,0,0,0,ZERO,ZERO)
+              MSG = 'not immediately after a root was found.'
+              CALL XERRDV(MSG,1320,1,2,NGC,NG,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+        ENDIF
+        NGC = NG
 !       Next process and check the optional input.
-        IF (IOPT==1) GOTO 60
-        MAXORD = MORD(METH)
-        MXSTEP = MXSTP0
-        MXHNIL = MXHNL0
-        IF (ISTATE==1) H0 = ZERO
-        HMXI = ZERO
-        HMIN = ZERO
-        GOTO 80
-60      MAXORD = IWORK(5)
-        IF (MAXORD<0) GOTO 520
-        IF (MAXORD==0) MAXORD = 100
-        MAXORD = MIN(MAXORD,MORD(METH))
-        MXSTEP = IWORK(6)
-        IF (MXSTEP<0) GOTO 530
-        IF (MXSTEP==0) MXSTEP = MXSTP0
-        MXHNIL = IWORK(7)
-        IF (MXHNIL<0) GOTO 540
-        IF (MXHNIL==0) MXHNIL = MXHNL0
-        IF (ISTATE/=1) GOTO 70
-        H0 = RWORK(5)
-        IF ((TOUT-T)*H0<ZERO) GOTO 550
-70      HMAX = RWORK(6)
-        IF (HMAX<ZERO) GOTO 560
-        HMXI = ZERO
-        IF (HMAX>ZERO) HMXI = ONE/HMAX
-        HMIN = RWORK(7)
-        IF (HMIN<ZERO) GOTO 570
-        SETH = RWORK(8)
-        IF (SETH<ZERO) GOTO 690
-!       Check the nonnegativity information.
-        IF (BOUNDS) THEN
-          IF (NDX<1 .OR. NDX>NEQ) THEN
-            MSG = 'The size of the CONSTRAINED vector'
-            CALL XERRDV(MSG,900,1,0,0,0,0,ZERO,ZERO)
-            MSG = 'must be between 1 and NEQ.'
-            CALL XERRDV(MSG,900,2,0,0,0,0,ZERO,ZERO)
-          END IF
-          DO I = 1, NDX
-            IF (IDX(I)<1 .OR. IDX(I)>N) THEN
-              MSG = 'Each component of THE CONSTRAINED'
-              CALL XERRDV(MSG,910,1,0,0,0,0,ZERO,ZERO)
-              MSG = 'vector must be between 1 and N.'
-              CALL XERRDV(MSG,910,2,0,0,0,0,ZERO,ZERO)
-            END IF
-          END DO
-        END IF
-!       Check the sub diagonal and super diagonal arrays.
-        IF (MITER==4 .OR. MITER==5) THEN
-           IF (SUBS) THEN
-              DO I = 1, NSUBS
-                 IF (SUBDS(I) < 2 .OR. SUBDS(I) > ML+1) THEN
-                    MSG = 'Each element of SUB_DIAGONALS'
-                    CALL XERRDV(MSG,920,1,0,0,0,0,ZERO,ZERO)
-                    MSG = 'must be between 2 and ML + 1.'
-                    CALL XERRDV(MSG,920,2,0,0,0,0,ZERO,ZERO)
-                 END IF
-              END DO
-           END IF
-           IF (SUPS) THEN
-              DO I = 1, NSUPS
-                 IF (SUPDS(I) < 2 .OR. SUPDS(I) > MU + 1) THEN
-                    MSG = 'Each element of SUP_DIAGONALS'
-                    CALL XERRDV(MSG,930,1,0,0,0,0,ZERO,ZERO)
-                    MSG = 'must be between 2 and MU + 1.'
-                    CALL XERRDV(MSG,930,2,0,0,0,0,ZERO,ZERO)
-                 END IF
-              END DO
-           END IF
-!          Compute the banded column grouping.
-           IF (SUBS .OR. SUPS) THEN
-             CALL BGROUP(N,EWT,ACOR,YMAX,ML,MU)
-             BUILD_IAJA = .FALSE.
-             BUILD_IAJA = .TRUE.
-             IF (BUILD_IAJA) THEN
-                CALL BANDED_IAJA(N,ML,MU)
-                NZB = IAB(N+1) - 1
+        IF (IOPT/=1) THEN
+           MAXORD = MORD(METH)
+           MXSTEP = MXSTP0
+           MXHNIL = MXHNL0
+           IF (ISTATE==1) H0 = ZERO
+           HMXI = ZERO
+           HMIN = ZERO
+        ELSE
+           MAXORD = IWORK(5)
+           IF (MAXORD<0)  THEN
+              MSG = 'MAXORD(=I1) < 0.'
+              CALL XERRDV(MSG,1130,1,1,MAXORD,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           IF (MAXORD==0) MAXORD = 100
+           MAXORD = MIN(MAXORD,MORD(METH))
+           MXSTEP = IWORK(6)
+           IF (MXSTEP<0) THEN
+              MSG = 'MXSTEP(=I1) < 0.'
+              CALL XERRDV(MSG,1140,1,1,MXSTEP,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           IF (MXSTEP==0) MXSTEP = MXSTP0
+           MXHNIL = IWORK(7)
+           IF (MXHNIL<0) THEN
+              MSG = 'MXHNIL(=I1) < 0.'
+              CALL XERRDV(MSG,1150,1,1,MXHNIL,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           IF (MXHNIL==0) MXHNIL = MXHNL0
+           IF (ISTATE==1) THEN
+              H0 = RWORK(5)
+              IF ((TOUT-T)*H0<ZERO) THEN
+                 MSG = 'TOUT(=R1) is behind T(=R2).'
+                 CALL XERRDV(MSG,1160,1,0,0,0,2,TOUT,T)
+                 MSG = 'The integration direction is given by H0 (=R1).'
+                 CALL XERRDV(MSG,1160,1,0,0,0,1,H0,ZERO)
+                 ISTATE = -3
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                 RETURN
+              ENDIF
+           ENDIF
+           HMAX = RWORK(6)
+           IF (HMAX<ZERO) THEN
+              MSG = 'HMAX(=R1) < 0.'
+              CALL XERRDV(MSG,1170,1,0,0,0,1,HMAX,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           HMXI = ZERO
+           IF (HMAX>ZERO) HMXI = ONE/HMAX
+           HMIN = RWORK(7)
+           IF (HMIN<ZERO) THEN
+              MSG = 'HMIN(=R1) < 0.'
+              CALL XERRDV(MSG,1180,1,0,0,0,1,HMIN,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           SETH = RWORK(8)
+           IF (SETH<ZERO) THEN
+              MSG = 'SETH must be nonnegative.'
+              CALL XERRDV(MSG,1300,1,0,0,0,0,ZERO,ZERO)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+   !       Check the nonnegativity information.
+           IF (BOUNDS) THEN
+             IF (NDX<1 .OR. NDX>NEQ) THEN
+               MSG = 'The size of the CONSTRAINED vector'
+               CALL XERRDV(MSG,900,1,0,0,0,0,ZERO,ZERO)
+               MSG = 'must be between 1 and NEQ.'
+               CALL XERRDV(MSG,900,2,0,0,0,0,ZERO,ZERO)
              END IF
+             DO I = 1, NDX
+               IF (IDX(I)<1 .OR. IDX(I)>N) THEN
+                 MSG = 'Each component of THE CONSTRAINED'
+                 CALL XERRDV(MSG,910,1,0,0,0,0,ZERO,ZERO)
+                 MSG = 'vector must be between 1 and N.'
+                 CALL XERRDV(MSG,910,2,0,0,0,0,ZERO,ZERO)
+               END IF
+             END DO
            END IF
-        END IF
+   !       Check the sub diagonal and super diagonal arrays.
+           IF (MITER==4 .OR. MITER==5) THEN
+              IF (SUBS) THEN
+                 DO I = 1, NSUBS
+                    IF (SUBDS(I) < 2 .OR. SUBDS(I) > ML+1) THEN
+                       MSG = 'Each element of SUB_DIAGONALS'
+                       CALL XERRDV(MSG,920,1,0,0,0,0,ZERO,ZERO)
+                       MSG = 'must be between 2 and ML + 1.'
+                       CALL XERRDV(MSG,920,2,0,0,0,0,ZERO,ZERO)
+                    END IF
+                 END DO
+              END IF
+              IF (SUPS) THEN
+                 DO I = 1, NSUPS
+                    IF (SUPDS(I) < 2 .OR. SUPDS(I) > MU + 1) THEN
+                       MSG = 'Each element of SUP_DIAGONALS'
+                       CALL XERRDV(MSG,930,1,0,0,0,0,ZERO,ZERO)
+                       MSG = 'must be between 2 and MU + 1.'
+                       CALL XERRDV(MSG,930,2,0,0,0,0,ZERO,ZERO)
+                    END IF
+                 END DO
+              END IF
+   !          Compute the banded column grouping.
+              IF (SUBS .OR. SUPS) THEN
+                CALL BGROUP(N,EWT,ACOR,YMAX,ML,MU)
+                BUILD_IAJA = .FALSE.
+                BUILD_IAJA = .TRUE.
+                IF (BUILD_IAJA) THEN
+                   CALL BANDED_IAJA(N,ML,MU)
+                   NZB = IAB(N+1) - 1
+                END IF
+              END IF
+           END IF
 
-        IF ((MITER==2 .OR. MITER==5) .AND. USE_JACSP) THEN
-!         Allocate the arrays needed by DVJAC/JACSPD.
-          IF (ALLOCATED(INDROWDS)) THEN
-             DEALLOCATE (INDROWDS, INDCOLDS, NGRPDS, IPNTRDS, JPNTRDS, &
-               IWADS, IWKDS, IOPTDS, YSCALEDS, WKDS, FACDS)
-             CALL CHECK_STAT(IER,440)
-          END IF
-          ALLOCATE (INDROWDS(1), INDCOLDS(1), NGRPDS(1), IPNTRDS(1),   &
-            JPNTRDS(1), IWADS(1), IWKDS(50+N), IOPTDS(5), YSCALEDS(N), &
-            WKDS(3*N), FACDS(N), STAT=IER)
-          CALL CHECK_STAT(IER,450)
-!         For use in DVJAC:
-          IOPTDS(4) = 0
-        END IF
+           IF ((MITER==2 .OR. MITER==5) .AND. USE_JACSP) THEN
+   !         Allocate the arrays needed by DVJAC/JACSPD.
+             IF (ALLOCATED(INDROWDS)) THEN
+                DEALLOCATE (INDROWDS, INDCOLDS, NGRPDS, IPNTRDS, JPNTRDS, &
+                  IWADS, IWKDS, IOPTDS, YSCALEDS, WKDS, FACDS)
+                CALL CHECK_STAT(IER,440)
+             END IF
+             ALLOCATE (INDROWDS(1), INDCOLDS(1), NGRPDS(1), IPNTRDS(1),   &
+               JPNTRDS(1), IWADS(1), IWKDS(50+N), IOPTDS(5), YSCALEDS(N), &
+               WKDS(3*N), FACDS(N), STAT=IER)
+             CALL CHECK_STAT(IER,450)
+   !         For use in DVJAC:
+             IOPTDS(4) = 0
+           END IF
+        ENDIF
 
 ! Set work array pointers and check lengths LRW and LIW. Pointers
 ! to segments of RWORK and IWORK are named by prefixing L to the
 ! name of the segment. e.g., the segment YH starts at RWORK(LYH).
 ! Within WM, LOCJS is the location of the saved Jacobian (JSV > 0).
 
-80      LYH = 21
+        LYH = 21
         IF (ISTATE==1) NYH = N
         LENRW = LYH + (MAXORD+1)*NYH - 1
         IWORK(17) = LENRW
-        IF (LENRW>LRW) GOTO 580
-        IF (LENRW/=LRW) GOTO 580
+        IF (LENRW>LRW .OR. LENRW/=LRW) THEN
+           MSG = 'RWORK length needed, LENRW(=I1) > LRW(=I2)'
+           CALL XERRDV(MSG,1190,1,2,LENRW,LRW,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
         LWM = 1
 !       Save MAXORD in case the calling program calls with ISTATE=3.
         PREVIOUS_MAXORD = MAXORD
         JCO = MAX(0,JSV)
-!       IF (MITER==0) LENWM = 2
         IF (MITER==0) LENWM = 0
         IF (MITER==1 .OR. MITER==2) THEN
-!         LENWM = 2 + (1+JCO)*N*N
-!         LOCJS = N*N + 3
           LENWM = (1+JCO)*N*N
           LOCJS = N*N + 1
         END IF
-!       IF (MITER==3) LENWM = N + 2
         IF (MITER==3) LENWM = N
         IF (MITER==4 .OR. MITER==5) THEN
           MBAND = ML + MU + 1
           LENP = (MBAND+ML)*N
           LENJ = MBAND*N
-!         LENWM = 2 + LENP + JCO*LENJ
-!         LOCJS = LENP + 3
           LENWM = LENP + JCO*LENJ
           LOCJS = LENP + 1
         END IF
-        IF (MITER==6 .OR. MITER==7) THEN
-!         LENWM = 2
-          LENWM = 0
-        END IF
-        IF (LENWM>LWMDIM) GOTO 730
-        IF (LENWM/=LWMDIM) GOTO 730
+        IF (MITER==6 .OR. MITER==7) LENWM = 0
+        IF (LENWM>LWMDIM .OR. LENWM/=LWMDIM) THEN
+           MSG = 'WM length needed, LENWM(=I1) > LWMDIM(=I2)'
+           CALL XERRDV(MSG,1340,1,2,LENWM,LWMDIM,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
         LIWM = 1
         LENIW = 30 + N
         IF (MITER==0 .OR. MITER==3) LENIW = 30
         IWORK(18) = LENIW
-        IF (LENIW>LIW) GOTO 590
+        IF (LENIW>LIW) THEN
+           MSG = 'IWORK length needed, LENIW(=I1) > LIW(=I2)'
+           CALL XERRDV(MSG,1200,1,2,LENIW,LIW,0,ZERO,ZERO)
+           ISTATE = -3
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
 !       Check RTOL and ATOL for legality.
         RTOLI = OPTS%RTOL(1)
         ATOLI = OPTS%ATOL(1)
         DO I = 1, N
           IF (ITOL>=3) RTOLI = OPTS%RTOL(I)
           IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-          IF (RTOLI<ZERO) GOTO 600
-          IF (ATOLI<ZERO) GOTO 610
+          IF (RTOLI<ZERO) THEN
+             MSG = 'RTOL(I1) is R1 < 0.'
+             CALL XERRDV(MSG,1210,1,1,I,0,1,RTOLI,ZERO)
+             ISTATE = -3
+             RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+             IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+             RETURN
+          ENDIF
+          IF (ATOLI<ZERO) THEN
+             MSG = 'ATOL(I1) is R1 < 0.'
+             CALL XERRDV(MSG,1220,1,1,I,0,1,ATOLI,ZERO)
+             ISTATE = -3
+             RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+             IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+             RETURN
+          ENDIF
         END DO
         IF (ISTATE==1) GOTO 100
 !       If ISTATE = 3, set flag to signal parameter changes to DVSTEP.
         JSTART = -1
-        IF (NQ<=MAXORD) GOTO 90
-!       MAXORD was reduced below NQ. Copy YH(*,MAXORD+2) into SAVF.
-!       YH(*,MAXORD+2) was copied to the YHNQP2 array at the
-!       beginning of DVODE when the ISTATE=3 call was made.
-        CALL DCOPY_F90(N,YHNQP2,1,SAVF,1)
+        IF (NQ>MAXORD) THEN
+   !       MAXORD was reduced below NQ. Copy YH(*,MAXORD+2) into SAVF.
+   !       YH(*,MAXORD+2) was copied to the YHNQP2 array at the
+   !       beginning of DVODE when the ISTATE=3 call was made.
+           CALL DCOPY_F90(N,YHNQP2,1,SAVF,1)
+        ENDIF
 !       Reload WM1 since LWM may have changed.
-90      IF (MITER>0) WM1 = SQRT(UROUND)
+        IF (MITER>0) WM1 = SQRT(UROUND)
 !       ISTATC controls the determination of the sparsity arrays
 !       if the sparse solution option is used.
         ISTATC = ISTATE
@@ -6218,11 +6470,19 @@
 !       the sparse solution option is used.
         ISTATC = ISTATE
         TN = T
-        IF (ITASK/=4 .AND. ITASK/=5) GOTO 110
-        TCRIT = RWORK(1)
-        IF ((TCRIT-TOUT)*(TOUT-T)<ZERO) GOTO 660
-        IF (ABS(H0)>ZERO .AND. (T+H0-TCRIT)*H0>ZERO) H0 = TCRIT - T
-110     JSTART = 0
+        IF (ITASK==4 .OR. ITASK==5) THEN
+           TCRIT = RWORK(1)
+           IF ((TCRIT-TOUT)*(TOUT-T)<ZERO) THEN
+              MSG = 'ITASK = 4 or 5 and TCRIT(=R1) < TOUT(=R2).'
+              CALL XERRDV(MSG,1270,1,0,0,0,2,TCRIT,TOUT)
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           IF (ABS(H0)>ZERO .AND. (T+H0-TCRIT)*H0>ZERO) H0 = TCRIT - T
+        ENDIF
+        JSTART = 0
         IF (MITER>0) WM1 = SQRT(UROUND)
         CCMXJ = PT2
         MSBJ = 50
@@ -6256,7 +6516,15 @@
         H = ONE
         CALL DEWSET(N,ITOL,OPTS%RTOL,OPTS%ATOL,RWORK(LYH),EWT)
         DO I = 1, N
-          IF (EWT(I)<=ZERO) GOTO 620
+          IF (EWT(I)<=ZERO) THEN
+             EWTI = EWT(I)
+             MSG = 'EWT(I1) is R1 <= 0.'
+             CALL XERRDV(MSG,1230,1,1,I,0,1,EWTI,ZERO)
+             ISTATE = -3
+             RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+             IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+             RETURN
+          ENDIF
           EWT(I) = ONE/EWT(I)
         END DO
         NNZ = 0
@@ -6264,26 +6532,41 @@
         IF (OPTS%SPARSE) THEN
           ISTATC = ISTATE
         END IF
-        IF (ABS(H0)>ZERO) GOTO 120
-!       Call DVHIN to set initial step size H0 to be attempted.
-        CALL DVHIN(N,T,RWORK(LYH),RWORK(LF0),F,TOUT,EWT,ITOL,OPTS%ATOL,Y,ACOR, &
-          H0,NITER,IER)
-        NFE = NFE + NITER
-        IF (IER/=0) GOTO 630
+        IF (ABS(H0)<=ZERO) THEN
+   !       Call DVHIN to set initial step size H0 to be attempted.
+           CALL DVHIN(N,T,RWORK(LYH),RWORK(LF0),F,TOUT,EWT,ITOL,OPTS%ATOL,Y,ACOR, &
+             H0,NITER,IER)
+           NFE = NFE + NITER
+           IF (IER/=0) THEN
+             MSG = 'TOUT(=R1) too close to T(=R2) to start.'
+             CALL XERRDV(MSG,1240,1,0,0,0,2,TOUT,T)
+             ISTATE = -3
+             RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+             IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+             RETURN
+          ENDIF
+        ENDIF
 !       Adjust H0 if necessary to meet HMAX bound.
-120     RH = ABS(H0)*HMXI
+        RH = ABS(H0)*HMXI
         IF (RH>ONE) H0 = H0/RH
 !       Load H with H0 and scale YH(*,2) by H0.
         H = H0
         CALL DSCAL_F90(N,H0,RWORK(LF0),1)
-!       GOTO 270
 !       Check for a zero of g at T.
         IRFND = 0
         TOUTC = TOUT
         IF (NGC==0) GOTO 210
         CALL DVCHECK(1,GFUN,NEQ,Y,RWORK(LYH),NYH,G0,G1,GX,IRT)
         IF (IRT==0) GOTO 210
-        GOTO 720
+        MSG = 'One or more components of g has a root'
+        CALL XERRDV(MSG,1330,1,0,0,0,0,ZERO,ZERO)
+        MSG = 'too near to the initial point.'
+        CALL XERRDV(MSG,1330,1,0,0,0,0,ZERO,ZERO)
+        ISTATE = -3
+        RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+        IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+        RETURN
+
 
 ! Block D.
 ! The next code block is for continuation calls only (ISTATE = 2 or 3)
@@ -6291,57 +6574,418 @@
 
 130     NSLAST = NST
         IRFP = IRFND
-        IF (NGC==0) GOTO 140
-        IF (ITASK==1 .OR. ITASK==4) TOUTC = TOUT
-        CALL DVCHECK(2,GFUN,NEQ,Y,RWORK(LYH),NYH,G0,G1,GX,IRT)
-        IF (IRT/=1) GOTO 140
-        IRFND = 1
-        ISTATE = 3
-        T = T0ST
-        GOTO 330
-140     CONTINUE
+        IF (NGC/=0) THEN
+           IF (ITASK==1 .OR. ITASK==4) TOUTC = TOUT
+           CALL DVCHECK(2,GFUN,NEQ,Y,RWORK(LYH),NYH,G0,G1,GX,IRT)
+           IF (IRT==1) THEN
+              IRFND = 1
+              ISTATE = 3
+              T = T0ST
+              RWORK(11) = HU
+              RWORK(12) = HNEW
+              RWORK(13) = TN
+              IWORK(10) = NGE
+              IWORK(11) = NST
+              IWORK(12) = NFE
+              IWORK(13) = NJE
+              IWORK(14) = NQU
+              IWORK(15) = NEWQ
+              IWORK(19) = NLU
+              IWORK(20) = NNI
+              IWORK(21) = NCFN
+              IWORK(22) = NETF
+              TLAST = T
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+      !       Warn the user if |y(t)| < ATOL:
+              IF (ISTATE==2 .OR. ISTATE==3) THEN
+                IF (YMAXWARN) THEN
+                  ATOLI = OPTS%ATOL(1)
+                  DO I = 1, N
+                    IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                    IF (ABS(Y(I))<ATOLI) THEN
+                      MSG = 'Warning: Component I1 of the solution is'
+                      CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                      MSG = 'smaller in magnitude than component I1'
+                      CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                      MSG = 'of the absolute error tolerance vector.'
+                      CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                    END IF
+                  END DO
+                END IF
+              END IF
+              RETURN
+           ENDIF
+        ENDIF
+        CONTINUE
         IRFND = 0
-        IF (IRFP==1 .AND. (ABS(TLAST-TN)>ZERO) .AND. ITASK==2) GOTO 310
+        IF (IRFP==1 .AND. (ABS(TLAST-TN)>ZERO) .AND. ITASK==2) THEN
+           CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+           T = TN
+           IF (ITASK==4 .OR. ITASK==5) THEN
+              IF (IHIT) T = TCRIT
+           ENDIF
+           ISTATE = 2
+           RWORK(11) = HU
+           RWORK(12) = HNEW
+           RWORK(13) = TN
+           IWORK(10) = NGE
+           IWORK(11) = NST
+           IWORK(12) = NFE
+           IWORK(13) = NJE
+           IWORK(14) = NQU
+           IWORK(15) = NEWQ
+           IWORK(19) = NLU
+           IWORK(20) = NNI
+           IWORK(21) = NCFN
+           IWORK(22) = NETF
+           TLAST = T
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+   !       Warn the user if |y(t)| < ATOL:
+           IF (ISTATE==2 .OR. ISTATE==3) THEN
+             IF (YMAXWARN) THEN
+               ATOLI = OPTS%ATOL(1)
+               DO I = 1, N
+                 IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                 IF (ABS(Y(I))<ATOLI) THEN
+                   MSG = 'Warning: Component I1 of the solution is'
+                   CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                   MSG = 'smaller in magnitude than component I1'
+                   CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                   MSG = 'of the absolute error tolerance vector.'
+                   CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                 END IF
+               END DO
+             END IF
+           END IF
+           RETURN
+        ENDIF
         KUTH = 0
-        GOTO (150,200,160,170,180) ITASK
-150     IF ((TN-TOUT)*H<ZERO) GOTO 200
-        CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
-        IF (IFLAG/=0) GOTO 680
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        T = TOUT
-        GOTO 320
-160     TP = TN - HU*(ONE+HUN*UROUND)
-        IF ((TP-TOUT)*H>ZERO) GOTO 640
-        IF ((TN-TOUT)*H<ZERO) GOTO 200
-        GOTO 310
-170     TCRIT = RWORK(1)
-        IF ((TN-TCRIT)*H>ZERO) GOTO 650
-        IF ((TCRIT-TOUT)*H<ZERO) GOTO 660
-        IF ((TN-TOUT)*H<ZERO) GOTO 190
-        CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
-        IF (IFLAG/=0) GOTO 680
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        T = TOUT
-        GOTO 320
-180     TCRIT = RWORK(1)
-        IF ((TN-TCRIT)*H>ZERO) GOTO 650
-190     HMX = ABS(TN) + ABS(H)
-        IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
-        IF (IHIT) GOTO 310
-        TNEXT = TN + HNEW*(ONE+FOUR*UROUND)
-        IF ((TNEXT-TCRIT)*H<=ZERO) GOTO 200
-        H = (TCRIT-TN)*(ONE-FOUR*UROUND)
-        KUTH = 1
+        SELECT CASE (ITASK)
+           CASE DEFAULT
+              IF ((TN-TOUT)*H>=ZERO) THEN
+                 CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
+                 IF (IFLAG/=0) THEN
+                    MSG = 'Trouble from DVINDY. ITASK = I1, TOUT = R1.'
+                    CALL XERRDV(MSG,1290,1,1,ITASK,0,1,TOUT,ZERO)
+                    ISTATE = -3
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                    RETURN
+                 ENDIF
+                 IF (BOUNDS) THEN
+                   DO I = 1, NDX
+                     Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+                     Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+                   END DO
+                 END IF
+                 T = TOUT
+                 ISTATE = 2
+                 RWORK(11) = HU
+                 RWORK(12) = HNEW
+                 RWORK(13) = TN
+                 IWORK(10) = NGE
+                 IWORK(11) = NST
+                 IWORK(12) = NFE
+                 IWORK(13) = NJE
+                 IWORK(14) = NQU
+                 IWORK(15) = NEWQ
+                 IWORK(19) = NLU
+                 IWORK(20) = NNI
+                 IWORK(21) = NCFN
+                 IWORK(22) = NETF
+                 TLAST = T
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+         !       Warn the user if |y(t)| < ATOL:
+                 IF (ISTATE==2 .OR. ISTATE==3) THEN
+                   IF (YMAXWARN) THEN
+                     ATOLI = OPTS%ATOL(1)
+                     DO I = 1, N
+                       IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                       IF (ABS(Y(I))<ATOLI) THEN
+                         MSG = 'Warning: Component I1 of the solution is'
+                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'smaller in magnitude than component I1'
+                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'of the absolute error tolerance vector.'
+                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                       END IF
+                     END DO
+                   END IF
+                 END IF
+                 RETURN
+               ENDIF
+           CASE (2)
+           CASE (3)
+              TP = TN - HU*(ONE+HUN*UROUND)
+              IF ((TP-TOUT)*H>ZERO) THEN
+                 MSG = 'ITASK = I1 and TOUT(=R1) < TCUR - HU(=R2).'
+                 CALL XERRDV(MSG,1250,1,1,ITASK,0,2,TOUT,TP)
+                 ISTATE = -3
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                 RETURN
+              ENDIF
+              IF ((TN-TOUT)*H>=ZERO) THEN
+                 CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                 T = TN
+                 IF (ITASK==4 .OR. ITASK==5) THEN
+                    ISTATE = 2
+                    RWORK(11) = HU
+                    RWORK(12) = HNEW
+                    RWORK(13) = TN
+                    IWORK(10) = NGE
+                    IWORK(11) = NST
+                    IWORK(12) = NFE
+                    IWORK(13) = NJE
+                    IWORK(14) = NQU
+                    IWORK(15) = NEWQ
+                    IWORK(19) = NLU
+                    IWORK(20) = NNI
+                    IWORK(21) = NCFN
+                    IWORK(22) = NETF
+                    TLAST = T
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+            !       Warn the user if |y(t)| < ATOL:
+                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+                      IF (YMAXWARN) THEN
+                        ATOLI = OPTS%ATOL(1)
+                        DO I = 1, N
+                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                          IF (ABS(Y(I))<ATOLI) THEN
+                            MSG = 'Warning: Component I1 of the solution is'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'smaller in magnitude than component I1'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'of the absolute error tolerance vector.'
+                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                          END IF
+                        END DO
+                      END IF
+                    END IF
+                    RETURN
+                 ENDIF
+                 IF (IHIT) T = TCRIT
+                 ISTATE = 2
+                 RWORK(11) = HU
+                 RWORK(12) = HNEW
+                 RWORK(13) = TN
+                 IWORK(10) = NGE
+                 IWORK(11) = NST
+                 IWORK(12) = NFE
+                 IWORK(13) = NJE
+                 IWORK(14) = NQU
+                 IWORK(15) = NEWQ
+                 IWORK(19) = NLU
+                 IWORK(20) = NNI
+                 IWORK(21) = NCFN
+                 IWORK(22) = NETF
+                 TLAST = T
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+         !       Warn the user if |y(t)| < ATOL:
+                 IF (ISTATE==2 .OR. ISTATE==3) THEN
+                   IF (YMAXWARN) THEN
+                     ATOLI = OPTS%ATOL(1)
+                     DO I = 1, N
+                       IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                       IF (ABS(Y(I))<ATOLI) THEN
+                         MSG = 'Warning: Component I1 of the solution is'
+                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'smaller in magnitude than component I1'
+                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'of the absolute error tolerance vector.'
+                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                       END IF
+                     END DO
+                   END IF
+                 END IF
+                 RETURN
+              ENDIF
+           CASE (4)
+              TCRIT = RWORK(1)
+              IF ((TN-TCRIT)*H>ZERO) THEN
+                 MSG = 'ITASK = 4 or 5 and TCRIT(=R1) < TCUR(=R2).'
+                 CALL XERRDV(MSG,1260,1,0,0,0,2,TCRIT,TN)
+                 ISTATE = -3
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                 RETURN
+              ENDIF
+              IF ((TCRIT-TOUT)*H<ZERO) THEN
+                 MSG = 'ITASK = 4 or 5 and TCRIT(=R1) < TOUT(=R2).'
+                 CALL XERRDV(MSG,1270,1,0,0,0,2,TCRIT,TOUT)
+                 ISTATE = -3
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                 RETURN
+              ENDIF
+              IF ((TN-TOUT)*H>=ZERO) THEN
+                 CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
+                 IF (IFLAG/=0) THEN
+                    MSG = 'Trouble from DVINDY. ITASK = I1, TOUT = R1.'
+                    CALL XERRDV(MSG,1290,1,1,ITASK,0,1,TOUT,ZERO)
+                    ISTATE = -3
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                    RETURN
+                 ENDIF
+                 IF (BOUNDS) THEN
+                   DO I = 1, NDX
+                     Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+                     Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+                   END DO
+                 END IF
+                 T = TOUT
+                 ISTATE = 2
+                 RWORK(11) = HU
+                 RWORK(12) = HNEW
+                 RWORK(13) = TN
+                 IWORK(10) = NGE
+                 IWORK(11) = NST
+                 IWORK(12) = NFE
+                 IWORK(13) = NJE
+                 IWORK(14) = NQU
+                 IWORK(15) = NEWQ
+                 IWORK(19) = NLU
+                 IWORK(20) = NNI
+                 IWORK(21) = NCFN
+                 IWORK(22) = NETF
+                 TLAST = T
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           !       Warn the user if |y(t)| < ATOL:
+                 IF (ISTATE==2 .OR. ISTATE==3) THEN
+                    IF (YMAXWARN) THEN
+                    ATOLI = OPTS%ATOL(1)
+                    DO I = 1, N
+                       IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                       IF (ABS(Y(I))<ATOLI) THEN
+                          MSG = 'Warning: Component I1 of the solution is'
+                          CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                          MSG = 'smaller in magnitude than component I1'
+                          CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                          MSG = 'of the absolute error tolerance vector.'
+                          CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                       END IF
+                    END DO
+                    END IF
+                 END IF
+                 RETURN
+              ELSE
+                 HMX = ABS(TN) + ABS(H)
+                 IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
+                 IF (IHIT) THEN
+                    CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                    T = TN
+                    IF (ITASK==4 .OR. ITASK==5) THEN
+                       IF (IHIT) T = TCRIT
+                    ENDIF
+                    ISTATE = 2
+                    RWORK(11) = HU
+                    RWORK(12) = HNEW
+                    RWORK(13) = TN
+                    IWORK(10) = NGE
+                    IWORK(11) = NST
+                    IWORK(12) = NFE
+                    IWORK(13) = NJE
+                    IWORK(14) = NQU
+                    IWORK(15) = NEWQ
+                    IWORK(19) = NLU
+                    IWORK(20) = NNI
+                    IWORK(21) = NCFN
+                    IWORK(22) = NETF
+                    TLAST = T
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+            !       Warn the user if |y(t)| < ATOL:
+                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+                      IF (YMAXWARN) THEN
+                        ATOLI = OPTS%ATOL(1)
+                        DO I = 1, N
+                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                          IF (ABS(Y(I))<ATOLI) THEN
+                            MSG = 'Warning: Component I1 of the solution is'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'smaller in magnitude than component I1'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'of the absolute error tolerance vector.'
+                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                          END IF
+                        END DO
+                      END IF
+                    END IF
+                    RETURN
+                 ENDIF
+                 TNEXT = TN + HNEW*(ONE+FOUR*UROUND)
+                 IF ((TNEXT-TCRIT)*H>ZERO) THEN
+                    H = (TCRIT-TN)*(ONE-FOUR*UROUND)
+                    KUTH = 1
+                 ENDIF
+              ENDIF
+           CASE (5)
+              TCRIT = RWORK(1)
+              IF ((TN-TCRIT)*H>ZERO) THEN
+                 MSG = 'ITASK = 4 or 5 and TCRIT(=R1) < TCUR(=R2).'
+                 CALL XERRDV(MSG,1260,1,0,0,0,2,TCRIT,TN)
+                 ISTATE = -3
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                 RETURN
+              ENDIF
+              HMX = ABS(TN) + ABS(H)
+              IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
+              IF (IHIT) THEN
+                 CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                 T = TN
+                 IF (ITASK==4 .OR. ITASK==5) THEN
+                    IF (IHIT) T = TCRIT
+                 ENDIF
+                 ISTATE = 2
+                 RWORK(11) = HU
+                 RWORK(12) = HNEW
+                 RWORK(13) = TN
+                 IWORK(10) = NGE
+                 IWORK(11) = NST
+                 IWORK(12) = NFE
+                 IWORK(13) = NJE
+                 IWORK(14) = NQU
+                 IWORK(15) = NEWQ
+                 IWORK(19) = NLU
+                 IWORK(20) = NNI
+                 IWORK(21) = NCFN
+                 IWORK(22) = NETF
+                 TLAST = T
+                 RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                 IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+         !       Warn the user if |y(t)| < ATOL:
+                 IF (ISTATE==2 .OR. ISTATE==3) THEN
+                   IF (YMAXWARN) THEN
+                     ATOLI = OPTS%ATOL(1)
+                     DO I = 1, N
+                       IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                       IF (ABS(Y(I))<ATOLI) THEN
+                         MSG = 'Warning: Component I1 of the solution is'
+                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'smaller in magnitude than component I1'
+                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'of the absolute error tolerance vector.'
+                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                       END IF
+                     END DO
+                   END IF
+                 END IF
+                 RETURN
+              ENDIF
+              TNEXT = TN + HNEW*(ONE+FOUR*UROUND)
+              IF ((TNEXT-TCRIT)*H>ZERO) THEN
+                 H = (TCRIT-TN)*(ONE-FOUR*UROUND)
+                 KUTH = 1
+              ENDIF
+           END SELECT
 
 ! Block E.
 ! The next block is normally executed for all calls and contains
@@ -6352,74 +6996,180 @@
 ! requested, and check for H below the roundoff level in T.
 
 200     CONTINUE
-        IF ((NST-NSLAST)>=MXSTEP) GOTO 340
+        IF ((NST-NSLAST)>=MXSTEP) THEN
+           MSG = 'At current T(=R1), MXSTEP(=I1) steps'
+           CALL XERRDV(MSG,970,1,0,0,0,0,ZERO,ZERO)
+           MSG = 'taken on this call before reaching TOUT.'
+           CALL XERRDV(MSG,970,1,1,MXSTEP,0,1,TN,ZERO)
+           ISTATE = -1
+           CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+           T = TN
+           RWORK(11) = HU
+           RWORK(12) = H
+           RWORK(13) = TN
+           IWORK(10) = NGE
+           IWORK(11) = NST
+           IWORK(12) = NFE
+           IWORK(13) = NJE
+           IWORK(14) = NQU
+           IWORK(15) = NQ
+           IWORK(19) = NLU
+           IWORK(20) = NNI
+           IWORK(21) = NCFN
+           IWORK(22) = NETF
+           TLAST = T
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
         CALL DEWSET(N,ITOL,OPTS%RTOL,OPTS%ATOL,RWORK(LYH),EWT)
         DO I = 1, N
-          IF (EWT(I)<=ZERO) GOTO 350
-          EWT(I) = ONE/EWT(I)
+           IF (EWT(I)<=ZERO) THEN
+              EWTI = EWT(I)
+              MSG = 'At T(=R1), EWT(I1) has become R2 <= 0.'
+              CALL XERRDV(MSG,980,1,1,I,0,2,TN,EWTI)
+              ISTATE = -6
+              CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+              T = TN
+              RWORK(11) = HU
+              RWORK(12) = H
+              RWORK(13) = TN
+              IWORK(10) = NGE
+              IWORK(11) = NST
+              IWORK(12) = NFE
+              IWORK(13) = NJE
+              IWORK(14) = NQU
+              IWORK(15) = NQ
+              IWORK(19) = NLU
+              IWORK(20) = NNI
+              IWORK(21) = NCFN
+              IWORK(22) = NETF
+              TLAST = T
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           EWT(I) = ONE/EWT(I)
         END DO
 210     TOLSF = UROUND*DVNORM(N,RWORK(LYH),EWT)
         IPCUTH = -1
-        IF (TOLSF<=ONE) GOTO 220
-        TOLSF = TOLSF*TWO
-        IF (NST==0) GOTO 670
-        GOTO 360
-220     CONTINUE
-        IPCUTH = IPCUTH + 1
-        IF (IPCUTH>=IPCUTH_MAX) THEN
-          MSG = 'Too many step reductions to prevent'
-          CALL XERRDV(MSG,940,1,0,0,0,0,ZERO,ZERO)
-          MSG = 'an infeasible prediction.'
-          CALL XERRDV(MSG,940,1,0,0,0,0,ZERO,ZERO)
-!         Retract the solution to TN:
-          CALL DVNRDN(RWORK(LYH),NYH,N,NQ)
-          ACOR(1:N) = ZERO
-          ISTATE = -7
-          GOTO 410
-        END IF
-        IF (ABS((TN+H)-TN)>ZERO) GOTO 230
-        NHNIL = NHNIL + 1
-        IF (NHNIL>MXHNIL) GOTO 230
-        MSG = 'Warning: internal T(=R1) and H(=R2) are such that'
-        CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'in the machine, T + H = T on the next step.'
-        CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
-        MSG = '(H = step size). The solver will continue anyway.'
-        CALL XERRDV(MSG,950,1,0,0,0,2,TN,H)
-        IF (NHNIL<MXHNIL) GOTO 230
-        MSG = 'The above warning has been issued I1 times.'
-        CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'It will not be issued again for this problem.'
-        CALL XERRDV(MSG,950,1,1,MXHNIL,0,0,ZERO,ZERO)
-230     CONTINUE
-        IF (BOUNDS) THEN
-!         Check positive components for infeasible prediction; reduce 
-!         step size if infeasible prediction will occur in DVNLSD.
-          ACOR(1:N) = RWORK(LYH:LYH+N-1)
-!         Predict:
-          CALL DVNRDP(RWORK(LYH:LRW),NYH,N,NQ)
-          DO I = 1, NDX
-            IF ((ACOR(IDX(I))>LB(I) .AND. RWORK(LYH+ &
-                IDX(I)-1)<LB(I)) .OR. (ACOR(IDX(I))<UB(I) .AND. RWORK(LYH+ &
-                IDX(I)-1)>UB(I))) THEN
-!              Retract:
-              CALL DVNRDN(RWORK(LYH),NYH,N,NQ)
-              H = HALF*H
-              ETA = HALF
-!              Rescale:
-              CALL DVNRDS(RWORK(LYH),NYH,N,L,ETA)
-              GOTO 220
-            END IF
-          END DO
-!         Retract:
-          CALL DVNRDN(RWORK(LYH),NYH,N,NQ)
-          ACOR(1:N) = ZERO
-        END IF
+        IF (TOLSF>ONE) THEN
+           TOLSF = TOLSF*TWO
+           IF (NST==0) THEN
+              MSG = 'At the start of the problem, too much'
+              CALL XERRDV(MSG,1280,1,0,0,0,0,ZERO,ZERO)
+              MSG = 'accuracy was requested for precision'
+              CALL XERRDV(MSG,1280,1,0,0,0,1,TOLSF,ZERO)
+              MSG = 'of machine: see TOLSF(=R1).'
+              CALL XERRDV(MSG,1280,1,0,0,0,1,TOLSF,ZERO)
+              RWORK(14) = TOLSF
+              ISTATE = -3
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+              RETURN
+           ENDIF
+           MSG = 'At T(=R1), too much accuracy was requested'
+           CALL XERRDV(MSG,990,1,0,0,0,0,ZERO,ZERO)
+           MSG = 'for precision of machine:   see TOLSF(=R2).'
+           CALL XERRDV(MSG,990,1,0,0,0,2,TN,TOLSF)
+           RWORK(14) = TOLSF
+           ISTATE = -2
+           CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+           T = TN
+           RWORK(11) = HU
+           RWORK(12) = H
+           RWORK(13) = TN
+           IWORK(10) = NGE
+           IWORK(11) = NST
+           IWORK(12) = NFE
+           IWORK(13) = NJE
+           IWORK(14) = NQU
+           IWORK(15) = NQ
+           IWORK(19) = NLU
+           IWORK(20) = NNI
+           IWORK(21) = NCFN
+           IWORK(22) = NETF
+           TLAST = T
+           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           RETURN
+        ENDIF
+        LOOP220: DO
+           IPCUTH = IPCUTH + 1
+           IF (IPCUTH>=IPCUTH_MAX) THEN
+             MSG = 'Too many step reductions to prevent'
+             CALL XERRDV(MSG,940,1,0,0,0,0,ZERO,ZERO)
+             MSG = 'an infeasible prediction.'
+             CALL XERRDV(MSG,940,1,0,0,0,0,ZERO,ZERO)
+   !         Retract the solution to TN:
+             CALL DVNRDN(RWORK(LYH),NYH,N,NQ)
+             ACOR(1:N) = ZERO
+             ISTATE = -7
+             CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+             T = TN
+             RWORK(11) = HU
+             RWORK(12) = H
+             RWORK(13) = TN
+             IWORK(10) = NGE
+             IWORK(11) = NST
+             IWORK(12) = NFE
+             IWORK(13) = NJE
+             IWORK(14) = NQU
+             IWORK(15) = NQ
+             IWORK(19) = NLU
+             IWORK(20) = NNI
+             IWORK(21) = NCFN
+             IWORK(22) = NETF
+             TLAST = T
+             RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+             IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+             RETURN
+           END IF
+           IF (ABS((TN+H)-TN)<=ZERO) THEN
+              NHNIL = NHNIL + 1
+              IF (NHNIL<=MXHNIL) THEN
+                 MSG = 'Warning: internal T(=R1) and H(=R2) are such that'
+                 CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
+                 MSG = 'in the machine, T + H = T on the next step.'
+                 CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
+                 MSG = '(H = step size). The solver will continue anyway.'
+                 CALL XERRDV(MSG,950,1,0,0,0,2,TN,H)
+                 IF (NHNIL>=MXHNIL) THEN
+                    MSG = 'The above warning has been issued I1 times.'
+                    CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
+                    MSG = 'It will not be issued again for this problem.'
+                    CALL XERRDV(MSG,950,1,1,MXHNIL,0,0,ZERO,ZERO)
+                 ENDIF
+              ENDIF
+           ENDIF
 
-!       CALL DVSTEP(Y,YH,LDYH,YH1,EWT,SAVF,ACOR,WM,IWM,F,JAC, &
-!         VNLS,OPTS%ATOL,ITOL)
+           IF (BOUNDS) THEN
+   !         Check positive components for infeasible prediction; reduce 
+   !         step size if infeasible prediction will occur in DVNLSD.
+             ACOR(1:N) = RWORK(LYH:LYH+N-1)
+   !         Predict:
+             CALL DVNRDP(RWORK(LYH:LRW),NYH,N,NQ)
+             DO I = 1, NDX
+               IF ((ACOR(IDX(I))>LB(I) .AND. RWORK(LYH+ &
+                   IDX(I)-1)<LB(I)) .OR. (ACOR(IDX(I))<UB(I) .AND. RWORK(LYH+ &
+                   IDX(I)-1)>UB(I))) THEN
+   !              Retract:
+                 CALL DVNRDN(RWORK(LYH),NYH,N,NQ)
+                 H = HALF*H
+                 ETA = HALF
+   !              Rescale:
+                 CALL DVNRDS(RWORK(LYH),NYH,N,L,ETA)
+                 CYCLE LOOP220
+               END IF
+             END DO
+   !         Retract:
+             CALL DVNRDN(RWORK(LYH),NYH,N,NQ)
+             ACOR(1:N) = ZERO
+           END IF
+           EXIT LOOP220
+        ENDDO LOOP220
+
 !_______________________________________________________________________
-
         IF (MITER/=6 .AND. MITER/=7) THEN
           CALL DVSTEP(Y,RWORK(LYH),NYH,RWORK(LYH),EWT,SAVF,ACOR,WM, &
             IWORK(LIWM),F,JAC,DVNLSD,OPTS%ATOL,ITOL)
@@ -6445,319 +7195,392 @@
         KGO = 1 - KFLAG
 !       Branch on KFLAG. Note: In this version, KFLAG can not be set to
 !                            -3; KFLAG = 0, -1, -2.
-        GOTO (240,370,380) KGO
-
-! Block F.
-! The following block handles the case of a successful return from the
-! core integrator (KFLAG = 0). Test for stop conditions.
-
-240     INIT = 1
-        KUTH = 0
-        GOTO (250,310,270,280,300) ITASK
-!       ITASK = 1. If TOUT has been reached, interpolate.
-250     CONTINUE
-        IF (NGC==0) GOTO 260
-        CALL DVCHECK(3,GFUN,NEQ,Y,RWORK(LYH),NYH,G0,G1,GX,IRT)
-        IF (IRT/=1) GOTO 260
-        IRFND = 1
-        ISTATE = 3
-        T = T0ST
-        GOTO 330
-260     CONTINUE
-        IF ((TN-TOUT)*H<ZERO) GOTO 200
-        CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        T = TOUT
-        GOTO 320
-!       ITASK = 3. Jump to exit if TOUT was reached.
-270     IF ((TN-TOUT)*H>=ZERO) GOTO 310
-        GOTO 200
-!       ITASK = 4. See if TOUT or TCRIT was reached. Adjust H if necessary.
-280     IF ((TN-TOUT)*H<ZERO) GOTO 290
-        CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        T = TOUT
-        GOTO 320
-290     HMX = ABS(TN) + ABS(H)
-        IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
-        IF (IHIT) GOTO 310
-        TNEXT = TN + HNEW*(ONE+FOUR*UROUND)
-        IF ((TNEXT-TCRIT)*H<=ZERO) GOTO 200
-        H = (TCRIT-TN)*(ONE-FOUR*UROUND)
-        KUTH = 1
-        GOTO 200
-!       ITASK = 5. See if TCRIT was reached and jump to exit.
-300     HMX = ABS(TN) + ABS(H)
-        IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
-
-! Block G.
-! The following block handles all successful returns from DVODE.
-! If ITASK /= 1, Y is loaded from YH and T is set accordingly.
-! ISTATE is set to 2, and the optional output is loaded into the
-! work arrays before returning.
-
-310     CONTINUE
-        CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
-        T = TN
-        IF (ITASK/=4 .AND. ITASK/=5) GOTO 320
-        IF (IHIT) T = TCRIT
-320     ISTATE = 2
-330     CONTINUE
-        RWORK(11) = HU
-        RWORK(12) = HNEW
-        RWORK(13) = TN
-        IWORK(10) = NGE
-        IWORK(11) = NST
-        IWORK(12) = NFE
-        IWORK(13) = NJE
-        IWORK(14) = NQU
-        IWORK(15) = NEWQ
-        IWORK(19) = NLU
-        IWORK(20) = NNI
-        IWORK(21) = NCFN
-        IWORK(22) = NETF
-        TLAST = T
-        RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
-        IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
-!       Warn the user if |y(t)| < ATOL:
-        IF (ISTATE==2 .OR. ISTATE==3) THEN
-          IF (YMAXWARN) THEN
-            ATOLI = OPTS%ATOL(1)
-            DO I = 1, N
-              IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-              IF (ABS(Y(I))<ATOLI) THEN
-                MSG = 'Warning: Component I1 of the solution is'
-                CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                MSG = 'smaller in magnitude than component I1'
-                CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                MSG = 'of the absolute error tolerance vector.'
-                CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-              END IF
-            END DO
-          END IF
-        END IF
-        RETURN
-
-! Block H.
-! The following block handles all unsuccessful returns other than
-! those for illegal input. First the error message routine is called.
-! if there was an error test or convergence test failure, IMXER is set.
-! Then Y is loaded from YH, and T is set to TN. The optional output
-! is loaded into the work arrays before returning.
-
-!       The maximum number of steps was taken before reaching TOUT.
-340     MSG = 'At current T(=R1), MXSTEP(=I1) steps'
-        CALL XERRDV(MSG,970,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'taken on this call before reaching TOUT.'
-        CALL XERRDV(MSG,970,1,1,MXSTEP,0,1,TN,ZERO)
-        ISTATE = -1
-        GOTO 410
-!       EWT(i) <= 0.0 for some i (not at start of problem).
-350     EWTI = EWT(I)
-        MSG = 'At T(=R1), EWT(I1) has become R2 <= 0.'
-        CALL XERRDV(MSG,980,1,1,I,0,2,TN,EWTI)
-        ISTATE = -6
-        GOTO 410
-!       Too much accuracy requested for machine precision.
-360     MSG = 'At T(=R1), too much accuracy was requested'
-        CALL XERRDV(MSG,990,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'for precision of machine:   see TOLSF(=R2).'
-        CALL XERRDV(MSG,990,1,0,0,0,2,TN,TOLSF)
-        RWORK(14) = TOLSF
-        ISTATE = -2
-        GOTO 410
-!       KFLAG = -1. Error test failed repeatedly or with ABS(H) = HMIN.
-370     MSG = 'At T(=R1) and step size H(=R2), the error'
-        CALL XERRDV(MSG,1000,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'test failed repeatedly or with ABS(H) = HMIN.'
-        CALL XERRDV(MSG,1000,1,0,0,0,2,TN,H)
-        ISTATE = -4
-        GOTO 390
-!       KFLAG = -2. Convergence failed repeatedly or with ABS(H) = HMIN.
-380     MSG = 'At T(=R1) and step size H(=R2), the'
-        CALL XERRDV(MSG,1010,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'corrector convergence failed repeatedly'
-        CALL XERRDV(MSG,1010,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'or with ABS(H) = HMIN.'
-        CALL XERRDV(MSG,1010,1,0,0,0,2,TN,H)
-        ISTATE = -5
-!       Compute IMXER if relevant.
-390     BIG = ZERO
-        IMXER = 1
-        DO 400 I = 1, N
-          SIZEST = ABS(ACOR(I)*EWT(I))
-          IF (BIG>=SIZEST) GOTO 400
-          BIG = SIZEST
-          IMXER = I
-400     END DO
-        IWORK(16) = IMXER
-!       Set Y vector, T, and optional output.
-410     CONTINUE
-        CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
-        T = TN
-        RWORK(11) = HU
-        RWORK(12) = H
-        RWORK(13) = TN
-        IWORK(10) = NGE
-        IWORK(11) = NST
-        IWORK(12) = NFE
-        IWORK(13) = NJE
-        IWORK(14) = NQU
-        IWORK(15) = NQ
-        IWORK(19) = NLU
-        IWORK(20) = NNI
-        IWORK(21) = NCFN
-        IWORK(22) = NETF
-        TLAST = T
-        RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
-        IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
-        RETURN
-
-! Block I.
-! The following block handles all error returns due to illegal input
-! (ISTATE = -3), as detected before calling the core integrator.
-! First the error message routine is called. If the illegal input
-! is a negative ISTATE, the run is aborted (apparent infinite loop).
-
-420     MSG = 'ISTATE(=I1) is illegal.'
-        CALL XERRDV(MSG,1020,1,1,ISTATE,0,0,ZERO,ZERO)
-        IF (ISTATE<0) GOTO 750
-        GOTO 740
-430     MSG = 'ITASK(=I1) is illegal.'
-        CALL XERRDV(MSG,1030,1,1,ITASK,0,0,ZERO,ZERO)
-        GOTO 740
-440     MSG = 'ISTATE(=I1) > 1 but DVODE is not initialized.'
-        CALL XERRDV(MSG,1040,1,1,ISTATE,0,0,ZERO,ZERO)
-        GOTO 740
-450     MSG = 'NEQ (=I1) < 1.'
-        CALL XERRDV(MSG,1050,1,1,NEQ,0,0,ZERO,ZERO)
-        GOTO 740
-460     MSG = 'ISTATE = 3 and NEQ increased (I1 to I2).'
-        CALL XERRDV(MSG,1060,1,2,N,NEQ,0,ZERO,ZERO)
-        GOTO 740
-465     MSG = 'This version of DVODE requires does not allow NEQ to be reduced.'
-        CALL XERRDV(MSG,1070,2,0,0,0,0,ZERO,ZERO)
-        GOTO 740
-470     MSG = 'ITOL(=I1) is illegal.'
-        CALL XERRDV(MSG,1080,1,1,ITOL,0,0,ZERO,ZERO)
-        GOTO 740
-480     MSG = 'IOPT(=I1) is illegal.'
-        CALL XERRDV(MSG,1090,1,1,IOPT,0,0,ZERO,ZERO)
-        GOTO 740
-490     MSG = 'MF(=I1) is illegal.'
-        CALL XERRDV(MSG,1100,1,1,MF,0,0,ZERO,ZERO)
-        GOTO 740
-500     MSG = 'ML(=I1) illegal: < 0 or >= NEQ (=I2)'
-        CALL XERRDV(MSG,1110,1,2,ML,NEQ,0,ZERO,ZERO)
-        GOTO 740
-510     MSG = 'MU(=I1) illegal: < 0 or >= NEQ (=I2)'
-        CALL XERRDV(MSG,1120,1,2,MU,NEQ,0,ZERO,ZERO)
-        GOTO 740
-520     MSG = 'MAXORD(=I1) < 0.'
-        CALL XERRDV(MSG,1130,1,1,MAXORD,0,0,ZERO,ZERO)
-        GOTO 740
-530     MSG = 'MXSTEP(=I1) < 0.'
-        CALL XERRDV(MSG,1140,1,1,MXSTEP,0,0,ZERO,ZERO)
-        GOTO 740
-540     MSG = 'MXHNIL(=I1) < 0.'
-        CALL XERRDV(MSG,1150,1,1,MXHNIL,0,0,ZERO,ZERO)
-        GOTO 740
-550     MSG = 'TOUT(=R1) is behind T(=R2).'
-        CALL XERRDV(MSG,1160,1,0,0,0,2,TOUT,T)
-        MSG = 'The integration direction is given by H0 (=R1).'
-        CALL XERRDV(MSG,1160,1,0,0,0,1,H0,ZERO)
-        GOTO 740
-560     MSG = 'HMAX(=R1) < 0.'
-        CALL XERRDV(MSG,1170,1,0,0,0,1,HMAX,ZERO)
-        GOTO 740
-570     MSG = 'HMIN(=R1) < 0.'
-        CALL XERRDV(MSG,1180,1,0,0,0,1,HMIN,ZERO)
-        GOTO 740
-580     CONTINUE
-        MSG = 'RWORK length needed, LENRW(=I1) > LRW(=I2)'
-        CALL XERRDV(MSG,1190,1,2,LENRW,LRW,0,ZERO,ZERO)
-        GOTO 740
-590     CONTINUE
-        MSG = 'IWORK length needed, LENIW(=I1) > LIW(=I2)'
-        CALL XERRDV(MSG,1200,1,2,LENIW,LIW,0,ZERO,ZERO)
-        GOTO 740
-600     MSG = 'RTOL(I1) is R1 < 0.'
-        CALL XERRDV(MSG,1210,1,1,I,0,1,RTOLI,ZERO)
-        GOTO 740
-610     MSG = 'ATOL(I1) is R1 < 0.'
-        CALL XERRDV(MSG,1220,1,1,I,0,1,ATOLI,ZERO)
-        GOTO 740
-620     EWTI = EWT(I)
-        MSG = 'EWT(I1) is R1 <= 0.'
-        CALL XERRDV(MSG,1230,1,1,I,0,1,EWTI,ZERO)
-        GOTO 740
-630     CONTINUE
-        MSG = 'TOUT(=R1) too close to T(=R2) to start.'
-        CALL XERRDV(MSG,1240,1,0,0,0,2,TOUT,T)
-        GOTO 740
-640     CONTINUE
-        MSG = 'ITASK = I1 and TOUT(=R1) < TCUR - HU(=R2).'
-        CALL XERRDV(MSG,1250,1,1,ITASK,0,2,TOUT,TP)
-        GOTO 740
-650     CONTINUE
-        MSG = 'ITASK = 4 or 5 and TCRIT(=R1) < TCUR(=R2).'
-        CALL XERRDV(MSG,1260,1,0,0,0,2,TCRIT,TN)
-        GOTO 740
-660     CONTINUE
-        MSG = 'ITASK = 4 or 5 and TCRIT(=R1) < TOUT(=R2).'
-        CALL XERRDV(MSG,1270,1,0,0,0,2,TCRIT,TOUT)
-        GOTO 740
-670     MSG = 'At the start of the problem, too much'
-        CALL XERRDV(MSG,1280,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'accuracy was requested for precision'
-        CALL XERRDV(MSG,1280,1,0,0,0,1,TOLSF,ZERO)
-        MSG = 'of machine: see TOLSF(=R1).'
-        CALL XERRDV(MSG,1280,1,0,0,0,1,TOLSF,ZERO)
-        RWORK(14) = TOLSF
-        GOTO 740
-680     MSG = 'Trouble from DVINDY. ITASK = I1, TOUT = R1.'
-        CALL XERRDV(MSG,1290,1,1,ITASK,0,1,TOUT,ZERO)
-        GOTO 740
-690     MSG = 'SETH must be nonnegative.'
-        CALL XERRDV(MSG,1300,1,0,0,0,0,ZERO,ZERO)
-        GOTO 740
-700     MSG = 'NG(=I1) < 0.'
-        CALL XERRDV(MSG,1310,0,1,NG,0,0,ZERO,ZERO)
-        GOTO 740
-710     MSG = 'NG changed (from I1 to I2) illegally, i.e.,'
-        CALL XERRDV(MSG,1320,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'not immediately after a root was found.'
-        CALL XERRDV(MSG,1320,1,2,NGC,NG,0,ZERO,ZERO)
-        GOTO 740
-720     MSG = 'One or more components of g has a root'
-        CALL XERRDV(MSG,1330,1,0,0,0,0,ZERO,ZERO)
-        MSG = 'too near to the initial point.'
-        CALL XERRDV(MSG,1330,1,0,0,0,0,ZERO,ZERO)
-        GOTO 740
-730     CONTINUE
-        MSG = 'WM length needed, LENWM(=I1) > LWMDIM(=I2)'
-        CALL XERRDV(MSG,1340,1,2,LENWM,LWMDIM,0,ZERO,ZERO)
-
-740     CONTINUE
-        ISTATE = -3
-        RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
-        IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
-        RETURN
-
-750     MSG = 'Run aborted:  apparent infinite loop.'
-        CALL XERRDV(MSG,1350,2,0,0,0,0,ZERO,ZERO)
-        RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
-        IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+        KGO_SEL: SELECT CASE (KGO)
+           CASE DEFAULT KGO_SEL
+              INIT = 1
+              KUTH = 0
+              ITASK_SEL: SELECT CASE (ITASK)
+                 CASE DEFAULT ITASK_SEL
+                    CONTINUE
+                    IF (NGC/=0) THEN
+                       CALL DVCHECK(3,GFUN,NEQ,Y,RWORK(LYH),NYH,G0,G1,GX,IRT)
+                       IF (IRT==1) THEN
+                          IRFND = 1
+                          ISTATE = 3
+                          T = T0ST
+                          RWORK(11) = HU
+                          RWORK(12) = HNEW
+                          RWORK(13) = TN
+                          IWORK(10) = NGE
+                          IWORK(11) = NST
+                          IWORK(12) = NFE
+                          IWORK(13) = NJE
+                          IWORK(14) = NQU
+                          IWORK(15) = NEWQ
+                          IWORK(19) = NLU
+                          IWORK(20) = NNI
+                          IWORK(21) = NCFN
+                          IWORK(22) = NETF
+                          TLAST = T
+                          RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                          IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                  !       Warn the user if |y(t)| < ATOL:
+                          IF (ISTATE==2 .OR. ISTATE==3) THEN
+                            IF (YMAXWARN) THEN
+                              ATOLI = OPTS%ATOL(1)
+                              DO I = 1, N
+                                IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                                IF (ABS(Y(I))<ATOLI) THEN
+                                  MSG = 'Warning: Component I1 of the solution is'
+                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                                  MSG = 'smaller in magnitude than component I1'
+                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                                  MSG = 'of the absolute error tolerance vector.'
+                                  CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                                END IF
+                              END DO
+                            END IF
+                          END IF
+                       ENDIF
+                    ENDIF
+                    IF ((TN-TOUT)*H<ZERO) GOTO 200
+                    CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
+                    IF (BOUNDS) THEN
+                      DO I = 1, NDX
+                        Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+                        Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+                      END DO
+                    END IF
+                    T = TOUT
+                    ISTATE = 2
+                    CONTINUE
+                    RWORK(11) = HU
+                    RWORK(12) = HNEW
+                    RWORK(13) = TN
+                    IWORK(10) = NGE
+                    IWORK(11) = NST
+                    IWORK(12) = NFE
+                    IWORK(13) = NJE
+                    IWORK(14) = NQU
+                    IWORK(15) = NEWQ
+                    IWORK(19) = NLU
+                    IWORK(20) = NNI
+                    IWORK(21) = NCFN
+                    IWORK(22) = NETF
+                    TLAST = T
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+            !       Warn the user if |y(t)| < ATOL:
+                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+                      IF (YMAXWARN) THEN
+                        ATOLI = OPTS%ATOL(1)
+                        DO I = 1, N
+                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                          IF (ABS(Y(I))<ATOLI) THEN
+                            MSG = 'Warning: Component I1 of the solution is'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'smaller in magnitude than component I1'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'of the absolute error tolerance vector.'
+                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                          END IF
+                        END DO
+                      END IF
+                    END IF
+              CASE (2) ITASK_SEL
+                    CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                    T = TN
+                    IF (ITASK==4 .OR. ITASK==5) THEN
+                     IF (IHIT) T = TCRIT
+                    ENDIF
+                    ISTATE = 2
+                    RWORK(11) = HU
+                    RWORK(12) = HNEW
+                    RWORK(13) = TN
+                    IWORK(10) = NGE
+                    IWORK(11) = NST
+                    IWORK(12) = NFE
+                    IWORK(13) = NJE
+                    IWORK(14) = NQU
+                    IWORK(15) = NEWQ
+                    IWORK(19) = NLU
+                    IWORK(20) = NNI
+                    IWORK(21) = NCFN
+                    IWORK(22) = NETF
+                    TLAST = T
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+            !       Warn the user if |y(t)| < ATOL:
+                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+                      IF (YMAXWARN) THEN
+                        ATOLI = OPTS%ATOL(1)
+                        DO I = 1, N
+                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                          IF (ABS(Y(I))<ATOLI) THEN
+                            MSG = 'Warning: Component I1 of the solution is'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'smaller in magnitude than component I1'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'of the absolute error tolerance vector.'
+                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                          END IF
+                        END DO
+                      END IF
+                    END IF
+                 CASE (3) ITASK_SEL
+                    IF ((TN-TOUT)*H<ZERO) GOTO 200
+                    CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                    T = TN
+                    IF (ITASK==4 .OR. ITASK==5) THEN
+                       IF (IHIT) T = TCRIT
+                    ENDIF
+                    ISTATE = 2
+                    RWORK(11) = HU
+                    RWORK(12) = HNEW
+                    RWORK(13) = TN
+                    IWORK(10) = NGE
+                    IWORK(11) = NST
+                    IWORK(12) = NFE
+                    IWORK(13) = NJE
+                    IWORK(14) = NQU
+                    IWORK(15) = NEWQ
+                    IWORK(19) = NLU
+                    IWORK(20) = NNI
+                    IWORK(21) = NCFN
+                    IWORK(22) = NETF
+                    TLAST = T
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+            !       Warn the user if |y(t)| < ATOL:
+                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+                      IF (YMAXWARN) THEN
+                        ATOLI = OPTS%ATOL(1)
+                        DO I = 1, N
+                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                          IF (ABS(Y(I))<ATOLI) THEN
+                            MSG = 'Warning: Component I1 of the solution is'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'smaller in magnitude than component I1'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'of the absolute error tolerance vector.'
+                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                          END IF
+                        END DO
+                      END IF
+                    END IF
+                 CASE (4) ITASK_SEL
+                    IF ((TN-TOUT)*H<ZERO) THEN
+                       HMX = ABS(TN) + ABS(H)
+                       IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
+                       IF (IHIT) THEN
+                          CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                          T = TN
+                          IF (ITASK==4 .OR. ITASK==5) THEN
+                             IF (IHIT) T = TCRIT
+                          ENDIF
+                          ISTATE = 2
+                          RWORK(11) = HU
+                          RWORK(12) = HNEW
+                          RWORK(13) = TN
+                          IWORK(10) = NGE
+                          IWORK(11) = NST
+                          IWORK(12) = NFE
+                          IWORK(13) = NJE
+                          IWORK(14) = NQU
+                          IWORK(15) = NEWQ
+                          IWORK(19) = NLU
+                          IWORK(20) = NNI
+                          IWORK(21) = NCFN
+                          IWORK(22) = NETF
+                          TLAST = T
+                          RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                          IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+                  !       Warn the user if |y(t)| < ATOL:
+                          IF (ISTATE==2 .OR. ISTATE==3) THEN
+                            IF (YMAXWARN) THEN
+                              ATOLI = OPTS%ATOL(1)
+                              DO I = 1, N
+                                IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                                IF (ABS(Y(I))<ATOLI) THEN
+                                  MSG = 'Warning: Component I1 of the solution is'
+                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                                  MSG = 'smaller in magnitude than component I1'
+                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                                  MSG = 'of the absolute error tolerance vector.'
+                                  CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                                END IF
+                              END DO
+                            END IF
+                          END IF
+                          RETURN
+                       ENDIF
+                       TNEXT = TN + HNEW*(ONE+FOUR*UROUND)
+                       IF ((TNEXT-TCRIT)*H<=ZERO) GOTO 200
+                       H = (TCRIT-TN)*(ONE-FOUR*UROUND)
+                       KUTH = 1
+                       GOTO 200
+                    ELSE
+                       CALL DVINDY_CORE(TOUT,0,RWORK(LYH),NYH,Y,IFLAG)
+                       IF (BOUNDS) THEN
+                         DO I = 1, NDX
+                           Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+                           Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+                         END DO
+                       END IF
+                       T = TOUT
+                       ISTATE = 2
+                       CONTINUE
+                       RWORK(11) = HU
+                       RWORK(12) = HNEW
+                       RWORK(13) = TN
+                       IWORK(10) = NGE
+                       IWORK(11) = NST
+                       IWORK(12) = NFE
+                       IWORK(13) = NJE
+                       IWORK(14) = NQU
+                       IWORK(15) = NEWQ
+                       IWORK(19) = NLU
+                       IWORK(20) = NNI
+                       IWORK(21) = NCFN
+                       IWORK(22) = NETF
+                       TLAST = T
+                       RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                       IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+               !       Warn the user if |y(t)| < ATOL:
+                       IF (ISTATE==2 .OR. ISTATE==3) THEN
+                         IF (YMAXWARN) THEN
+                           ATOLI = OPTS%ATOL(1)
+                           DO I = 1, N
+                             IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                             IF (ABS(Y(I))<ATOLI) THEN
+                               MSG = 'Warning: Component I1 of the solution is'
+                               CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                               MSG = 'smaller in magnitude than component I1'
+                               CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                               MSG = 'of the absolute error tolerance vector.'
+                               CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                             END IF
+                           END DO
+                         END IF
+                       END IF
+                    ENDIF
+                 CASE (5) ITASK_SEL
+                    HMX = ABS(TN) + ABS(H)
+                    IHIT = ABS(TN-TCRIT) <= HUN*UROUND*HMX
+                    CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+                    T = TN
+                    IF (ITASK==4 .OR. ITASK==5) THEN
+                       IF (IHIT) T = TCRIT
+                    ENDIF
+                    ISTATE = 2
+                    RWORK(11) = HU
+                    RWORK(12) = HNEW
+                    RWORK(13) = TN
+                    IWORK(10) = NGE
+                    IWORK(11) = NST
+                    IWORK(12) = NFE
+                    IWORK(13) = NJE
+                    IWORK(14) = NQU
+                    IWORK(15) = NEWQ
+                    IWORK(19) = NLU
+                    IWORK(20) = NNI
+                    IWORK(21) = NCFN
+                    IWORK(22) = NETF
+                    TLAST = T
+                    RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+                    IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+            !       Warn the user if |y(t)| < ATOL:
+                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+                      IF (YMAXWARN) THEN
+                        ATOLI = OPTS%ATOL(1)
+                        DO I = 1, N
+                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+                          IF (ABS(Y(I))<ATOLI) THEN
+                            MSG = 'Warning: Component I1 of the solution is'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'smaller in magnitude than component I1'
+                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+                            MSG = 'of the absolute error tolerance vector.'
+                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+                          END IF
+                        END DO
+                      END IF
+                    END IF
+              END SELECT ITASK_SEL
+           CASE (2) KGO_SEL
+      !       KFLAG = -1. Error test failed repeatedly or with ABS(H) = HMIN.
+              MSG = 'At T(=R1) and step size H(=R2), the error'
+              CALL XERRDV(MSG,1000,1,0,0,0,0,ZERO,ZERO)
+              MSG = 'test failed repeatedly or with ABS(H) = HMIN.'
+              CALL XERRDV(MSG,1000,1,0,0,0,2,TN,H)
+              ISTATE = -4
+              BIG = ZERO
+              IMXER = 1
+              DO I = 1, N
+                SIZEST = ABS(ACOR(I)*EWT(I))
+                IF (BIG>=SIZEST) CYCLE
+                BIG = SIZEST
+                IMXER = I
+              END DO
+              IWORK(16) = IMXER
+      !       Set Y vector, T, and optional output.
+              CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+              T = TN
+              RWORK(11) = HU
+              RWORK(12) = H
+              RWORK(13) = TN
+              IWORK(10) = NGE
+              IWORK(11) = NST
+              IWORK(12) = NFE
+              IWORK(13) = NJE
+              IWORK(14) = NQU
+              IWORK(15) = NQ
+              IWORK(19) = NLU
+              IWORK(20) = NNI
+              IWORK(21) = NCFN
+              IWORK(22) = NETF
+              TLAST = T
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+           CASE (3) KGO_SEL
+      !       KFLAG = -2. Convergence failed repeatedly or with ABS(H) = HMIN.
+              MSG = 'At T(=R1) and step size H(=R2), the'
+              CALL XERRDV(MSG,1010,1,0,0,0,0,ZERO,ZERO)
+              MSG = 'corrector convergence failed repeatedly'
+              CALL XERRDV(MSG,1010,1,0,0,0,0,ZERO,ZERO)
+              MSG = 'or with ABS(H) = HMIN.'
+              CALL XERRDV(MSG,1010,1,0,0,0,2,TN,H)
+              ISTATE = -5
+      !       Compute IMXER if relevant.
+              BIG = ZERO
+              IMXER = 1
+              DO I = 1, N
+                SIZEST = ABS(ACOR(I)*EWT(I))
+                IF (BIG>=SIZEST) CYCLE
+                BIG = SIZEST
+                IMXER = I
+              END DO
+              IWORK(16) = IMXER
+      !       Set Y vector, T, and optional output.
+              CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
+              T = TN
+              RWORK(11) = HU
+              RWORK(12) = H
+              RWORK(13) = TN
+              IWORK(10) = NGE
+              IWORK(11) = NST
+              IWORK(12) = NFE
+              IWORK(13) = NJE
+              IWORK(14) = NQU
+              IWORK(15) = NQ
+              IWORK(19) = NLU
+              IWORK(20) = NNI
+              IWORK(21) = NCFN
+              IWORK(22) = NETF
+              TLAST = T
+              RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
+              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
+        END SELECT KGO_SEL
         RETURN
 
       END SUBROUTINE DVODE
@@ -6822,8 +7645,11 @@
         NITER = 0
         TDIST = ABS(TOUT-T0)
         TROUND = UROUND*MAX(ABS(T0),ABS(TOUT))
-        IF (TDIST<TWO*TROUND) GOTO 40
-
+        IF (TDIST<TWO*TROUND) THEN
+   !       Error return for TOUT - T0 too small.
+           IER = -1
+           RETURN
+        ENDIF
 !       Set a lower bound on H based on the roundoff level in T0
 !       and TOUT.
         HLB = HUN*TROUND
@@ -6844,11 +7670,14 @@
 !       If the bounds have crossed, exit with the mean value.
         IF (HUB<HLB) THEN
           H0 = HG
-          GOTO 30
+          H0 = SIGN(H0,TOUT-T0)
+          NITER = ITER
+          IER = 0
+          RETURN
         END IF
 
 !       Looping point for iteration.
-10      CONTINUE
+        LOOP10:DO
 !       Estimate the second derivative as a difference quotient in f.
         H = SIGN(HG,TOUT-T0)
         T1 = T0 + H
@@ -6871,27 +7700,25 @@
 ! if HNEW/HG > 2 after first iteration, as this probably means that
 ! the second derivative value is bad because of cancellation error.
 
-        IF (ITER>=4) GOTO 20
+        IF (ITER>=4) EXIT LOOP10
         HRAT = HNEW/HG
-        IF ((HRAT>HALF) .AND. (HRAT<TWO)) GOTO 20
+        IF ((HRAT>HALF) .AND. (HRAT<TWO)) EXIT LOOP10
         IF ((ITER>=2) .AND. (HNEW>TWO*HG)) THEN
           HNEW = HG
-          GOTO 20
+          EXIT LOOP10
         END IF
         HG = HNEW
-        GOTO 10
+        ENDDO LOOP10
 
 !       Iteration done. Apply bounds, bias factor, and sign. Then exit.
-20      H0 = HNEW*HALF
+        H0 = HNEW*HALF
         IF (H0<HLB) H0 = HLB
         IF (H0>HUB) H0 = HUB
-30      H0 = SIGN(H0,TOUT-T0)
+        H0 = SIGN(H0,TOUT-T0)
         NITER = ITER
         IER = 0
         RETURN
-!       Error return for TOUT - T0 too small.
-40      IER = -1
-        RETURN
+
 
       END SUBROUTINE DVHIN
 !_______________________________________________________________________
@@ -6941,47 +7768,52 @@
 ! .. FIRST EXECUTABLE STATEMENT DVINDY_CORE
 ! ..
         IFLAG = 0
-        IF (K<0 .OR. K>NQ) GOTO 40
+        IF (K<0 .OR. K>NQ) THEN
+           MSG = 'Error in DVINDY, K(=I1) is illegal.'
+           CALL XERRDV(MSG,1360,1,1,K,0,0,ZERO,ZERO)
+           IFLAG = -1
+           RETURN
+        ENDIF
 !       TFUZZ = HUN * UROUND * (TN + HU)
         TFUZZ = HUN*UROUND*SIGN(ABS(TN)+ABS(HU),HU)
         TP = TN - HU - TFUZZ
         TN1 = TN + TFUZZ
-        IF ((T-TP)*(T-TN1)>ZERO) GOTO 50
+        IF ((T-TP)*(T-TN1)>ZERO) THEN
+           MSG = 'Error in DVINDY, T(=R1) is illegal. T is not'
+           CALL XERRDV(MSG,1370,1,0,0,0,1,T,ZERO)
+           MSG = 'in interval TCUR - HU(= R1) to TCUR(=R2)'
+           CALL XERRDV(MSG,1370,1,0,0,0,2,TP,TN)
+           IFLAG = -2
+           RETURN
+        ENDIF
         S = (T-TN)/H
         IC = 1
-        IF (K==0) GOTO 10
-        JJ1 = L - K
-        DO JJ = JJ1, NQ
-          IC = IC*JJ
-        END DO
-10      C = REAL(IC)
+        IF (K/=0) THEN
+           JJ1 = L - K
+           DO JJ = JJ1, NQ
+             IC = IC*JJ
+           END DO
+        ENDIF
+        C = REAL(IC)
         DKY(1:N) = C*YH(1:N,L)
-        IF (K==NQ) GOTO 30
-        JB2 = NQ - K
-        DO JB = 1, JB2
-          J = NQ - JB
-          JP1 = J + 1
-          IC = 1
-          IF (K==0) GOTO 20
-          JJ1 = JP1 - K
-          DO JJ = JJ1, J
-            IC = IC*JJ
-          END DO
-20        C = REAL(IC)
-          DKY(1:N) = C*YH(1:N,JP1) + S*DKY(1:N)
-        END DO
-30      R = H**(-K)
+        IF (K/=NQ) THEN
+           JB2 = NQ - K
+           DO JB = 1, JB2
+             J = NQ - JB
+             JP1 = J + 1
+             IC = 1
+             IF (K/=0) THEN
+                JJ1 = JP1 - K
+                DO JJ = JJ1, J
+                  IC = IC*JJ
+                END DO
+             ENDIF
+             C = REAL(IC)
+             DKY(1:N) = C*YH(1:N,JP1) + S*DKY(1:N)
+           END DO
+        ENDIF
+        R = H**(-K)
         CALL DSCAL_F90(N,R,DKY,1)
-        RETURN
-40      MSG = 'Error in DVINDY, K(=I1) is illegal.'
-        CALL XERRDV(MSG,1360,1,1,K,0,0,ZERO,ZERO)
-        IFLAG = -1
-        RETURN
-50      MSG = 'Error in DVINDY, T(=R1) is illegal. T is not'
-        CALL XERRDV(MSG,1370,1,0,0,0,1,T,ZERO)
-        MSG = 'in interval TCUR - HU(= R1) to TCUR(=R2)'
-        CALL XERRDV(MSG,1370,1,0,0,0,2,TP,TN)
-        IFLAG = -2
         RETURN
 
       END SUBROUTINE DVINDY_CORE
@@ -7038,21 +7870,39 @@
 ! .. FIRST EXECUTABLE STATEMENT DVINDY_BNDS
 ! ..
         IFLAG = 0
-        IF (K==0) GOTO 50
-        IF (K<0 .OR. K>NQ) GOTO 40
+        IF (K==0) THEN
+           MSG = 'DVINDY_BNDS cannot be called with k = 0.'
+           CALL XERRDV(MSG,1390,1,0,0,0,0,ZERO,ZERO)
+           IFLAG = -1
+           RETURN
+        ENDIF
+        IF (K<0 .OR. K>NQ) THEN
+           MSG = 'Error in DVINDY, K(=I1) is illegal.'
+           CALL XERRDV(MSG,1380,1,1,K,0,0,ZERO,ZERO)
+           IFLAG = -1
+           RETURN
+        ENDIF
 !       TFUZZ = HUN * UROUND * (TN + HU)
         TFUZZ = HUN*UROUND*SIGN(ABS(TN)+ABS(HU),HU)
         TP = TN - HU - TFUZZ
         TN1 = TN + TFUZZ
-        IF ((T-TP)*(T-TN1)>ZERO) GOTO 60
+        IF ((T-TP)*(T-TN1)>ZERO) THEN
+           MSG = 'Error in DVINDY, T(=R1) is illegal. T is not'
+           CALL XERRDV(MSG,1400,1,0,0,0,1,T,ZERO)
+           MSG = 'not in interval TCUR - HU(= R1) to TCUR(=R2)'
+           CALL XERRDV(MSG,1400,1,0,0,0,2,TP,TN)
+           IFLAG = -2
+           RETURN
+        ENDIF
         S = (T-TN)/H
         IC = 1
-        IF (K==0) GOTO 10
-        JJ1 = L - K
-        DO JJ = JJ1, NQ
-          IC = IC*JJ
-        END DO
-10      C = REAL(IC)
+        IF (K/=0) THEN
+           JJ1 = L - K
+           DO JJ = JJ1, NQ
+             IC = IC*JJ
+           END DO
+           ENDIF
+         C = REAL(IC)
         DKY(1:N) = C*YH(1:N,L)
         IF (BOUNDS) THEN
           DO I = 1, NDX
@@ -7060,43 +7910,31 @@
               = ZERO
           END DO
         END IF
-        IF (K==NQ) GOTO 30
-        JB2 = NQ - K
-        DO JB = 1, JB2
-          J = NQ - JB
-          JP1 = J + 1
-          IC = 1
-          IF (K==0) GOTO 20
-          JJ1 = JP1 - K
-          DO JJ = JJ1, J
-            IC = IC*JJ
-          END DO
-20        C = REAL(IC)
-          DKY(1:N) = C*YH(1:N,JP1) + S*DKY(1:N)
-          IF (BOUNDS) THEN
-            DO I = 1, NDX
-              IF (YNNEG(IDX(I))<LB(I) .OR. YNNEG(IDX(I))>UB(I)) DKY(IDX(I)) &
-                = ZERO
-            END DO
-          END IF
-        END DO
-30      R = H**(-K)
+        IF (K/=NQ) THEN
+           JB2 = NQ - K
+           DO JB = 1, JB2
+             J = NQ - JB
+             JP1 = J + 1
+             IC = 1
+             IF (K==0) EXIT
+             JJ1 = JP1 - K
+             DO JJ = JJ1, J
+               IC = IC*JJ
+             END DO
+             C = REAL(IC)
+             DKY(1:N) = C*YH(1:N,JP1) + S*DKY(1:N)
+             IF (BOUNDS) THEN
+               DO I = 1, NDX
+                 IF (YNNEG(IDX(I))<LB(I) .OR. YNNEG(IDX(I))>UB(I)) DKY(IDX(I)) &
+                   = ZERO
+               END DO
+             END IF
+           END DO
+        ENDIF
+        R = H**(-K)
         CALL DSCAL_F90(N,R,DKY,1)
         RETURN
-40      MSG = 'Error in DVINDY, K(=I1) is illegal.'
-        CALL XERRDV(MSG,1380,1,1,K,0,0,ZERO,ZERO)
-        IFLAG = -1
-        RETURN
-50      MSG = 'DVINDY_BNDS cannot be called with k = 0.'
-        CALL XERRDV(MSG,1390,1,0,0,0,0,ZERO,ZERO)
-        IFLAG = -1
-        RETURN
-60      MSG = 'Error in DVINDY, T(=R1) is illegal. T is not'
-        CALL XERRDV(MSG,1400,1,0,0,0,1,T,ZERO)
-        MSG = 'not in interval TCUR - HU(= R1) to TCUR(=R2)'
-        CALL XERRDV(MSG,1400,1,0,0,0,2,TP,TN)
-        IFLAG = -2
-        RETURN
+
 
       END SUBROUTINE DVINDY_BNDS
 !_______________________________________________________________________
@@ -7428,9 +8266,6 @@
         TAU(1) = H
 
         IF (BOUNDS) THEN
-! Original:
-!         CALL DAXPY_F90(N,EL(1),ACOR,1,YH(1,1),1)
-!         CALL DAXPY_F90(N,EL(2),ACOR,1,YH(1,2),1)
           CALL DAXPY_F90(N,EL(1),ACOR,1,YH(1:N,1),1)
           CALL DAXPY_F90(N,EL(2),ACOR,1,YH(1:N,2),1)
 !         Take care of roundoff causing y(t) to be slightly unequal
@@ -7444,24 +8279,18 @@
 !         Update the higher derivatives and project to zero if necessary.
           IF (L>2) THEN
             DO J = 3, L
-! Original:
-!             CALL DAXPY_F90(N,EL(J),ACOR,1,YH(1,J),1)
               CALL DAXPY_F90(N,EL(J),ACOR,1,YH(1:N,J),1)
             END DO
           END IF
         ELSE
 !         Proceed as usual.
           DO J = 1, L
-! Original:
-!           CALL DAXPY_F90(N,EL(J),ACOR,1,YH(1,J),1)
             CALL DAXPY_F90(N,EL(J),ACOR,1,YH(1:N,J),1)
           END DO
         END IF
 
         NQWAIT = NQWAIT - 1
         IF ((L==LMAX) .OR. (NQWAIT/=1)) GOTO 90
-! Original:
-!       CALL DCOPY_F90(N,ACOR,1,YH(1,LMAX),1)
         CALL DCOPY_F90(N,ACOR,1,YH(1:N,LMAX),1)
         CONP = TQ(5)
 90      IF (ABS(ETAMAX-ONE)>0) GOTO 130
@@ -7506,7 +8335,6 @@
 ! the step is retried. After a total of 7 consecutive failures,
 ! an exit is taken with KFLAG = -1.
 
-!110     IF (KFLAG==KFH) GOTO 220
 110     IF (KFLAG==CONSECUTIVE_EFAILS) GOTO 220
         IF (NQ==1) GOTO 120
         ETA = MAX(ETAMIN,HMIN/ABS(H))
@@ -7550,8 +8378,6 @@
         IF (NQ==1) GOTO 140
 !       Compute ratio of new H to current H at the current order
 !       less one.
-! Original:
-!       DDN = DVNORM(N,YH(1,L),EWT)/TQ(1)
         DDN = DVNORM(N,YH(1:N,L),EWT)/TQ(1)
         ETAQM1 = ONE/((BIAS1*DDN)**(ONE/(FLOTL-ONE))+ADDON)
 140     ETAQP1 = ZERO
@@ -7573,8 +8399,6 @@
         GOTO 200
 190     ETA = ETAQP1
         NEWQ = NQ + 1
-! Original:
-!       CALL DCOPY_F90(N,ACOR,1,YH(1,LMAX),1)
         CALL DCOPY_F90(N,ACOR,1,YH(1:N,LMAX),1)
 !       Test tentative new H against THRESH, ETAMAX, and HMXI and
 !       then exit.
@@ -7665,121 +8489,133 @@
         FLOTL = REAL(L)
         NQM1 = NQ - 1
         NQM2 = NQ - 2
-        GOTO (10,40) METH
+        IF (METH==2) THEN
+   !       Set coefficients for BDF methods.
+           EL(3:L) = ZERO
+           EL(1) = ONE
+           EL(2) = ONE
+           ALPH0 = -ONE
+           AHATN0 = -ONE
+           HSUM = H
+           RXI = ONE
+           RXIS = ONE
+           IF (NQ/=1) THEN
+              DO J = 1, NQM2
+      !       In EL, construct coefficients of (1+x/xi(1))*...*(1+x/xi(j+1)).
+                HSUM = HSUM + TAU(J)
+                RXI = H/HSUM
+                JP1 = J + 1
+                ALPH0 = ALPH0 - ONE/REAL(JP1)
+                DO IBACK = 1, JP1
+                  I = (J+3) - IBACK
+                  EL(I) = EL(I) + EL(I-1)*RXI
+                END DO
+              END DO
+              ALPH0 = ALPH0 - ONE/REAL(NQ)
+              RXIS = -EL(2) - ALPH0
+              HSUM = HSUM + TAU(NQM1)
+              RXI = H/HSUM
+              AHATN0 = -EL(2) - RXI
+              DO IBACK = 1, NQ
+                I = (NQ+2) - IBACK
+                EL(I) = EL(I) + EL(I-1)*RXIS
+              END DO
+           ENDIF
+           T1 = ONE - AHATN0 + ALPH0
+           T2 = ONE + REAL(NQ)*T1
+           TQ(2) = ABS(ALPH0*T2/T1)
+           TQ(5) = ABS(T2/(EL(L)*RXI/RXIS))
+           IF (NQWAIT==1) THEN
+              CNQM1 = RXIS/EL(L)
+              T3 = ALPH0 + ONE/REAL(NQ)
+              T4 = AHATN0 + RXI
+              ELP = T3/(ONE-T4+T3)
+              TQ(1) = ABS(ELP/CNQM1)
+              HSUM = HSUM + TAU(NQ)
+              RXI = H/HSUM
+              T5 = ALPH0 - ONE/REAL(NQ+1)
+              T6 = AHATN0 - RXI
+              ELP = T2/(ONE-T6+T5)
+              TQ(3) = ABS(ELP*RXI*(FLOTL+ONE)*T5)
+           ENDIF
+        ELSE
+   !       Set coefficients for Adams methods.
+           IF (NQ==1) THEN
+              EL(1) = ONE
+              EL(2) = ONE
+              TQ(1) = ONE
+              TQ(2) = TWO
+              TQ(3) = SIX*TQ(2)
+              TQ(5) = ONE
+           ELSE
+              HSUM = H
+              EM(1) = ONE
+              FLOTNQ = FLOTL - ONE
+              EM(2:L) = ZERO
+              DO J = 1, NQM1
+                IF ((J/=NQM1) .OR. (NQWAIT/=1)) THEN
+                   RXI = H/HSUM
+                   DO IBACK = 1, J
+                     I = (J+2) - IBACK
+                     EM(I) = EM(I) + EM(I-1)*RXI
+                   END DO
+                   HSUM = HSUM + TAU(J)
+                   CYCLE
+                ENDIF
+                S = ONE
+                CSUM = ZERO
+                DO I = 1, NQM1
+                  CSUM = CSUM + S*EM(I)/REAL(I+1)
+                  S = -S
+                END DO
+                TQ(1) = EM(NQM1)/(FLOTNQ*CSUM)
+                RXI = H/HSUM
+                DO IBACK = 1, J
+                  I = (J+2) - IBACK
+                  EM(I) = EM(I) + EM(I-1)*RXI
+                END DO
+                HSUM = HSUM + TAU(J)
+              END DO
+      !       Compute integral from -1 to 0 of polynomial and of x times it.
+              S = ONE
+              EM0 = ZERO
+              CSUM = ZERO
+              DO I = 1, NQ
+                FLOTI = REAL(I)
+                EM0 = EM0 + S*EM(I)/FLOTI
+                CSUM = CSUM + S*EM(I)/(FLOTI+ONE)
+                S = -S
+              END DO
+      !       In EL, form coefficients of normalized integrated polynomial.
+              S = ONE/EM0
+              EL(1) = ONE
+              DO I = 1, NQ
+                EL(I+1) = S*EM(I)/REAL(I)
+              END DO
+              XI = HSUM/H
+              TQ(2) = XI*EM0/CSUM
+              TQ(5) = XI/EL(L)
+              IF (NQWAIT==1) THEN
+         !       For higher order control constant, multiply polynomial by
+         !       1+x/xi(q).
+                 RXI = ONE/XI
+                 DO IBACK = 1, NQ
+                   I = (L+1) - IBACK
+                   EM(I) = EM(I) + EM(I-1)*RXI
+                 END DO
+         !       Compute integral of polynomial.
+                 S = ONE
+                 CSUM = ZERO
+                 DO I = 1, L
+                   CSUM = CSUM + S*EM(I)/REAL(I+1)
+                   S = -S
+                 END DO
+                 TQ(3) = FLOTL*EM0/CSUM
+              ENDIF
+           ENDIF
+        ENDIF
 
-!       Set coefficients for Adams methods.
-10      IF (NQ/=1) GOTO 20
-        EL(1) = ONE
-        EL(2) = ONE
-        TQ(1) = ONE
-        TQ(2) = TWO
-        TQ(3) = SIX*TQ(2)
-        TQ(5) = ONE
-        GOTO 60
-20      HSUM = H
-        EM(1) = ONE
-        FLOTNQ = FLOTL - ONE
-        EM(2:L) = ZERO
-        DO J = 1, NQM1
-          IF ((J/=NQM1) .OR. (NQWAIT/=1)) GOTO 30
-          S = ONE
-          CSUM = ZERO
-          DO I = 1, NQM1
-            CSUM = CSUM + S*EM(I)/REAL(I+1)
-            S = -S
-          END DO
-          TQ(1) = EM(NQM1)/(FLOTNQ*CSUM)
-30        RXI = H/HSUM
-          DO IBACK = 1, J
-            I = (J+2) - IBACK
-            EM(I) = EM(I) + EM(I-1)*RXI
-          END DO
-          HSUM = HSUM + TAU(J)
-        END DO
-!       Compute integral from -1 to 0 of polynomial and of x times it.
-        S = ONE
-        EM0 = ZERO
-        CSUM = ZERO
-        DO I = 1, NQ
-          FLOTI = REAL(I)
-          EM0 = EM0 + S*EM(I)/FLOTI
-          CSUM = CSUM + S*EM(I)/(FLOTI+ONE)
-          S = -S
-        END DO
-!       In EL, form coefficients of normalized integrated polynomial.
-        S = ONE/EM0
-        EL(1) = ONE
-        DO I = 1, NQ
-          EL(I+1) = S*EM(I)/REAL(I)
-        END DO
-        XI = HSUM/H
-        TQ(2) = XI*EM0/CSUM
-        TQ(5) = XI/EL(L)
-        IF (NQWAIT/=1) GOTO 60
-!       For higher order control constant, multiply polynomial by
-!       1+x/xi(q).
-        RXI = ONE/XI
-        DO IBACK = 1, NQ
-          I = (L+1) - IBACK
-          EM(I) = EM(I) + EM(I-1)*RXI
-        END DO
-!       Compute integral of polynomial.
-        S = ONE
-        CSUM = ZERO
-        DO I = 1, L
-          CSUM = CSUM + S*EM(I)/REAL(I+1)
-          S = -S
-        END DO
-        TQ(3) = FLOTL*EM0/CSUM
-        GOTO 60
-
-!       Set coefficients for BDF methods.
-40      EL(3:L) = ZERO
-        EL(1) = ONE
-        EL(2) = ONE
-        ALPH0 = -ONE
-        AHATN0 = -ONE
-        HSUM = H
-        RXI = ONE
-        RXIS = ONE
-        IF (NQ==1) GOTO 50
-        DO J = 1, NQM2
-!       In EL, construct coefficients of (1+x/xi(1))*...*(1+x/xi(j+1)).
-          HSUM = HSUM + TAU(J)
-          RXI = H/HSUM
-          JP1 = J + 1
-          ALPH0 = ALPH0 - ONE/REAL(JP1)
-          DO IBACK = 1, JP1
-            I = (J+3) - IBACK
-            EL(I) = EL(I) + EL(I-1)*RXI
-          END DO
-        END DO
-        ALPH0 = ALPH0 - ONE/REAL(NQ)
-        RXIS = -EL(2) - ALPH0
-        HSUM = HSUM + TAU(NQM1)
-        RXI = H/HSUM
-        AHATN0 = -EL(2) - RXI
-        DO IBACK = 1, NQ
-          I = (NQ+2) - IBACK
-          EL(I) = EL(I) + EL(I-1)*RXIS
-        END DO
-50      T1 = ONE - AHATN0 + ALPH0
-        T2 = ONE + REAL(NQ)*T1
-        TQ(2) = ABS(ALPH0*T2/T1)
-        TQ(5) = ABS(T2/(EL(L)*RXI/RXIS))
-        IF (NQWAIT/=1) GOTO 60
-        CNQM1 = RXIS/EL(L)
-        T3 = ALPH0 + ONE/REAL(NQ)
-        T4 = AHATN0 + RXI
-        ELP = T3/(ONE-T4+T3)
-        TQ(1) = ABS(ELP/CNQM1)
-        HSUM = HSUM + TAU(NQ)
-        RXI = H/HSUM
-        T5 = ALPH0 - ONE/REAL(NQ+1)
-        T6 = AHATN0 - RXI
-        ELP = T2/(ONE-T6+T5)
-        TQ(3) = ABS(ELP*RXI*(FLOTL+ONE)*T5)
-60      TQ(4) = CORTES*TQ(2)
+        TQ(4) = CORTES*TQ(2)
         RETURN
 
       END SUBROUTINE DVSET
@@ -7818,104 +8654,100 @@
         IF ((NQ==2) .AND. (IORD/=1)) RETURN
         NQM1 = NQ - 1
         NQM2 = NQ - 2
-        GOTO (10,30) METH
+        IF (METH==2) THEN
+   !       Stiff option.
+   !       Check to see if the order is being increased or decreased.
+           IF (IORD/=1) THEN
+      !       Order decrease.
+              EL(1:LMAX) = ZERO
+              EL(3) = ONE
+              HSUM = ZERO
+              DO J = 1, NQM2
+      !     Construct coefficients of x*x*(x+xi(1))*...*(x+xi(j)).
+                HSUM = HSUM + TAU(J)
+                XI = HSUM/HSCAL
+                JP1 = J + 1
+                DO IBACK = 1, JP1
+                  I = (J+4) - IBACK
+                  EL(I) = EL(I)*XI + EL(I-1)
+                END DO
+              END DO
+      !       Subtract correction terms from YH array.
+              DO J = 3, NQ
+                YH(1:N,J) = YH(1:N,J) - YH(1:N,L)*EL(J)
+              END DO
+              RETURN
+           ENDIF
+   !       Order increase.
+           EL(1:LMAX) = ZERO
+           EL(3) = ONE
+           ALPH0 = -ONE
+           ALPH1 = ONE
+           PROD = ONE
+           XIOLD = ONE
+           HSUM = HSCAL
+           IF (NQ/=1) THEN
+              DO J = 1, NQM1
+      !       Construct coefficients of x*x*(x+xi(1))*...*(x+xi(j)).
+                JP1 = J + 1
+                HSUM = HSUM + TAU(JP1)
+                XI = HSUM/HSCAL
+                PROD = PROD*XI
+                ALPH0 = ALPH0 - ONE/REAL(JP1)
+                ALPH1 = ALPH1 + ONE/XI
+                DO IBACK = 1, JP1
+                  I = (J+4) - IBACK
+                  EL(I) = EL(I)*XIOLD + EL(I-1)
+                END DO
+                XIOLD = XI
+              END DO
+           ENDIF
+           T1 = (-ALPH0-ALPH1)/PROD
+   !       Load column L+1 in YH array.
+           LP1 = L + 1
+           YH(1:N,LP1) = T1*YH(1:N,LMAX)
+   !       Add correction terms to YH array.
+           NQP1 = NQ + 1
+           DO J = 3, NQP1
+             CALL DAXPY_F90(N,EL(J),YH(1:N,LP1),1,YH(1:N,J),1)
+           END DO
+        ELSE
+   !       Nonstiff option.
+   !       Check to see if the order is being increased or decreased.
+           CONTINUE
+           IF (IORD/=1) THEN
+      !       Order decrease.
+              EL(1:LMAX) = ZERO
+              EL(2) = ONE
+              HSUM = ZERO
+              DO J = 1, NQM2
+      !         Construct coefficients of x*(x+xi(1))*...*(x+xi(j)).
+                HSUM = HSUM + TAU(J)
+                XI = HSUM/HSCAL
+                JP1 = J + 1
+                DO IBACK = 1, JP1
+                  I = (J+3) - IBACK
+                  EL(I) = EL(I)*XI + EL(I-1)
+                END DO
+              END DO
+      !       Construct coefficients of integrated polynomial.
+              DO J = 2, NQM1
+                EL(J+1) = REAL(NQ)*EL(J)/REAL(J)
+              END DO
+      !       Subtract correction terms from YH array.
+              DO J = 3, NQ
+                DO I = 1, N
+                  YH(I,J) = YH(I,J) - YH(I,L)*EL(J)
+                END DO
+              END DO
+              RETURN
+      !       Order increase.
+      !       Zero out next column in YH array.
+           ENDIF
+           LP1 = L + 1
+           YH(1:N,LP1) = ZERO
+        ENDIF
 
-!       Nonstiff option.
-
-!       Check to see if the order is being increased or decreased.
-10      CONTINUE
-        IF (IORD==1) GOTO 20
-!       Order decrease.
-        EL(1:LMAX) = ZERO
-        EL(2) = ONE
-        HSUM = ZERO
-        DO J = 1, NQM2
-!         Construct coefficients of x*(x+xi(1))*...*(x+xi(j)).
-          HSUM = HSUM + TAU(J)
-          XI = HSUM/HSCAL
-          JP1 = J + 1
-          DO IBACK = 1, JP1
-            I = (J+3) - IBACK
-            EL(I) = EL(I)*XI + EL(I-1)
-          END DO
-        END DO
-!       Construct coefficients of integrated polynomial.
-        DO J = 2, NQM1
-          EL(J+1) = REAL(NQ)*EL(J)/REAL(J)
-        END DO
-!       Subtract correction terms from YH array.
-        DO J = 3, NQ
-          DO I = 1, N
-            YH(I,J) = YH(I,J) - YH(I,L)*EL(J)
-          END DO
-        END DO
-        RETURN
-!       Order increase.
-!       Zero out next column in YH array.
-20      CONTINUE
-        LP1 = L + 1
-        YH(1:N,LP1) = ZERO
-        RETURN
-
-!       Stiff option.
-
-!       Check to see if the order is being increased or decreased.
-30      CONTINUE
-        IF (IORD==1) GOTO 40
-!       Order decrease.
-        EL(1:LMAX) = ZERO
-        EL(3) = ONE
-        HSUM = ZERO
-        DO J = 1, NQM2
-!     Construct coefficients of x*x*(x+xi(1))*...*(x+xi(j)).
-          HSUM = HSUM + TAU(J)
-          XI = HSUM/HSCAL
-          JP1 = J + 1
-          DO IBACK = 1, JP1
-            I = (J+4) - IBACK
-            EL(I) = EL(I)*XI + EL(I-1)
-          END DO
-        END DO
-!       Subtract correction terms from YH array.
-        DO J = 3, NQ
-          YH(1:N,J) = YH(1:N,J) - YH(1:N,L)*EL(J)
-        END DO
-        RETURN
-!       Order increase.
-40      EL(1:LMAX) = ZERO
-        EL(3) = ONE
-        ALPH0 = -ONE
-        ALPH1 = ONE
-        PROD = ONE
-        XIOLD = ONE
-        HSUM = HSCAL
-        IF (NQ==1) GOTO 50
-        DO J = 1, NQM1
-!       Construct coefficients of x*x*(x+xi(1))*...*(x+xi(j)).
-          JP1 = J + 1
-          HSUM = HSUM + TAU(JP1)
-          XI = HSUM/HSCAL
-          PROD = PROD*XI
-          ALPH0 = ALPH0 - ONE/REAL(JP1)
-          ALPH1 = ALPH1 + ONE/XI
-          DO IBACK = 1, JP1
-            I = (J+4) - IBACK
-            EL(I) = EL(I)*XIOLD + EL(I-1)
-          END DO
-          XIOLD = XI
-        END DO
-50      CONTINUE
-        T1 = (-ALPH0-ALPH1)/PROD
-!       Load column L+1 in YH array.
-        LP1 = L + 1
-        YH(1:N,LP1) = T1*YH(1:N,LMAX)
-!       Add correction terms to YH array.
-        NQP1 = NQ + 1
-        DO J = 3, NQP1
-! Original:
-!         CALL DAXPY_F90(N,EL(J),YH(1,LP1),1,YH(1,J),1)
-          CALL DAXPY_F90(N,EL(J),YH(1:N,LP1),1,YH(1:N,J),1)
-        END DO
         RETURN
 
       END SUBROUTINE DVJUST
@@ -8264,12 +9096,9 @@
           NSLJ = NST
           JCUR = 1
           LENP = N*N
-!         WM(3:LENP+2) = ZERO
           WM(1:LENP) = ZERO
-!         CALL JAC(N,TN,Y,0,0,WM(3),N)
           CALL JAC(N,TN,Y,0,0,WM(1),N)
           IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .TRUE.
-!         IF (JSV==1) CALL DCOPY_F90(LENP,WM(3),1,WM(LOCJS),1)
           IF (JSV==1) CALL DCOPY_F90(LENP,WM(1),1,WM(LOCJS),1)
         END IF
 
@@ -8296,13 +9125,11 @@
               IF (LIKE_ORIGINAL_VODE) THEN
                  FAC = DVNORM(N,SAVF,EWT)
 !                JACSPDB multiplies YSCALEDS(*) BY UROUND**0.825:
-!                R0 = THOU*ABS(H)*UROUND*REAL(N)*FAC
                  R0 = THOU*ABS(H)*REAL(N)*FAC
                  IF (ABS(R0)<=ZERO) R0 = ONE
                  SRUR = WM1
                  DO J = 1, N
 !                   JACSPDB multiplies YSCALEDS(*) BY UROUND**0.825:
-!                   R = MAX(ABS(Y(J)),R0/EWT(J))
                     R = MAX(ABS(Y(J))/U325,(R0/EWT(J))*U125)
                     YSCALEDS(J) = R
                  END DO
@@ -8349,7 +9176,6 @@
               NJE = NJE + 1
            END IF
            LENP = N*N
-!          IF (JSV==1) CALL DCOPY_F90(LENP,WM(3),1,WM(LOCJS),1)
            IF (JSV==1) CALL DCOPY_F90(LENP,WM(1),1,WM(LOCJS),1)
            IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .TRUE.
         END IF
@@ -8357,7 +9183,6 @@
         IF (JOK==1 .AND. (MITER==1 .OR. MITER==2)) THEN
           JCUR = 0
           LENP = N*N
-!         CALL DCOPY_F90(LENP,WM(LOCJS),1,WM(3),1)
           CALL DCOPY_F90(LENP,WM(LOCJS),1,WM(1),1)
         END IF
 
@@ -8365,9 +9190,7 @@
 !         Multiply Jacobian by scalar, add identity, and do LU
 !         decomposition.
           CON = -HRL1
-!         CALL DSCAL_F90(LENP,CON,WM(3),1)
           CALL DSCAL_F90(LENP,CON,WM(1),1)
-!         J = 3
           J = 1
           NP1 = N + 1
           DO I = 1, N
@@ -8377,7 +9200,6 @@
           NLU = NLU + 1
 ! ______________________________________________________________________
 
-!         CALL DGEFA_F90(WM(3),N,N,IWM(31),IER)
           CALL DGEFA_F90(WM(1),N,N,IWM(31),IER)
           IF (IER/=0) IERPJ = 1
 ! *****LAPACK build change point. Replace above with these statements.
@@ -8404,22 +9226,19 @@
           WM2 = HRL1
           R = RL1*PT1
           Y(1:N) = Y(1:N) + R*(H*SAVF(1:N)-YH(1:N,2))
-!         CALL F(N,TN,Y,WM(3))
           CALL F(N,TN,Y,WM(1))
           NFE = NFE + 1
-          DO 10 I = 1, N
+          DO I = 1, N
             R0 = H*SAVF(I) - YH(I,2)
-!           DI = PT1*R0 - H*(WM(I+2)-SAVF(I))
             DI = PT1*R0 - H*(WM(I)-SAVF(I))
-!           WM(I+2) = ONE
             WM(I) = ONE
-            IF (ABS(R0)<UROUND/EWT(I)) GOTO 10
-            IF (ABS(DI)<=ZERO) GOTO 20
-!           WM(I+2) = PT1*R0/DI
+            IF (ABS(R0)<UROUND/EWT(I)) CYCLE
+            IF (ABS(DI)<=ZERO) THEN
+               IERPJ = 1
+               RETURN
+            ENDIF
             WM(I) = PT1*R0/DI
-10        END DO
-          RETURN
-20        IERPJ = 1
+          END DO
           RETURN
         END IF
 !       End of code block for MITER = 3.
@@ -8427,7 +9246,6 @@
 !       Set constants for MITER = 4 or 5.
         ML = IWM(1)
         MU = IWM(2)
-!       ML3 = ML + 3
         ML1 = ML + 1
         MBAND = ML + MU + 1
         MEBAND = MBAND + ML
@@ -8438,12 +9256,9 @@
           NJE = NJE + 1
           NSLJ = NST
           JCUR = 1
-!         WM(3:LENP+2) = ZERO
           WM(1:LENP) = ZERO
-!         CALL JAC(N,TN,Y,ML,MU,WM(ML3),MEBAND)
           CALL JAC(N,TN,Y,ML,MU,WM(ML1),MEBAND)
           IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .TRUE.
-!         IF (JSV==1) CALL DACOPY(MBAND,N,WM(ML3),MEBAND,WM(LOCJS),MBAND)
           IF (JSV==1) CALL DACOPY(MBAND,N,WM(ML1),MEBAND,WM(LOCJS),MBAND)
         END IF
 
@@ -8585,23 +9400,20 @@
                     DO K = 1, N
                        IF (IWM(30+K) /= 0) THEN
                           K1 = K
-                          GOTO 70
+                          EXIT
                        END IF
                     END DO
-   70               CONTINUE
                     DO K = N, 1, -1
                        IF (IWM(30+K) /= 0) THEN
                           K2 = K
-                          GOTO 80
+                          EXIT
                        END IF
                     END DO
-   80               CONTINUE
                  END IF
 !                Load the nonzeros for column J in the banded matrix.
                  IF (BUILD_IAJA) THEN
                     DO K = K1, K2
                        I = JAB(K)
-!                      II = J * MEB1 - ML + 2
                        II = J * MEB1 - ML
                        WM(II+I) = (FTEM(I)-SAVF(I))*FAC
                     END DO
@@ -8609,7 +9421,6 @@
                     DO K = K1, K2
                        I = IWM(30+K)
                        IF (I /= 0) THEN
-!                         II = J * MEB1 - ML + 2
                           II = J * MEB1 - ML
                           WM(II+I) = (FTEM(I)-SAVF(I))*FAC
                        END IF
@@ -8620,22 +9431,18 @@
           NFE = NFE + BNGRP
           IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .TRUE.
    90     CONTINUE
-!         IF (JSV==1) CALL DACOPY(MBAND,N,WM(ML3),MEBAND,WM(LOCJS),MBAND)
           IF (JSV==1) CALL DACOPY(MBAND,N,WM(ML1),MEBAND,WM(LOCJS),MBAND)
         END IF
 
         IF (JOK==1) THEN
           JCUR = 0
-!         CALL DACOPY(MBAND,N,WM(LOCJS),MBAND,WM(ML3),MEBAND)
           CALL DACOPY(MBAND,N,WM(LOCJS),MBAND,WM(ML1),MEBAND)
         END IF
 
 !       Multiply Jacobian by scalar, add identity, and do LU
 !       decomposition.
         CON = -HRL1
-!       CALL DSCAL_F90(LENP,CON,WM(3),1)
         CALL DSCAL_F90(LENP,CON,WM(1),1)
-!       II = MBAND + 2
         II = MBAND
         DO I = 1, N
           WM(II) = WM(II) + ONE
@@ -8644,7 +9451,6 @@
         NLU = NLU + 1
 ! ______________________________________________________________________
 
-!       CALL DGBFA_F90(WM(3),MEBAND,N,ML,MU,IWM(31),IER)
         CALL DGBFA_F90(WM(1),MEBAND,N,ML,MU,IWM(31),IER)
         IF (IER/=0) IERPJ = 1
 ! *****LAPACK build change point. Replace above with these statements.
@@ -8742,72 +9548,71 @@
 ! .. FIRST EXECUTABLE STATEMENT DVSOL
 ! ..
         IERSL = 0
-        GOTO (10,10,20,50,50) MITER
+        SELECT CASE (MITER)
+           CASE DEFAULT
+      ! ______________________________________________________________________
+              CALL DGESL_F90(WM(1),N,N,IWM(31),X,0)
+      ! *****LAPACK build change point. Replace above with these statements.
+      !       IF (.NOT.USE_LAPACK) THEN
+      !!         CALL DGESL_f90(WM(3),N,N,IWM(31),X,0)
+      !          CALL DGESL_f90(WM(1),N,N,IWM(31),X,0)
+      !       ELSE
+      !          TRANS = 'N'
+      !!         CALL DGETRS(TRANS,N,1,WM(3),N,IWM(31),X,N,INFO)
+      !          CALL DGETRS(TRANS,N,1,WM(1),N,IWM(31),X,N,INFO)
+      !          IF (INFO /= 0) THEN
+      !             WRITE(6,*) 'Stopping in DVSOL with INFO = ', INFO
+      !             STOP
+      !          END IF
+      !       END IF
+      ! ______________________________________________________________________
 
-10      CONTINUE
-! ______________________________________________________________________
+           CASE(3)
+              PHRL1 = WM2
+              HRL1 = H*RL1
+              WM2 = HRL1
+              IF (ABS(HRL1-PHRL1)<=ZERO) THEN
+                 DO I = 1, N
+                   X(I) = WM(I)*X(I)
+                 END DO
+                 RETURN
+              ENDIF
+              R = HRL1/PHRL1
+              DO I = 1, N
+                DI = ONE - R*(ONE-ONE/WM(I))
+                IF (ABS(DI)<=ZERO) THEN
+                   IERSL = 1
+                   RETURN
+                ENDIF
+                WM(I) = ONE/DI
+              END DO
 
-!       CALL DGESL_F90(WM(3),N,N,IWM(31),X,0)
-        CALL DGESL_F90(WM(1),N,N,IWM(31),X,0)
-! *****LAPACK build change point. Replace above with these statements.
-!       IF (.NOT.USE_LAPACK) THEN
-!!         CALL DGESL_f90(WM(3),N,N,IWM(31),X,0)
-!          CALL DGESL_f90(WM(1),N,N,IWM(31),X,0)
-!       ELSE
-!          TRANS = 'N'
-!!         CALL DGETRS(TRANS,N,1,WM(3),N,IWM(31),X,N,INFO)
-!          CALL DGETRS(TRANS,N,1,WM(1),N,IWM(31),X,N,INFO)
-!          IF (INFO /= 0) THEN
-!             WRITE(6,*) 'Stopping in DVSOL with INFO = ', INFO
-!             STOP
-!          END IF
-!       END IF
-! ______________________________________________________________________
+              DO I = 1, N
+                X(I) = WM(I)*X(I)
+              END DO
 
-        RETURN
+           CASE(4,5)
+              ML = IWM(1)
+              MU = IWM(2)
+              MEBAND = 2*ML + MU + 1
+      ! ______________________________________________________________________
+              CALL DGBSL_F90(WM(1),MEBAND,N,ML,MU,IWM(31),X,0)
+      ! *****LAPACK build change point. Replace above with these statements.
+      !       IF (.NOT.USE_LAPACK) THEN
+      !!        CALL DGBSL_F90(WM(3),MEBAND,N,ML,MU,IWM(31),X,0)
+      !         CALL DGBSL_F90(WM(1),MEBAND,N,ML,MU,IWM(31),X,0)
+      !       ELSE
+      !         TRANS = 'N'
+      !!        CALL DGBTRS(TRANS,N,ML,MU,1,WM(3),MEBAND,IWM(31),X,N,INFO)
+      !         CALL DGBTRS(TRANS,N,ML,MU,1,WM(1),MEBAND,IWM(31),X,N,INFO)
+      !         IF (INFO /= 0) THEN
+      !           WRITE(6,*) 'Stopping in DVSOL with INFO = ', INFO
+      !           STOP
+      !         END IF
+      !       END IF
+      ! ______________________________________________________________________
 
-20      PHRL1 = WM2
-        HRL1 = H*RL1
-        WM2 = HRL1
-        IF (ABS(HRL1-PHRL1)<=ZERO) GOTO 30
-        R = HRL1/PHRL1
-        DO I = 1, N
-!         DI = ONE - R*(ONE-ONE/WM(I+2))
-          DI = ONE - R*(ONE-ONE/WM(I))
-          IF (ABS(DI)<=ZERO) GOTO 40
-!         WM(I+2) = ONE/DI
-          WM(I) = ONE/DI
-        END DO
-
-30      DO I = 1, N
-!         X(I) = WM(I+2)*X(I)
-          X(I) = WM(I)*X(I)
-        END DO
-        RETURN
-40      IERSL = 1
-        RETURN
-
-50      ML = IWM(1)
-        MU = IWM(2)
-        MEBAND = 2*ML + MU + 1
-! ______________________________________________________________________
-
-!       CALL DGBSL_F90(WM(3),MEBAND,N,ML,MU,IWM(31),X,0)
-        CALL DGBSL_F90(WM(1),MEBAND,N,ML,MU,IWM(31),X,0)
-! *****LAPACK build change point. Replace above with these statements.
-!       IF (.NOT.USE_LAPACK) THEN
-!!        CALL DGBSL_F90(WM(3),MEBAND,N,ML,MU,IWM(31),X,0)
-!         CALL DGBSL_F90(WM(1),MEBAND,N,ML,MU,IWM(31),X,0)
-!       ELSE
-!         TRANS = 'N'
-!!        CALL DGBTRS(TRANS,N,ML,MU,1,WM(3),MEBAND,IWM(31),X,N,INFO)
-!         CALL DGBTRS(TRANS,N,ML,MU,1,WM(1),MEBAND,IWM(31),X,N,INFO)
-!         IF (INFO /= 0) THEN
-!           WRITE(6,*) 'Stopping in DVSOL with INFO = ', INFO
-!           STOP
-!         END IF
-!       END IF
-! ______________________________________________________________________
+        END SELECT
 
       RETURN
 
@@ -8996,18 +9801,16 @@
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT DEWSET
 ! ..
-        GOTO (10,20,30,40) ITOL
-10      CONTINUE
-        EWT(1:N) = RTOL(1)*ABS(YCUR(1:N)) + ATOL(1)
-        RETURN
-20      CONTINUE
-        EWT(1:N) = RTOL(1)*ABS(YCUR(1:N)) + ATOL(1:N)
-        RETURN
-30      CONTINUE
-        EWT(1:N) = RTOL(1:N)*ABS(YCUR(1:N)) + ATOL(1)
-        RETURN
-40      CONTINUE
-        EWT(1:N) = RTOL(1:N)*ABS(YCUR(1:N)) + ATOL(1:N)
+        SELECT CASE (ITOL)
+           CASE DEFAULT
+              EWT(1:N) = RTOL(1)*ABS(YCUR(1:N)) + ATOL(1)
+           CASE(2)
+              EWT(1:N) = RTOL(1)*ABS(YCUR(1:N)) + ATOL(1:N)
+           CASE(3)
+              EWT(1:N) = RTOL(1:N)*ABS(YCUR(1:N)) + ATOL(1)
+           CASE(4)
+              EWT(1:N) = RTOL(1:N)*ABS(YCUR(1:N)) + ATOL(1:N)
+        END SELECT
         RETURN
 
       END SUBROUTINE DEWSET
@@ -9104,7 +9907,11 @@
 !       Get logical unit number and message print flag.
         LUNIT = IXSAV(1,0,.FALSE.)
         MESFLG = IXSAV(2,0,.FALSE.)
-        IF (MESFLG==0) GOTO 10
+        IF (MESFLG==0) THEN
+   !       Abort the run if LEVEL = 2.
+           IF (LEVEL/=2) RETURN
+           WRITE (LUNIT,90005)
+        ENDIF
 
         PRINT_NERR = .FALSE.
         IF (PRINT_NERR) PRINT *, MSG, 'Message number = ', NERR
@@ -9121,9 +9928,6 @@
         IF (NR==2) WRITE (LUNIT,90004) R1, R2
 90004   FORMAT ('In the above message, R1 = ',D21.13,3X,'R2 = ',D21.13)
 
-!       Abort the run if LEVEL = 2.
-10      IF (LEVEL/=2) RETURN
-        WRITE (LUNIT,90005)
 90005   FORMAT ('LEVEL = 2 in XERRDV. Stopping.')
         STOP
 
@@ -9347,140 +10151,194 @@
           JMAT(1:NZ_ALL) = ZERO
         END IF
 
-        IF (MOSS==0) GOTO 30
-        IF (ISTATC==3) GOTO 20
+        IF (MOSS/=0) THEN
+           IF (ISTATC/=3) THEN
+      !       ISTATE = 1 and MOSS /= 0.
+      !       Perturb Y for structure determination:
+              DO I = 1, N
+                ERWT = ONE/EWT(I)
+                FAC = ONE + ONE/(I+ONE)
+                Y(I) = Y(I) + FAC*SIGN(ERWT,Y(I))
+              END DO
+              IF (MOSS==1) THEN
+         !       MOSS = 1.
+         !       Compute structure from user-supplied Jacobian routine JAC.
+                 NZ = 0
+                 CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
+                 IF (NZ<=0) THEN
+                   MSG = 'Illegal value of NZ from JAC in DVPREPS.'
+                   CALL XERRDV(MSG,1460,2,0,0,0,0,ZERO,ZERO)
+                 END IF
+                 IF (NZ>NZ_ALL) THEN
+                    IF (LP /= 0) THEN
+                       MSG = 'NZ_ALL (=I1) is not large enough.'
+                       CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
+                       MSG = 'Allocating more space for another try.'
+                       CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
+                    END IF
+                    GOTO 10
+                 END IF
+                 CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
+                 CALL SET_ICN(N,IAN,ICN)
+                 CALL CHECK_DIAG(N,IAN,JAN,ICN)
+                 GOTO 90
+              ELSE
+         !       MOSS = 2.
+         !       Compute structure from results of N+1 calls to F.
+                 K = 1
+                 IAN(1) = 1
+                 DO I = 1, N
+                   ERWT = ONE/EWT(I)
+                   FAC = ONE + ONE/(I+ONE)
+                   Y(I) = Y(I) + FAC*SIGN(ERWT,Y(I))
+                 END DO
+                 CALL F(NEQ,TN,Y,SAVF)
+                 NFE = NFE + 1
+                 DO J = 1, N
+                   IF (K>NZ_ALL) THEN
+                      IF (LP /= 0) THEN
+                         MSG = 'NZ_ALL (=I1) is not large enough.'
+                         CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
+                         MSG = 'Allocating more space for another try.'
+                         CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
+                      END IF
+                      GOTO 10
+                   END IF
+                   YJ = Y(J)
+                   ERWT = ONE/EWT(J)
+                   DYJ = SIGN(ERWT,YJ)
+                   Y(J) = YJ + DYJ
+                   CALL F(NEQ,TN,Y,FTEMP1)
+                   NFE = NFE + 1
+                   Y(J) = YJ
+                   DO I = 1, N
+                      DQ = (FTEMP1(I)-SAVF(I))/DYJ
+                      IF ((ABS(DQ)<=SETH) .AND. (I/=J)) CYCLE
+                      JAN(K) = I
+                      K = K + 1
+                   END DO
+                   IAN(J+1) = K
+                 END DO
+                 GOTO 90
+              ENDIF
+          ENDIF
 
-!       ISTATE = 1 and MOSS /= 0.
+   !       ISTATE = 3 and MOSS /= 0.
 
-!       Perturb Y for structure determination:
-        DO I = 1, N
-          ERWT = ONE/EWT(I)
-          FAC = ONE + ONE/(I+ONE)
-          Y(I) = Y(I) + FAC*SIGN(ERWT,Y(I))
-        END DO
-        GOTO (60,70) MOSS
-
-20      CONTINUE
-!       ISTATE = 3 and MOSS /= 0.
-
-!       Load Y from YH(*,1):
-        Y(1:N) = YH(1:N,1)
-        GOTO (60,70) MOSS
-
-!       MOSS = 0
-
-!       Process user's IA,JA. Add diagonal entries if necessary:
-30      CONTINUE
-        IF (IAJA_CALLED) THEN
+   !       Load Y from YH(*,1):
+           Y(1:N) = YH(1:N,1)
+           IF (MOSS==1) THEN
+     !       MOSS = 1.
+     !       Compute structure from user-supplied Jacobian routine JAC.
+              NZ = 0
+              CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
+              IF (NZ<=0) THEN
+                 MSG = 'Illegal value of NZ from JAC in DVPREPS.'
+                 CALL XERRDV(MSG,1460,2,0,0,0,0,ZERO,ZERO)
+              END IF
+              IF (NZ>NZ_ALL) THEN
+                 IF (LP /= 0) THEN
+                    MSG = 'NZ_ALL (=I1) is not large enough.'
+                    CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
+                    MSG = 'Allocating more space for another try.'
+                    CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
+                 END IF
+                 GOTO 10
+              END IF
+              CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
+              CALL SET_ICN(N,IAN,ICN)
+              CALL CHECK_DIAG(N,IAN,JAN,ICN)
+              GOTO 90
+           ELSE
+     !       MOSS = 2.
+     !       Compute structure from results of N+1 calls to F.
+              K = 1
+              IAN(1) = 1
+              DO I = 1, N
+                 ERWT = ONE/EWT(I)
+                 FAC = ONE + ONE/(I+ONE)
+                 Y(I) = Y(I) + FAC*SIGN(ERWT,Y(I))
+              END DO
+              CALL F(NEQ,TN,Y,SAVF)
+              NFE = NFE + 1
+              DO J = 1, N
+                 IF (K>NZ_ALL) THEN
+                    IF (LP /= 0) THEN
+                       MSG = 'NZ_ALL (=I1) is not large enough.'
+                       CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
+                       MSG = 'Allocating more space for another try.'
+                       CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
+                    END IF
+                    GOTO 10
+                 END IF
+                 YJ = Y(J)
+                 ERWT = ONE/EWT(J)
+                 DYJ = SIGN(ERWT,YJ)
+                 Y(J) = YJ + DYJ
+                 CALL F(NEQ,TN,Y,FTEMP1)
+                 NFE = NFE + 1
+                 Y(J) = YJ
+                 DO I = 1, N
+                    DQ = (FTEMP1(I)-SAVF(I))/DYJ
+                    IF ((ABS(DQ)<=SETH) .AND. (I/=J)) CYCLE
+                    JAN(K) = I
+                    K = K + 1
+                 END DO
+                 IAN(J+1) = K
+              END DO
+              GOTO 90
+           ENDIF
         ELSE
-          MSG = 'You have indicated that you wish to supply the'
-          CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
-          MSG = 'sparsity arrays IA and JA directly but you did'
-          CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
-          MSG = 'not call SET_IAJA after calling SET_OPTS.'
-          CALL XERRDV(MSG,1430,2,0,0,0,0,ZERO,ZERO)
-        END IF
-        KNEW = 1
-        KMIN = IA(1)
-        IAN(1) = 1
-        DO J = 1, N
-          JFOUND = 0
-          KMAX = IA(J+1) - 1
-          IF (KMIN>KMAX) GOTO 40
-          DO K = KMIN, KMAX
-            I = JA(K)
-            IF (I==J) JFOUND = 1
-            IF (KNEW>NZ_ALL) THEN
-               IF (LP /= 0) THEN
-                  MSG = 'NZ_ALL (=I1) is not large enough.'
-                  CALL XERRDV(MSG,1440,1,0,0,0,0,ZERO,ZERO)
-                  MSG = 'Allocating more space for another try.'
-                  CALL XERRDV(MSG,1440,1,1,NZ_ALL,0,0,ZERO,ZERO)
-               END IF
-               GOTO 10
-            END IF
-            JAN(KNEW) = I
-            KNEW = KNEW + 1
-          END DO
-          IF (JFOUND==1) GOTO 50
-40        IF (KNEW>NZ_ALL) THEN
-             IF (LP /= 0) THEN
-                MSG = 'NZ_ALL (=I1) is not large enough.'
-                CALL XERRDV(MSG,1450,1,0,0,0,0,ZERO,ZERO)
-                MSG = 'Allocating more space for another try.'
-                CALL XERRDV(MSG,1450,1,1,NZ_ALL,0,0,ZERO,ZERO)
-             END IF
-             GOTO 10
-          END IF
-          JAN(KNEW) = J
-          KNEW = KNEW + 1
-50        IAN(J+1) = KNEW
-          KMIN = KMAX + 1
-        END DO
-        GOTO 90
-
-60      CONTINUE
-
-!       MOSS = 1.
-
-!       Compute structure from user-supplied Jacobian routine JAC.
-        NZ = 0
-        CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
-        IF (NZ<=0) THEN
-          MSG = 'Illegal value of NZ from JAC in DVPREPS.'
-          CALL XERRDV(MSG,1460,2,0,0,0,0,ZERO,ZERO)
-        END IF
-        IF (NZ>NZ_ALL) THEN
-           IF (LP /= 0) THEN
-              MSG = 'NZ_ALL (=I1) is not large enough.'
-              CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
-              MSG = 'Allocating more space for another try.'
-              CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
+   !       MOSS = 0
+   !       Process user's IA,JA. Add diagonal entries if necessary:
+           IF (IAJA_CALLED) THEN
+           ELSE
+             MSG = 'You have indicated that you wish to supply the'
+             CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
+             MSG = 'sparsity arrays IA and JA directly but you did'
+             CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
+             MSG = 'not call SET_IAJA after calling SET_OPTS.'
+             CALL XERRDV(MSG,1430,2,0,0,0,0,ZERO,ZERO)
            END IF
-           GOTO 10
-        END IF
-        CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
-        CALL SET_ICN(N,IAN,ICN)
-        CALL CHECK_DIAG(N,IAN,JAN,ICN)
-        GOTO 90
-
-!       MOSS = 2.
-
-!       Compute structure from results of N+1 calls to F.
-70      K = 1
-        IAN(1) = 1
-        DO I = 1, N
-          ERWT = ONE/EWT(I)
-          FAC = ONE + ONE/(I+ONE)
-          Y(I) = Y(I) + FAC*SIGN(ERWT,Y(I))
-        END DO
-        CALL F(NEQ,TN,Y,SAVF)
-        NFE = NFE + 1
-        DO J = 1, N
-          IF (K>NZ_ALL) THEN
-             IF (LP /= 0) THEN
-                MSG = 'NZ_ALL (=I1) is not large enough.'
-                CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
-                MSG = 'Allocating more space for another try.'
-                CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
+           KNEW = 1
+           KMIN = IA(1)
+           IAN(1) = 1
+           DO J = 1, N
+             JFOUND = 0
+             KMAX = IA(J+1) - 1
+             IF (KMIN>KMAX) GOTO 40
+             DO K = KMIN, KMAX
+               I = JA(K)
+               IF (I==J) JFOUND = 1
+               IF (KNEW>NZ_ALL) THEN
+                  IF (LP /= 0) THEN
+                     MSG = 'NZ_ALL (=I1) is not large enough.'
+                     CALL XERRDV(MSG,1440,1,0,0,0,0,ZERO,ZERO)
+                     MSG = 'Allocating more space for another try.'
+                     CALL XERRDV(MSG,1440,1,1,NZ_ALL,0,0,ZERO,ZERO)
+                  END IF
+                  GOTO 10
+               END IF
+               JAN(KNEW) = I
+               KNEW = KNEW + 1
+             END DO
+             IF (JFOUND==1) GOTO 50
+   40        IF (KNEW>NZ_ALL) THEN
+                IF (LP /= 0) THEN
+                   MSG = 'NZ_ALL (=I1) is not large enough.'
+                   CALL XERRDV(MSG,1450,1,0,0,0,0,ZERO,ZERO)
+                   MSG = 'Allocating more space for another try.'
+                   CALL XERRDV(MSG,1450,1,1,NZ_ALL,0,0,ZERO,ZERO)
+                END IF
+                GOTO 10
              END IF
-             GOTO 10
-          END IF
-          YJ = Y(J)
-          ERWT = ONE/EWT(J)
-          DYJ = SIGN(ERWT,YJ)
-          Y(J) = YJ + DYJ
-          CALL F(NEQ,TN,Y,FTEMP1)
-          NFE = NFE + 1
-          Y(J) = YJ
-          DO 80 I = 1, N
-            DQ = (FTEMP1(I)-SAVF(I))/DYJ
-            IF ((ABS(DQ)<=SETH) .AND. (I/=J)) GOTO 80
-            JAN(K) = I
-            K = K + 1
-80        END DO
-          IAN(J+1) = K
-        END DO
+             JAN(KNEW) = J
+             KNEW = KNEW + 1
+   50        IAN(J+1) = KNEW
+             KMIN = KMAX + 1
+           END DO
+        ENDIF
+
 90      CONTINUE
         IF (MOSS==0 .OR. ISTATC/=1) GOTO 100
 !       If ISTATE = 1 and MOSS /= 0, restore Y from YH.
@@ -9738,12 +10596,12 @@
           CALL F(NEQ,TN,Y,FTEMP1)
           NFE = NFE + 1
           Y(J) = YJ
-          DO 80 I = 1, N
+          DO I = 1, N
             DQ = (FTEMP1(I)-SAVF(I))/DYJ
-            IF ((ABS(DQ)<=SETH) .AND. (I/=J)) GOTO 80
+            IF ((ABS(DQ)<=SETH) .AND. (I/=J)) CYCLE
             JAN(K) = I
             K = K + 1
-80        END DO
+          END DO
           IAN(J+1) = K
         END DO
 
@@ -9830,17 +10688,17 @@
         DO NG = 1, MAXG
           IGP(NG) = NCOL
           INCL(1:N) = 0
-          DO 20 J = 1, N
+          LOOP20: DO J = 1, N
 !           Reject column J if it is already in a group.
-            IF (JDONE(J)==1) GOTO 20
+            IF (JDONE(J)==1) CYCLE LOOP20
             KMIN = IA(J)
             KMAX = IA(J+1) - 1
-            DO 10 K = KMIN, KMAX
+            DO K = KMIN, KMAX
 !           Reject column J if it overlaps any column already
 !           in this group.
               I = JA(K)
-              IF (INCL(I)==1) GOTO 20
-10          END DO
+              IF (INCL(I)==1) CYCLE LOOP20
+            END DO
 !           Accept column J into group NG.
             JGP(NCOL) = J
             NCOL = NCOL + 1
@@ -9849,16 +10707,20 @@
               I = JA(K)
               INCL(I) = 1
             END DO
-20        END DO
+          END DO LOOP20
 !         Stop if this group is empty (grouping is complete).
-          IF (NCOL==IGP(NG)) GOTO 30
+          IF (NCOL==IGP(NG)) THEN
+            NGRP = NG - 1
+             RETURN
+          ENDIF
         END DO
 !       Error return if not all columns were chosen (MAXG too small).
-        IF (NCOL<=N) GOTO 40
+        IF (NCOL>N) THEN
+           IER = 1
+           RETURN
+        ENDIF
         NG = MAXG
-30      NGRP = NG - 1
-        RETURN
-40      IER = 1
+        NGRP = NG - 1
         RETURN
 
       END SUBROUTINE DGROUP
@@ -9949,44 +10811,36 @@
         FUDGE = 0.4_WP
         ONE_PLUS_FUDGE = 1.0_WP + FUDGE
         MAXG = N + 1
-!       BDONE(1:N) = 0 ...
         BDONE(1:N) = FUDGE
         NCOL = 1
         DO NG = 1, MAXG
            BIGP(NG) = NCOL
-!          BINCL(1:N) = 0 ...
            BINCL(1:N) = FUDGE
-           DO 30 J = 1, N
+           LOOP30: DO J = 1, N
 !             Reject column J if it is already in a group.
-!             IF (BDONE(J) == 1) GOTO 30 ...
               IBDONE = INT(BDONE(J))
-              IF (IBDONE == 1) GOTO 30
+              IF (IBDONE == 1) CYCLE LOOP30
 !             Vertical extent of band = KBEGIN to KFINI.
 !             KJ = number of nonzeros in column J.
-!             BJA(K) = K implies nonzero at (k,j).
               KBEGIN = MAX(J-MU,1)
               KFINI = MIN(J+ML,N)
               KJ = 0
-!             BJA(1:N) = 0 ...
               BJA(1:N) = FUDGE
 !             Locate the row positions of the nonzeros in column J.
 !             Restrict attention to the band:
-              DO 10 K = KBEGIN, KFINI
+              DO K = KBEGIN, KFINI
                  IF (K < J) THEN
                     IF (NSUPS > 0) THEN
                        DO I = NSUPS, 1, -1
-!                         KI = SUPDS(I) + J - 1
                           KI = J + 1 - SUPDS(I)
                           IF (K == KI) THEN
                              KJ = KJ + 1
-!                            BJA(K) = K ...
                              BJA(K) = REAL(K) + FUDGE
                           END IF
                        END DO
                     END IF
                  ELSEIF (K == J) THEN
                     KJ = KJ + 1
-!                   BJA(K) = K ...
                     BJA(K) = REAL(K) + FUDGE
                  ELSE
                     IF (NSUBS > 0) THEN
@@ -9994,37 +10848,51 @@
                           KI = SUBDS(I) + J -1
                           IF (K == KI) THEN
                              KJ = KJ + 1
-!                            BJA(K) = K ...
                              BJA(K) = REAL(K) + FUDGE
                           END IF
                        END DO
                     END IF
               END IF
- 10           CONTINUE
+              ENDDO
 !             At this point BJA contains the row numbers for
 !             the nonzeros in column J.
-              DO 20 K = KBEGIN, KFINI
+              DO K = KBEGIN, KFINI
 !                Reject column J if it overlaps any column
 !                already in this group.
-!                I = BJA(K)
                  I = INT(BJA(K))
                  IBINCL = INT(BINCL(I))
-!                IF (BINCL(I) == 1 .AND. I == K) GOTO 30
-                 IF (IBINCL == 1 .AND. I == K) GOTO 30
- 20           END DO
+                 IF (IBINCL == 1 .AND. I == K) CYCLE LOOP30
+              END DO
 !             Accept column J into group NG.
               BJGP(NCOL) = J
               NCOL = NCOL + 1
-!             BDONE(J) = 1 ...
               BDONE(J) = ONE_PLUS_FUDGE
               DO K = 1, N
-!                IF (I == K) BINCL(I) = 1 ...
                  I = INT(BJA(K))
                  IF (I == K) BINCL(I) = ONE_PLUS_FUDGE
               END DO
- 30        END DO
+           END DO LOOP30
 !          Done if this group is empty (grouping is complete).
-           IF (NCOL == BIGP(NG)) GOTO 40
+           IF (NCOL == BIGP(NG)) THEN
+              BNGRP = NG - 1
+
+      !       Trim BIGP to it's actual size if necessary.
+              IF (NG < MAXG) THEN
+      !          BJA(1:NG) = BIGP(1:NG) ...
+                 DO I = 1, NG
+                    BJA(I) = REAL(BIGP(I)) + FUDGE
+                 END DO
+                 DEALLOCATE (BIGP,STAT=IER)
+                 CALL CHECK_STAT(IER,780)
+                 ALLOCATE (BIGP(NG),STAT=IER)
+                 CALL CHECK_STAT(IER,790)
+      !          BIGP(1:NG) = BJA(1:NG) ...
+                 DO I = 1, NG
+                    BIGP(I) = INT(BJA(I))
+                 END DO
+              END IF
+              RETURN
+           ENDIF
         END DO
 
 !       Should not get here since MAXG = N + 1.
@@ -10036,7 +10904,7 @@
         END IF
 
         NG = MAXG
- 40     BNGRP = NG - 1
+        BNGRP = NG - 1
 
 !       Trim BIGP to it's actual size if necessary.
         IF (NG < MAXG) THEN
@@ -10680,205 +11548,240 @@
         IF (NST>=NSLG+MSBG) MA28 = 2
         IF (JSTART==0 .OR. JSTART==-1) MA28 = 1
         JSTART = 1
-10      IF (MA28<=2) NSLG = NST
-        IF (MA28<=3) NSLJ = NST
+        LOOP10: DO
+           IF (MA28<=2) NSLG = NST
+           IF (MA28<=3) NSLJ = NST
 
-!       Analytical Sparse Jacobian
+   !       Analytical Sparse Jacobian
 
-!       If MITER = 6, call JAC to evaluate J analytically, multiply
-!       J by CON = -H*EL(1), and add the identity matrix to form P.
-        IF (MITER==6) THEN
-          IF (MA28==4) THEN
-!           Reuse the saved Jacobian.
-            NZ = IAN(N+1) - 1
-            PMAT(1:NZ) = CON*JMAT(1:NZ)
-            DO K = 1, NZ
-              IF (JAN(K)==JVECT(K)) PMAT(K) = PMAT(K) + ONE
-            END DO
-            GOTO 90
-          END IF
-          JCUR = 1
-          NJE = NJE + 1
-          IF (MA28==1 .OR. MA28==2) THEN
-            NZ = IAN(N+1) - 1
-            CALL JAC(N,TN,Y,IAN,JAN,NZ,PMAT)
-            NZ = IAN(N+1) - 1
-            IF (NZ>NZ_ALL) THEN
-              MSG = 'DVODE_F90-- NZ > NZ_ALL in DVJACS28.'
-              CALL XERRDV(MSG,1670,2,0,0,0,0,ZERO,ZERO)
-            END IF
-!           Define column pointers for MA28AD.
-            CALL SET_ICN(N,IAN,ICN)
-            CALL CHECK_DIAG(N,IAN,JAN,ICN)
-            PMAT(1:NZ) = CON*PMAT(1:NZ)
-            DO K = 1, NZ
-              IF (JAN(K)==ICN(K)) PMAT(K) = PMAT(K) + ONE
-            END DO
-            GOTO 80
-          ELSE
-!           MA28 = 3...
-            NZ = IAN(N+1) - 1
-            CALL JAC(N,TN,Y,IAN,JAN,NZ,PMAT)
-            NZ = IAN(N+1) - 1
-            IF (NZ>NZ_ALL) THEN
-              MSG = 'DVODE_F90-- NZ > NZ_ALL in DVJACS28.'
-              CALL XERRDV(MSG,1680,2,0,0,0,0,ZERO,ZERO)
-            END IF
-!           Define column pointers for MA28AD.
-            CALL SET_ICN(N,IAN,JVECT)
-            CALL CHECK_DIAG(N,IAN,JAN,JVECT)
-            IF (INEWJ/=1) JMAT(1:NZ) = PMAT(1:NZ)
-            PMAT(1:NZ) = CON*PMAT(1:NZ)
-            DO K = 1, NZ
-              IF (JAN(K)==JVECT(K)) PMAT(K) = PMAT(K) + ONE
-            END DO
-            GOTO 90
-          END IF
-        END IF
+   !       If MITER = 6, call JAC to evaluate J analytically, multiply
+   !       J by CON = -H*EL(1), and add the identity matrix to form P.
+           IF (MITER==6) THEN
+             IF (MA28==4) THEN
+   !           Reuse the saved Jacobian.
+               NZ = IAN(N+1) - 1
+               PMAT(1:NZ) = CON*JMAT(1:NZ)
+               DO K = 1, NZ
+                 IF (JAN(K)==JVECT(K)) PMAT(K) = PMAT(K) + ONE
+               END DO
+       !       MA28BD uses the pivot sequence generated by an earlier call
+       !       to MA28AD to factor a new matrix of the same structure.
 
-!       Finite Difference Sparse Jacobian
-
-!       If MITER = 7, evaluate J numerically, multiply J by
-!       CON, and add the identity matrix to form P.
-        IF (MITER==7) THEN
-          IF (MA28==4) THEN
-!           Reuse the saved constant Jacobian.
-            NZ = IAN(N+1) - 1
-            PMAT(1:NZ) = CON*JMAT(1:NZ)
-            DO J = 1, N
-              K1 = IAN(J)
-              K2 = IAN(J+1) - 1
-              DO K = K1, K2
-                I = JAN(K)
-                IF (I==J) PMAT(K) = PMAT(K) + ONE
-              END DO
-            END DO
-            GOTO 90
-          ELSE
-            NZ = IAN(N+1) - 1
-            JCUR = 1
-            IF (.NOT.(J_IS_CONSTANT.AND.J_HAS_BEEN_COMPUTED)) THEN
-               IF (USE_JACSP) THEN
-!                 Approximate the Jacobian using Doug Salane's JACSP.
-!                 The JPNTRDS and INDROWDS pointer arrays were defined
-!                 in DVPREPS (and altered in DSM).
-                  IOPTDS(1) = 2
-                  IOPTDS(2) = 0
-                  IOPTDS(3) = 1
-                  IOPTDS(5) = 0
-!                 INFORDS(4) was initialized in DVPREPS (and altered in
-!                 the first call to JACSP).
-                  LWKDS  = 3 * N
-                  LIWKDS = 50 + N
-                  NRFJACDS = NZ
-                  NCFJACDS = 1
-
-!                 Set flag to indicate how the YSCALE vector will be
-!                 set for JACSP.
-                  LIKE_ORIGINAL_VODE = .FALSE.
-!                 Calculate the YSCALEDS vector for JACSPDV.
-                  IF (LIKE_ORIGINAL_VODE) THEN
-                     FAC = DVNORM(N,SAVF,EWT)
-!                    JACSPDB multiplies YSCALEDS(*) BY UROUND**0.825:
-!                    R0 = THOU*ABS(H)*UROUND*REAL(N)*FAC
-                     R0 = THOU*ABS(H)*REAL(N)*FAC
-                     IF (ABS(R0)<=ZERO) R0 = ONE
-!                    SRUR = WM1
-                     DO J = 1, N
-!                       JACSPDB multiplies YSCALEDS(*) BY UROUND**0.825:
-!                       R = MAX(ABS(Y(J)),R0/EWT(J))
-                        R = MAX(ABS(Y(J))/U325,(R0/EWT(J))*U125)
-                        YSCALEDS(J) = R
-                     END DO
-                  ELSE
-                     IF (ITOL == 1 .OR. ITOL == 3) THEN
-                        DO J = 1, N
-                           YSCALEDS(J) = MAX(ABS(Y(J)),ATOL(1),UROUND)
-                        END DO
-                     ELSE
-                        DO J = 1, N
-                          YSCALEDS(J) = MAX(ABS(Y(J)),ATOL(J),UROUND)
-                        END DO
-                     END IF
-                  END IF
-
-                  CALL JACSPDB(F,N,TN,Y,SAVF,PMAT(1),NRFJACDS, &
-                    YSCALEDS,FACDS,IOPTDS,WKDS,LWKDS,IWKDS,LIWKDS, &
-                    MAXGRPDS,NGRPDS,JPNTRDS,INDROWDS)
-                  NFE = NFE + IWKDS(7)
-                  NJE = NJE + 1
-
-                  DO NG = 1, MAXGRPDS
-                    JJ1 = IGP(NG)
-                    JJ2 = IGP(NG+1) - 1
-                    DO JJ = JJ1, JJ2
-                      J = JGP(JJ)
-                      K1 = IAN(J)
-                      K2 = IAN(J+1) - 1
-                      DO K = K1, K2
-                        I = JAN(K)
-                        GOTO (17,17,18) MA28
-!                       Define the row pointers for MA28AD.
-17                      JVECT(K) = I
-!                       Define the column pointers for MA28AD.
-                        ICN(K) = J
-                        GOTO 19
-!                       Define the column pointers for MA28AD.
-18                      JVECT(K) = J
-19                      CONTINUE
-                        IF (INEWJ==0) JMAT(K) = PMAT(K)
-                        PMAT(K) = CON*PMAT(K)
-                        IF (I==J) PMAT(K) = PMAT(K) + ONE
-                      END DO
-                    END DO
+               IF (SCALE_MATRIX) THEN
+                  DO K =1, NZ
+                     I = JAN(K)
+                     J = JVECT(K)
+                     PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
                   END DO
-                  NFE = NFE + MAXGRPDS
-               ELSE
-                  FAC = DVNORM(N,SAVF,EWT)
-                  R0 = THOU*ABS(H)*UROUND*REAL(N)*FAC
-                  IF (ABS(R0)<=ZERO) R0 = ONE
-                  SRUR = WM1
-                  DO NG = 1, NGP
-                    JJ1 = IGP(NG)
-                    JJ2 = IGP(NG+1) - 1
-                    DO JJ = JJ1, JJ2
-                      J = JGP(JJ)
-                      R = MAX(SRUR*ABS(Y(J)),R0/EWT(J))
-                      Y(J) = Y(J) + R
-                    END DO
-                    CALL F(N,TN,Y,FTEMP1)
-                    NFE = NFE + 1
-                    DO JJ = JJ1, JJ2
-                      J = JGP(JJ)
-                      Y(J) = YH(J,1)
-                      R = MAX(SRUR*ABS(Y(J)),R0/EWT(J))
-                      FAC = ONE / R
-                      K1 = IAN(J)
-                      K2 = IAN(J+1) - 1
-                      DO K = K1, K2
-                        I = JAN(K)
-                        GOTO (20,20,30) MA28
-!                       Define row pointers for MA28AD.
-20                      JVECT(K) = I
-!                       Define column pointers for MA28AD.
-                        ICN(K) = J
-                        GOTO 40
-!                       Define column pointers for MA28AD.
-30                      JVECT(K) = J
-40                      PMAT(K) = (FTEMP1(I)-SAVF(I)) * FAC
-                        IF (INEWJ==0) JMAT(K) = PMAT(K)
-                        PMAT(K) = CON*PMAT(K)
-                        IF (I==J) PMAT(K) = PMAT(K) + ONE
-                      END DO
-                    END DO
-                  END DO
-                  NFE = NFE + NGP
-                  NJE = NJE + 1
                END IF
-               IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .TRUE.
-            ELSE
-!              Do not recompute the constant Jacobian.
-!              Reuse the saved Jacobian.
+               CALL MA28BD(N,NZ,PMAT,LICN_ALL,JAN,JVECT,ICN,IKEEP28,IW28,FTEMP1,IER)
+               MA28BD_CALLS = MA28BD_CALLS + 1
+               MB28 = 1
+               NLU = NLU + 1
+       !       IER = -2 : The matrix is numerically singular. The MA28AD
+       !                  pivot sequence leads to a zero pivot, that is,
+       !                  to one for which the ratio of it to the smallest
+       !                  element in the row is less than EPS.
+       !       IER = -13: The matrix is structurally singular.
+
+               IF (REDO_PIVOT_SEQUENCE) THEN
+       !          Force MA28AD to calculate a new pivot sequence.
+                  IF (IER/=-13 .AND. IER/=-2 .AND. IER<=0) RETURN
+                  IF (IER==-2) MA28 = 1
+                  IF (IER==-13) MA28 = 1
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               ELSE
+                  IF (IER==-2) IERPJ = 1
+                  IF (IER/=-13 .AND. IER<=0) RETURN
+                  IF (IER==-13) MA28 = 1
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               END IF
+               IF (IER>0) MA28 = 2
+               IF (IER==-13 .AND. MITER==7 .AND. MOSS==2) THEN
+       !          Recompute the sparsity structure.
+                  CALL DVRENEW(N,Y,SAVF,EWT,F)
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               END IF
+               CYCLE LOOP10
+             END IF
+             JCUR = 1
+             NJE = NJE + 1
+             IF (MA28==1 .OR. MA28==2) THEN
+               NZ = IAN(N+1) - 1
+               CALL JAC(N,TN,Y,IAN,JAN,NZ,PMAT)
+               NZ = IAN(N+1) - 1
+               IF (NZ>NZ_ALL) THEN
+                 MSG = 'DVODE_F90-- NZ > NZ_ALL in DVJACS28.'
+                 CALL XERRDV(MSG,1670,2,0,0,0,0,ZERO,ZERO)
+               END IF
+   !           Define column pointers for MA28AD.
+               CALL SET_ICN(N,IAN,ICN)
+               CALL CHECK_DIAG(N,IAN,JAN,ICN)
+               PMAT(1:NZ) = CON*PMAT(1:NZ)
+               DO K = 1, NZ
+                 IF (JAN(K)==ICN(K)) PMAT(K) = PMAT(K) + ONE
+               END DO
+       !       MA28AD does an LU factorization based on a pivotal strategy
+       !       designed to compromise between maintaining sparsity and
+       !       controlling loss of accuracy due to roundoff error. Unless
+       !       magnitudes of Jacobian elements change so as to invalidate
+       !       choice of pivots, MA28AD need only be called at beginning
+       !       of the integration.
+
+               IF (SCALE_MATRIX) THEN
+       !          MA19AD computes scaling factors for the iteration matrix.
+                  CALL MC19AD(N,NZ,PMAT,JAN,ICN,RSCALEX,CSCALEX,WSCALEX)
+                  MC19AD_CALLS = MC19AD_CALLS + 1
+                  DO I =1, N
+                     RSCALEX(I) = EXP(RSCALEX(I))
+                     CSCALEX(I) = EXP(CSCALEX(I))
+                  END DO
+                  DO K = 1, NZ
+                     I = JAN(K)
+                     J = ICN(K)
+                     PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
+                  END DO
+               END IF
+               OK_TO_CALL_MA28 = .TRUE.
+               CALL MA28AD(N,NZ,PMAT,LICN_ALL,JAN,LIRN_ALL,ICN,U_PIVOT,IKEEP28,IW28,FTEMP1,IER)
+               OK_TO_CALL_MA28 = .FALSE.
+               MA28AD_CALLS = MA28AD_CALLS + 1
+               MA28SAVE = MA28
+               MB28SAVE = MB28
+               MB28 = 0
+               NLU = NLU + 1
+               MAX_MINIRN = MAX(MAX_MINIRN,MINIRN)
+               MAX_MINICN = MAX(MAX_MINICN,MINICN)
+       !       IER = -1: Numerically singular Jacobian
+       !       IER = -2: Structurally singular Jacobian
+               IF (IER==-1 .OR. IER==-2) IERPJ = 1
+               IF (IER==-3) THEN
+       !         LIRN_ALL is not large enough.
+                 IF (LP /= 0) THEN
+                    MSG = 'LIRN_ALL (=I1) is not large enough.'
+                    CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
+                    MSG = 'Allocating more space for another try.'
+                    CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
+                 END IF
+       !         Allocate more space for JAN and JVECT and try again.
+                 LIRN_ALL = LIRN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
+                 LIRN_ALL = MAX(LIRN_ALL,(11*MINIRN)/10)
+                 IF (LIRN_ALL>MAX_ARRAY_SIZE) THEN
+                   MSG = 'Maximum array size exceeded. Stopping.'
+                   CALL XERRDV(MSG,1700,2,0,0,0,0,ZERO,ZERO)
+                 END IF
+                 DEALLOCATE (JAN,STAT=JER)
+                 CALL CHECK_STAT(JER,820)
+                 ALLOCATE (JAN(LIRN_ALL),STAT=JER)
+                 CALL CHECK_STAT(JER,830)
+                 IF (MITER==7) JAN(1:NZ) = JVECT(1:NZ)
+                 DEALLOCATE (JVECT,STAT=JER)
+                 CALL CHECK_STAT(JER,840)
+                 ALLOCATE (JVECT(LIRN_ALL),STAT=JER)
+                 CALL CHECK_STAT(JER,850)
+                 IF (MITER==7) JVECT(1:NZ) = JAN(1:NZ)
+                 MA28 = MA28SAVE
+                 MB28 = MB28SAVE
+                 NLU = NLU - 1
+       !         Since PMAT has changed, it must be restored:
+                 IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                 CYCLE LOOP10
+               END IF
+               IF (IER==-4 .OR. IER==-5 .OR. IER==-6) THEN
+       !         LICN_ALL is not large enough.
+                 IF (LP /= 0) THEN
+                    MSG = 'LICN_ALL (=I1) is not large enough.'
+                    CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
+                    MSG = 'Allocating more space for another try.'
+                    CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
+                 END IF
+       !         Allocate more space for JAN and JVECT and try again.
+                 LICN_ALL = LICN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
+                 LICN_ALL = MAX(LICN_ALL,(11*MINICN)/10)
+                 IF (LICN_ALL>MAX_ARRAY_SIZE) THEN
+                   MSG = 'Maximum array size exceeded. Stopping.'
+                   CALL XERRDV(MSG,1720,2,0,0,0,0,ZERO,ZERO)
+                 END IF
+                 DEALLOCATE (PMAT,ICN,STAT=JER)
+                 CALL CHECK_STAT(JER,860)
+                 ALLOCATE (PMAT(LICN_ALL),ICN(LICN_ALL),STAT=JER)
+                 PMAT(1:LICN_ALL) = ZERO
+                 CALL CHECK_STAT(JER,870)
+                 IF (MITER==7) JAN(1:NZ) = JVECT(1:NZ)
+                 MA28 = MA28SAVE
+                 MB28 = MB28SAVE
+                 NLU = NLU - 1
+                 IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                 CYCLE LOOP10
+               END IF
+               IF (MITER==7) JAN(1:NZ) = JVECT(1:NZ)
+               RETURN
+             ELSE
+   !           MA28 = 3...
+               NZ = IAN(N+1) - 1
+               CALL JAC(N,TN,Y,IAN,JAN,NZ,PMAT)
+               NZ = IAN(N+1) - 1
+               IF (NZ>NZ_ALL) THEN
+                 MSG = 'DVODE_F90-- NZ > NZ_ALL in DVJACS28.'
+                 CALL XERRDV(MSG,1680,2,0,0,0,0,ZERO,ZERO)
+               END IF
+   !           Define column pointers for MA28AD.
+               CALL SET_ICN(N,IAN,JVECT)
+               CALL CHECK_DIAG(N,IAN,JAN,JVECT)
+               IF (INEWJ/=1) JMAT(1:NZ) = PMAT(1:NZ)
+               PMAT(1:NZ) = CON*PMAT(1:NZ)
+               DO K = 1, NZ
+                 IF (JAN(K)==JVECT(K)) PMAT(K) = PMAT(K) + ONE
+               END DO
+         !     MA28BD uses the pivot sequence generated by an earlier call
+         !     to MA28AD to factor a new matrix of the same structure.
+
+               IF (SCALE_MATRIX) THEN
+                  DO K =1, NZ
+                     I = JAN(K)
+                     J = JVECT(K)
+                     PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
+                  END DO
+               END IF
+               CALL MA28BD(N,NZ,PMAT,LICN_ALL,JAN,JVECT,ICN,IKEEP28,IW28,FTEMP1,IER)
+               MA28BD_CALLS = MA28BD_CALLS + 1
+               MB28 = 1
+               NLU = NLU + 1
+         !     IER = -2 : The matrix is numerically singular. The MA28AD
+         !                pivot sequence leads to a zero pivot, that is,
+         !                to one for which the ratio of it to the smallest
+         !                element in the row is less than EPS.
+         !     IER = -13: The matrix is structurally singular.
+
+               IF (REDO_PIVOT_SEQUENCE) THEN
+         !        Force MA28AD to calculate a new pivot sequence.
+                  IF (IER/=-13 .AND. IER/=-2 .AND. IER<=0) RETURN
+                  IF (IER==-2) MA28 = 1
+                  IF (IER==-13) MA28 = 1
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               ELSE
+                  IF (IER==-2) IERPJ = 1
+                  IF (IER/=-13 .AND. IER<=0) RETURN
+                  IF (IER==-13) MA28 = 1
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               END IF
+               IF (IER>0) MA28 = 2
+               IF (IER==-13 .AND. MITER==7 .AND. MOSS==2) THEN
+         !        Recompute the sparsity structure.
+                  CALL DVRENEW(N,Y,SAVF,EWT,F)
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               END IF
+               CYCLE LOOP10
+             END IF
+           END IF
+
+   !       Finite Difference Sparse Jacobian
+
+   !       If MITER = 7, evaluate J numerically, multiply J by
+   !       CON, and add the identity matrix to form P.
+           MITER7_IF: IF (MITER==7) THEN
+             MA284_IF: IF (MA28==4) THEN
+   !           Reuse the saved constant Jacobian.
                NZ = IAN(N+1) - 1
                PMAT(1:NZ) = CON*JMAT(1:NZ)
                DO J = 1, N
@@ -10887,170 +11790,332 @@
                  DO K = K1, K2
                    I = JAN(K)
                    IF (I==J) PMAT(K) = PMAT(K) + ONE
-                   GOTO (50,50,60) MA28
-!                  Define row pointers for MA28AD.
-50                 JVECT(K) = I
-!                  Define column pointers for MA28AD.
-                   ICN(K) = J
-                   GOTO 70
-!                  Define column pointers for MA28AD.
-60                 JVECT(K) = J
-70                 CONTINUE
                  END DO
                END DO
-            END IF
-            GOTO (80,80,90) MA28
-          END IF
-        END IF
+         !     MA28BD uses the pivot sequence generated by an earlier call
+         !     to MA28AD to factor a new matrix of the same structure.
 
-!       MA28AD does an LU factorization based on a pivotal strategy
-!       designed to compromise between maintaining sparsity and
-!       controlling loss of accuracy due to roundoff error. Unless
-!       magnitudes of Jacobian elements change so as to invalidate
-!       choice of pivots, MA28AD need only be called at beginning
-!       of the integration.
+               IF (SCALE_MATRIX) THEN
+                  DO K =1, NZ
+                     I = JAN(K)
+                     J = JVECT(K)
+                     PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
+                  END DO
+               END IF
+               CALL MA28BD(N,NZ,PMAT,LICN_ALL,JAN,JVECT,ICN,IKEEP28,IW28,FTEMP1,IER)
+               MA28BD_CALLS = MA28BD_CALLS + 1
+               MB28 = 1
+               NLU = NLU + 1
+        !      IER = -2 : The matrix is numerically singular. The MA28AD
+        !                 pivot sequence leads to a zero pivot, that is,
+        !                 to one for which the ratio of it to the smallest
+        !                 element in the row is less than EPS.
+        !      IER = -13: The matrix is structurally singular.
 
-80      CONTINUE
-        IF (SCALE_MATRIX) THEN
-!          MA19AD computes scaling factors for the iteration matrix.
-           CALL MC19AD(N,NZ,PMAT,JAN,ICN,RSCALEX,CSCALEX,WSCALEX)
-           MC19AD_CALLS = MC19AD_CALLS + 1
-           DO I =1, N
-              RSCALEX(I) = EXP(RSCALEX(I))
-              CSCALEX(I) = EXP(CSCALEX(I))
-           END DO
-           DO K = 1, NZ
-              I = JAN(K)
-              J = ICN(K)
-              PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
-           END DO
-        END IF
-        OK_TO_CALL_MA28 = .TRUE.
-        CALL MA28AD(N,NZ,PMAT,LICN_ALL,JAN,LIRN_ALL,ICN,U_PIVOT, &
-          IKEEP28,IW28,FTEMP1,IER)
-        OK_TO_CALL_MA28 = .FALSE.
-        MA28AD_CALLS = MA28AD_CALLS + 1
-        MA28SAVE = MA28
-        MB28SAVE = MB28
-        MB28 = 0
-        NLU = NLU + 1
-        MAX_MINIRN = MAX(MAX_MINIRN,MINIRN)
-        MAX_MINICN = MAX(MAX_MINICN,MINICN)
-!       IER = -1: Numerically singular Jacobian
-!       IER = -2: Structurally singular Jacobian
-        IF (IER==-1 .OR. IER==-2) IERPJ = 1
-        IF (IER==-3) THEN
-!         LIRN_ALL is not large enough.
-          IF (LP /= 0) THEN
-             MSG = 'LIRN_ALL (=I1) is not large enough.'
-             CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
-             MSG = 'Allocating more space for another try.'
-             CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
-          END IF
-!         Allocate more space for JAN and JVECT and try again.
-          LIRN_ALL = LIRN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
-          LIRN_ALL = MAX(LIRN_ALL,(11*MINIRN)/10)
-          IF (LIRN_ALL>MAX_ARRAY_SIZE) THEN
-            MSG = 'Maximum array size exceeded. Stopping.'
-            CALL XERRDV(MSG,1700,2,0,0,0,0,ZERO,ZERO)
-          END IF
-          DEALLOCATE (JAN,STAT=JER)
-          CALL CHECK_STAT(JER,820)
-          ALLOCATE (JAN(LIRN_ALL),STAT=JER)
-          CALL CHECK_STAT(JER,830)
-          IF (MITER==7) THEN
-            JAN(1:NZ) = JVECT(1:NZ)
-          END IF
-          DEALLOCATE (JVECT,STAT=JER)
-          CALL CHECK_STAT(JER,840)
-          ALLOCATE (JVECT(LIRN_ALL),STAT=JER)
-          CALL CHECK_STAT(JER,850)
-          IF (MITER==7) THEN
-            JVECT(1:NZ) = JAN(1:NZ)
-          END IF
-          MA28 = MA28SAVE
-          MB28 = MB28SAVE
-          NLU = NLU - 1
-!         Since PMAT has changed, it must be restored:
-          IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
-          GOTO 10
-        END IF
-        IF (IER==-4 .OR. IER==-5 .OR. IER==-6) THEN
-!         LICN_ALL is not large enough.
-          IF (LP /= 0) THEN
-             MSG = 'LICN_ALL (=I1) is not large enough.'
-             CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
-             MSG = 'Allocating more space for another try.'
-             CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
-          END IF
-!         Allocate more space for JAN and JVECT and try again.
-          LICN_ALL = LICN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
-          LICN_ALL = MAX(LICN_ALL,(11*MINICN)/10)
-          IF (LICN_ALL>MAX_ARRAY_SIZE) THEN
-            MSG = 'Maximum array size exceeded. Stopping.'
-            CALL XERRDV(MSG,1720,2,0,0,0,0,ZERO,ZERO)
-          END IF
-          DEALLOCATE (PMAT,ICN,STAT=JER)
-          CALL CHECK_STAT(JER,860)
-          ALLOCATE (PMAT(LICN_ALL),ICN(LICN_ALL),STAT=JER)
-          PMAT(1:LICN_ALL) = ZERO
-          CALL CHECK_STAT(JER,870)
-          IF (MITER==7) THEN
-            JAN(1:NZ) = JVECT(1:NZ)
-          END IF
-          MA28 = MA28SAVE
-          MB28 = MB28SAVE
-          NLU = NLU - 1
-          IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
-          GOTO 10
-        END IF
-        IF (MITER/=7) RETURN
-        JAN(1:NZ) = JVECT(1:NZ)
-        RETURN
+               IF (REDO_PIVOT_SEQUENCE) THEN
+        !         Force MA28AD to calculate a new pivot sequence.
+                  IF (IER/=-13 .AND. IER/=-2 .AND. IER<=0) RETURN
+                  IF (IER==-2) MA28 = 1
+                  IF (IER==-13) MA28 = 1
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               ELSE
+                  IF (IER==-2) IERPJ = 1
+                  IF (IER/=-13 .AND. IER<=0) RETURN
+                  IF (IER==-13) MA28 = 1
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               END IF
+               IF (IER>0) MA28 = 2
+               IF (IER==-13 .AND. MITER==7 .AND. MOSS==2) THEN
+        !         Recompute the sparsity structure.
+                  CALL DVRENEW(N,Y,SAVF,EWT,F)
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+               END IF
+               CYCLE LOOP10
+             ELSE MA284_IF
+               NZ = IAN(N+1) - 1
+               JCUR = 1
+               J_IF: IF (.NOT.(J_IS_CONSTANT.AND.J_HAS_BEEN_COMPUTED)) THEN
+                  JACSP_IF: IF (USE_JACSP) THEN
+   !                 Approximate the Jacobian using Doug Salane's JACSP.
+   !                 The JPNTRDS and INDROWDS pointer arrays were defined
+   !                 in DVPREPS (and altered in DSM).
+                     IOPTDS(1) = 2
+                     IOPTDS(2) = 0
+                     IOPTDS(3) = 1
+                     IOPTDS(5) = 0
+   !                 INFORDS(4) was initialized in DVPREPS (and altered in
+   !                 the first call to JACSP).
+                     LWKDS  = 3 * N
+                     LIWKDS = 50 + N
+                     NRFJACDS = NZ
+                     NCFJACDS = 1
 
-!       MA28BD uses the pivot sequence generated by an earlier call
-!       to MA28AD to factor a new matrix of the same structure.
+   !                 Set flag to indicate how the YSCALE vector will be
+   !                 set for JACSP.
+                     LIKE_ORIGINAL_VODE = .FALSE.
+   !                 Calculate the YSCALEDS vector for JACSPDV.
+                     IF (LIKE_ORIGINAL_VODE) THEN
+                        FAC = DVNORM(N,SAVF,EWT)
+   !                    JACSPDB multiplies YSCALEDS(*) BY UROUND**0.825:
+                        R0 = THOU*ABS(H)*REAL(N)*FAC
+                        IF (ABS(R0)<=ZERO) R0 = ONE
+                        DO J = 1, N
+   !                       JACSPDB multiplies YSCALEDS(*) BY UROUND**0.825:
+                           R = MAX(ABS(Y(J))/U325,(R0/EWT(J))*U125)
+                           YSCALEDS(J) = R
+                        END DO
+                     ELSE
+                        IF (ITOL == 1 .OR. ITOL == 3) THEN
+                           DO J = 1, N
+                              YSCALEDS(J) = MAX(ABS(Y(J)),ATOL(1),UROUND)
+                           END DO
+                        ELSE
+                           DO J = 1, N
+                             YSCALEDS(J) = MAX(ABS(Y(J)),ATOL(J),UROUND)
+                           END DO
+                        END IF
+                     END IF
 
-90      CONTINUE
+                     CALL JACSPDB(F,N,TN,Y,SAVF,PMAT(1),NRFJACDS, &
+                       YSCALEDS,FACDS,IOPTDS,WKDS,LWKDS,IWKDS,LIWKDS, &
+                       MAXGRPDS,NGRPDS,JPNTRDS,INDROWDS)
+                     NFE = NFE + IWKDS(7)
+                     NJE = NJE + 1
 
-        IF (SCALE_MATRIX) THEN
-           DO K =1, NZ
-              I = JAN(K)
-              J = JVECT(K)
-              PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
-           END DO
-        END IF
-        CALL MA28BD(N,NZ,PMAT,LICN_ALL,JAN,JVECT,ICN,IKEEP28,IW28, &
-          FTEMP1,IER)
-        MA28BD_CALLS = MA28BD_CALLS + 1
-        MB28 = 1
-        NLU = NLU + 1
-!       IER = -2 : The matrix is numerically singular. The MA28AD
-!                  pivot sequence leads to a zero pivot, that is,
-!                  to one for which the ratio of it to the smallest
-!                  element in the row is less than EPS.
-!       IER = -13: The matrix is structurally singular.
+                     DO NG = 1, MAXGRPDS
+                       JJ1 = IGP(NG)
+                       JJ2 = IGP(NG+1) - 1
+                       DO JJ = JJ1, JJ2
+                         J = JGP(JJ)
+                         K1 = IAN(J)
+                         K2 = IAN(J+1) - 1
+                         DO K = K1, K2
+                           I = JAN(K)
+                           IF (MA28==3) THEN
+      !                       Define the column pointers for MA28AD.
+                              JVECT(K) = J
+                           ELSE
+      !                       Define the row pointers for MA28AD.
+                              JVECT(K) = I
+      !                       Define the column pointers for MA28AD.
+                              ICN(K) = J
+                           ENDIF
+                           IF (INEWJ==0) JMAT(K) = PMAT(K)
+                           PMAT(K) = CON*PMAT(K)
+                           IF (I==J) PMAT(K) = PMAT(K) + ONE
+                         END DO
+                       END DO
+                     END DO
+                     NFE = NFE + MAXGRPDS
+                  ELSE JACSP_IF
+                     FAC = DVNORM(N,SAVF,EWT)
+                     R0 = THOU*ABS(H)*UROUND*REAL(N)*FAC
+                     IF (ABS(R0)<=ZERO) R0 = ONE
+                     SRUR = WM1
+                     DO NG = 1, NGP
+                       JJ1 = IGP(NG)
+                       JJ2 = IGP(NG+1) - 1
+                       DO JJ = JJ1, JJ2
+                         J = JGP(JJ)
+                         R = MAX(SRUR*ABS(Y(J)),R0/EWT(J))
+                         Y(J) = Y(J) + R
+                       END DO
+                       CALL F(N,TN,Y,FTEMP1)
+                       NFE = NFE + 1
+                       DO JJ = JJ1, JJ2
+                         J = JGP(JJ)
+                         Y(J) = YH(J,1)
+                         R = MAX(SRUR*ABS(Y(J)),R0/EWT(J))
+                         FAC = ONE / R
+                         K1 = IAN(J)
+                         K2 = IAN(J+1) - 1
+                         DO K = K1, K2
+                           I = JAN(K)
+                           IF (MA28==3) THEN
+      !                       Define column pointers for MA28AD.
+                              JVECT(K) = J
+                           ELSE
+      !                       Define row pointers for MA28AD.
+                              JVECT(K) = I
+      !                       Define column pointers for MA28AD.
+                              ICN(K) = J
+                           ENDIF
+                           PMAT(K) = (FTEMP1(I)-SAVF(I)) * FAC
+                           IF (INEWJ==0) JMAT(K) = PMAT(K)
+                           PMAT(K) = CON*PMAT(K)
+                           IF (I==J) PMAT(K) = PMAT(K) + ONE
+                         END DO
+                       END DO
+                     END DO
+                     NFE = NFE + NGP
+                     NJE = NJE + 1
+                  END IF JACSP_IF
+                  IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .TRUE.
+               ELSE J_IF
+   !              Do not recompute the constant Jacobian.
+   !              Reuse the saved Jacobian.
+                  NZ = IAN(N+1) - 1
+                  PMAT(1:NZ) = CON*JMAT(1:NZ)
+                  DO J = 1, N
+                    K1 = IAN(J)
+                    K2 = IAN(J+1) - 1
+                    DO K = K1, K2
+                      I = JAN(K)
+                      IF (I==J) PMAT(K) = PMAT(K) + ONE
+                      IF (MA28==3) THEN
+      !                  Define column pointers for MA28AD.
+                         JVECT(K) = J
+                      ELSE
+      !                  Define row pointers for MA28AD.
+                         JVECT(K) = I
+      !                  Define column pointers for MA28AD.
+                         ICN(K) = J
+                      ENDIF
+                    END DO
+                  END DO
+               END IF J_IF
+               MA28_GOTO: IF (MA28==3) THEN
+         !       MA28BD uses the pivot sequence generated by an earlier call
+         !       to MA28AD to factor a new matrix of the same structure.
 
-        IF (REDO_PIVOT_SEQUENCE) THEN
-!          Force MA28AD to calculate a new pivot sequence.
-           IF (IER/=-13 .AND. IER/=-2 .AND. IER<=0) RETURN
-           IF (IER==-2) MA28 = 1
-           IF (IER==-13) MA28 = 1
-           IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
-        ELSE
-           IF (IER==-2) IERPJ = 1
-           IF (IER/=-13 .AND. IER<=0) RETURN
-           IF (IER==-13) MA28 = 1
-           IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
-        END IF
-        IF (IER>0) MA28 = 2
-        IF (IER==-13 .AND. MITER==7 .AND. MOSS==2) THEN
-!          Recompute the sparsity structure.
-           CALL DVRENEW(N,Y,SAVF,EWT,F)
-           IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
-        END IF
-        GOTO 10
+                 IF (SCALE_MATRIX) THEN
+                    DO K =1, NZ
+                       I = JAN(K)
+                       J = JVECT(K)
+                       PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
+                    END DO
+                 END IF
+                 CALL MA28BD(N,NZ,PMAT,LICN_ALL,JAN,JVECT,ICN,IKEEP28,IW28, &
+                   FTEMP1,IER)
+                 MA28BD_CALLS = MA28BD_CALLS + 1
+                 MB28 = 1
+                 NLU = NLU + 1
+         !       IER = -2 : The matrix is numerically singular. The MA28AD
+         !                  pivot sequence leads to a zero pivot, that is,
+         !                  to one for which the ratio of it to the smallest
+         !                  element in the row is less than EPS.
+         !       IER = -13: The matrix is structurally singular.
 
+                 IF (REDO_PIVOT_SEQUENCE) THEN
+         !          Force MA28AD to calculate a new pivot sequence.
+                    IF (IER/=-13 .AND. IER/=-2 .AND. IER<=0) RETURN
+                    IF (IER==-2) MA28 = 1
+                    IF (IER==-13) MA28 = 1
+                    IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                 ELSE
+                    IF (IER==-2) IERPJ = 1
+                    IF (IER/=-13 .AND. IER<=0) RETURN
+                    IF (IER==-13) MA28 = 1
+                    IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                 END IF
+                 IF (IER>0) MA28 = 2
+                 IF (IER==-13 .AND. MITER==7 .AND. MOSS==2) THEN
+         !          Recompute the sparsity structure.
+                    CALL DVRENEW(N,Y,SAVF,EWT,F)
+                    IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                 END IF
+                 CYCLE LOOP10
+               ELSE MA28_GOTO
+         !       MA28AD does an LU factorization based on a pivotal strategy
+         !       designed to compromise between maintaining sparsity and
+         !       controlling loss of accuracy due to roundoff error. Unless
+         !       magnitudes of Jacobian elements change so as to invalidate
+         !       choice of pivots, MA28AD need only be called at beginning
+         !       of the integration.
+
+                 IF (SCALE_MATRIX) THEN
+         !          MA19AD computes scaling factors for the iteration matrix.
+                    CALL MC19AD(N,NZ,PMAT,JAN,ICN,RSCALEX,CSCALEX,WSCALEX)
+                    MC19AD_CALLS = MC19AD_CALLS + 1
+                    DO I =1, N
+                       RSCALEX(I) = EXP(RSCALEX(I))
+                       CSCALEX(I) = EXP(CSCALEX(I))
+                    END DO
+                    DO K = 1, NZ
+                       I = JAN(K)
+                       J = ICN(K)
+                       PMAT(K) = PMAT(K) * RSCALEX(I) * CSCALEX(J)
+                    END DO
+                 END IF
+                 OK_TO_CALL_MA28 = .TRUE.
+                 CALL MA28AD(N,NZ,PMAT,LICN_ALL,JAN,LIRN_ALL,ICN,U_PIVOT,IKEEP28,IW28,FTEMP1,IER)
+                 OK_TO_CALL_MA28 = .FALSE.
+                 MA28AD_CALLS = MA28AD_CALLS + 1
+                 MA28SAVE = MA28
+                 MB28SAVE = MB28
+                 MB28 = 0
+                 NLU = NLU + 1
+                 MAX_MINIRN = MAX(MAX_MINIRN,MINIRN)
+                 MAX_MINICN = MAX(MAX_MINICN,MINICN)
+         !       IER = -1: Numerically singular Jacobian
+         !       IER = -2: Structurally singular Jacobian
+                 IF (IER==-1 .OR. IER==-2) IERPJ = 1
+                 IF (IER==-3) THEN
+         !         LIRN_ALL is not large enough.
+                   IF (LP /= 0) THEN
+                      MSG = 'LIRN_ALL (=I1) is not large enough.'
+                      CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
+                      MSG = 'Allocating more space for another try.'
+                      CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
+                   END IF
+         !         Allocate more space for JAN and JVECT and try again.
+                   LIRN_ALL = LIRN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
+                   LIRN_ALL = MAX(LIRN_ALL,(11*MINIRN)/10)
+                   IF (LIRN_ALL>MAX_ARRAY_SIZE) THEN
+                     MSG = 'Maximum array size exceeded. Stopping.'
+                     CALL XERRDV(MSG,1700,2,0,0,0,0,ZERO,ZERO)
+                   END IF
+                   DEALLOCATE (JAN,STAT=JER)
+                   CALL CHECK_STAT(JER,820)
+                   ALLOCATE (JAN(LIRN_ALL),STAT=JER)
+                   CALL CHECK_STAT(JER,830)
+                   IF (MITER==7) JAN(1:NZ) = JVECT(1:NZ)
+                   DEALLOCATE (JVECT,STAT=JER)
+                   CALL CHECK_STAT(JER,840)
+                   ALLOCATE (JVECT(LIRN_ALL),STAT=JER)
+                   CALL CHECK_STAT(JER,850)
+                   IF (MITER==7) JVECT(1:NZ) = JAN(1:NZ)
+                   MA28 = MA28SAVE
+                   MB28 = MB28SAVE
+                   NLU = NLU - 1
+         !         Since PMAT has changed, it must be restored:
+                   IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                   CYCLE LOOP10
+                 END IF
+                 IF (IER==-4 .OR. IER==-5 .OR. IER==-6) THEN
+         !         LICN_ALL is not large enough.
+                   IF (LP /= 0) THEN
+                      MSG = 'LICN_ALL (=I1) is not large enough.'
+                      CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
+                      MSG = 'Allocating more space for another try.'
+                      CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
+                   END IF
+         !         Allocate more space for JAN and JVECT and try again.
+                   LICN_ALL = LICN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
+                   LICN_ALL = MAX(LICN_ALL,(11*MINICN)/10)
+                   IF (LICN_ALL>MAX_ARRAY_SIZE) THEN
+                     MSG = 'Maximum array size exceeded. Stopping.'
+                     CALL XERRDV(MSG,1720,2,0,0,0,0,ZERO,ZERO)
+                   END IF
+                   DEALLOCATE (PMAT,ICN,STAT=JER)
+                   CALL CHECK_STAT(JER,860)
+                   ALLOCATE (PMAT(LICN_ALL),ICN(LICN_ALL),STAT=JER)
+                   PMAT(1:LICN_ALL) = ZERO
+                   CALL CHECK_STAT(JER,870)
+                   IF (MITER==7) JAN(1:NZ) = JVECT(1:NZ)
+                   MA28 = MA28SAVE
+                   MB28 = MB28SAVE
+                   NLU = NLU - 1
+                   IF (J_IS_CONSTANT) J_HAS_BEEN_COMPUTED = .FALSE.
+                   CYCLE LOOP10
+                 END IF
+                 IF (MITER==7) JAN(1:NZ) = JVECT(1:NZ)
+                 RETURN
+               ENDIF MA28_GOTO
+             END IF MA284_IF
+           END IF MITER7_IF
+           EXIT LOOP10
+        ENDDO LOOP10
       END SUBROUTINE DVJACS28
 ! End of Jacobian related routines that use MA28
 !_______________________________________________________________________
@@ -11104,16 +12169,18 @@
 ! .. FIRST EXECUTABLE STATEMENT CHECK_DIAG
 ! ..
         KMIN = 1
-        DO J = 1, N
+        J_LOOP: DO J = 1, N
           KMAX = IA(J+1) - 1
           DO K = KMIN, KMAX
-            IF (JA(K)==ICN(K)) GOTO 10
+            IF (JA(K)==ICN(K)) THEN
+               KMIN = KMAX + 1
+               CYCLE J_LOOP
+            ENDIF
           END DO
           MSG = 'In CHECK_DIAG, the diagonal is not present.'
           CALL XERRDV(MSG,1730,2,0,0,0,0,ZERO,ZERO)
-10        CONTINUE
           KMIN = KMAX + 1
-        END DO
+        END DO J_LOOP
 
       END SUBROUTINE CHECK_DIAG
 !_______________________________________________________________________
@@ -11182,124 +12249,126 @@
         JROOT(1:NGC) = 0
         HMING = (ABS(TN)+ABS(H))*UROUND*HUN
 
-        GOTO (10,30,80) JOB
+        SELECT CASE (JOB)
+           CASE DEFAULT
+      !       Evaluate g at initial T, and check for zero values.
+              T0ST = TN
+              CALL G(NEQ,T0ST,Y,NGC,G0)
+              NGE = 1
+              ZROOT = .FALSE.
+              DO I = 1, NGC
+                IF (ABS(G0(I))<=ZERO) ZROOT = .TRUE.
+              END DO
+              IF (ZROOT) THEN
+         !       g has a zero at T. Look at g at T + (small increment).
+         !       TEMP1 = SIGN(HMING, H)
+         !       T0ST = T0ST + TEMP1
+         !       TEMP2 = TEMP1 / H
+                 TEMP2 = MAX(HMING/ABS(H),TENTH)
+                 TEMP1 = TEMP2*H
+                 T0ST = T0ST + TEMP1
+                 Y(1:N) = Y(1:N) + TEMP2*YH(1:N,2)
+                 CALL G(NEQ,T0ST,Y,NGC,G0)
+                 NGE = NGE + 1
+                 ZROOT = .FALSE.
+                 DO I = 1, NGC
+                   IF (ABS(G0(I))<=ZERO) ZROOT = .TRUE.
+                 END DO
+                 IF (ZROOT) THEN
+            !       g has a zero at T and also close to T. Take error return.
+                    IRT = -1
+                    RETURN
+                 ENDIF
+              ENDIF
+              RETURN
+           CASE (2)
+              IRFND_IF: IF (IRFND/=0) THEN
+         !       If a root was found on the previous step, evaluate G0 = g(T0ST).
+                 CALL DVINDY_CORE(T0ST,0,YH,NYH,Y,IFLAG)
+                 IF (BOUNDS) THEN
+                   DO I = 1, NDX
+                     Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+                     Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+                   END DO
+                 END IF
+                 CALL G(NEQ,T0ST,Y,NGC,G0)
+                 NGE = NGE + 1
+                 ZROOT = .FALSE.
+                 DO I = 1, NGC
+                   IF (ABS(G0(I))<=ZERO) ZROOT = .TRUE.
+                 END DO
+                 IF (ZROOT) THEN
+            !       g has a zero at T0ST. Look at g at T + (small increment).
+                    TEMP1 = SIGN(HMING,H)
+                    T0ST = T0ST + TEMP1
+                    IF ((T0ST-TN)*H>=ZERO) THEN
+                       TEMP2 = TEMP1/H
+                       Y(1:N) = Y(1:N) + TEMP2*YH(1:N,2)
+                    ELSE
+                       CALL DVINDY_CORE(T0ST,0,YH,NYH,Y,IFLAG)
+                       IF (BOUNDS) THEN
+                         DO I = 1, NDX
+                           Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+                           Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+                         END DO
+                       END IF
+                    ENDIF
+                    CALL G(NEQ,T0ST,Y,NGC,G0)
+                    NGE = NGE + 1
+                    ZROOT = .FALSE.
+                    DO I = 1, NGC
+                      IF (ABS(G0(I))>ZERO) CYCLE
+                      JROOT(I) = 1
+                      ZROOT = .TRUE.
+                    END DO
+                    IF (ZROOT) THEN
+               !       g has a zero at T0ST and also close to T0ST. Return root.
+                       IRT = 1
+                       RETURN
+                    ENDIF
+                 ENDIF
+              ENDIF IRFND_IF
+      !       G0 has no zero components. Proceed to check relevant interval.
+              IF (ABS(TN-TLAST)<=ZERO) RETURN
+        END SELECT
 
-!       Evaluate g at initial T, and check for zero values.
-10      CONTINUE
-        T0ST = TN
-        CALL G(NEQ,T0ST,Y,NGC,G0)
-        NGE = 1
-        ZROOT = .FALSE.
-        DO I = 1, NGC
-          IF (ABS(G0(I))<=ZERO) ZROOT = .TRUE.
-        END DO
-        IF (.NOT.ZROOT) GOTO 20
-!       g has a zero at T. Look at g at T + (small increment).
-!       TEMP1 = SIGN(HMING, H)
-!       T0ST = T0ST + TEMP1
-!       TEMP2 = TEMP1 / H
-        TEMP2 = MAX(HMING/ABS(H),TENTH)
-        TEMP1 = TEMP2*H
-        T0ST = T0ST + TEMP1
-        Y(1:N) = Y(1:N) + TEMP2*YH(1:N,2)
-        CALL G(NEQ,T0ST,Y,NGC,G0)
-        NGE = NGE + 1
-        ZROOT = .FALSE.
-        DO I = 1, NGC
-          IF (ABS(G0(I))<=ZERO) ZROOT = .TRUE.
-        END DO
-        IF (.NOT.ZROOT) GOTO 20
-!       g has a zero at T and also close to T. Take error return.
-        IRT = -1
-        RETURN
-
-20      CONTINUE
-        RETURN
-
-30      CONTINUE
-        IF (IRFND==0) GOTO 70
-!       If a root was found on the previous step, evaluate G0 = g(T0ST).
-        CALL DVINDY_CORE(T0ST,0,YH,NYH,Y,IFLAG)
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        CALL G(NEQ,T0ST,Y,NGC,G0)
-        NGE = NGE + 1
-        ZROOT = .FALSE.
-        DO I = 1, NGC
-          IF (ABS(G0(I))<=ZERO) ZROOT = .TRUE.
-        END DO
-        IF (.NOT.ZROOT) GOTO 70
-!       g has a zero at T0ST. Look at g at T + (small increment).
-        TEMP1 = SIGN(HMING,H)
-        T0ST = T0ST + TEMP1
-        IF ((T0ST-TN)*H<ZERO) GOTO 40
-        TEMP2 = TEMP1/H
-        Y(1:N) = Y(1:N) + TEMP2*YH(1:N,2)
-        GOTO 50
-40      CALL DVINDY_CORE(T0ST,0,YH,NYH,Y,IFLAG)
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-50      CALL G(NEQ,T0ST,Y,NGC,G0)
-        NGE = NGE + 1
-        ZROOT = .FALSE.
-        DO 60 I = 1, NGC
-          IF (ABS(G0(I))>ZERO) GOTO 60
-          JROOT(I) = 1
-          ZROOT = .TRUE.
-60      END DO
-        IF (.NOT.ZROOT) GOTO 70
-!       g has a zero at T0ST and also close to T0ST. Return root.
-        IRT = 1
-        RETURN
-!       G0 has no zero components. Proceed to check relevant interval.
-70      IF (ABS(TN-TLAST)<=ZERO) GOTO 130
-
-80      CONTINUE
+!       This block below was case 3 from a computed goto but case 2 fell through into this block,
+!       so it was kept outside the select case
 !       Set T1 to TN or TOUTC, whichever comes first, and get g at T1.
-        IF (ITASKC==2 .OR. ITASKC==3 .OR. ITASKC==5) GOTO 90
-        IF ((TOUTC-TN)*H>=ZERO) GOTO 90
-        T1 = TOUTC
-        IF ((T1-T0ST)*H<=ZERO) GOTO 130
-        CALL DVINDY_CORE(T1,0,YH,NYH,Y,IFLAG)
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        GOTO 100
-90      T1 = TN
-        DO I = 1, N
-          Y(I) = YH(I,1)
-        END DO
-100     CALL G(NEQ,T1,Y,NGC,G1)
+        IF (ITASKC==2 .OR. ITASKC==3 .OR. ITASKC==5 .OR. (TOUTC-TN)*H>=ZERO) THEN
+           T1 = TN
+           Y(1:N) = YH(1:N,1)
+        ELSE
+           T1 = TOUTC
+           IF ((T1-T0ST)*H<=ZERO) RETURN
+           CALL DVINDY_CORE(T1,0,YH,NYH,Y,IFLAG)
+           IF (BOUNDS) THEN
+             DO I = 1, NDX
+               Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+               Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+             END DO
+           END IF
+        ENDIF
+        CALL G(NEQ,T1,Y,NGC,G1)
         NGE = NGE + 1
 !       Call DVROOTS to search for root in interval from T0ST to T1.
         JFLAG = 0
-110     CONTINUE
-        CALL DVROOTS(NGC,HMING,JFLAG,T0ST,T1,G0,G1,GX,X)
-        IF (JFLAG>1) GOTO 120
-        CALL DVINDY_CORE(X,0,YH,NYH,Y,IFLAG)
-        IF (BOUNDS) THEN
-          DO I = 1, NDX
-            Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
-            Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
-          END DO
-        END IF
-        CALL G(NEQ,X,Y,NGC,GX)
-        NGE = NGE + 1
-        GOTO 110
-120     T0ST = X
+        LOOP110: DO
+           CALL DVROOTS(NGC,HMING,JFLAG,T0ST,T1,G0,G1,GX,X)
+           IF (JFLAG>1) EXIT LOOP110
+           CALL DVINDY_CORE(X,0,YH,NYH,Y,IFLAG)
+           IF (BOUNDS) THEN
+             DO I = 1, NDX
+               Y(IDX(I)) = MAX(Y(IDX(I)),LB(I))
+               Y(IDX(I)) = MIN(Y(IDX(I)),UB(I))
+             END DO
+           END IF
+           CALL G(NEQ,X,Y,NGC,GX)
+           NGE = NGE + 1
+        ENDDO LOOP110
+        T0ST = X
         CALL DCOPY_F90(NGC,GX,1,G0,1)
-        IF (JFLAG==4) GOTO 130
+        IF (JFLAG==4) RETURN
 !       Found a root. Interpolate to X and return.
         CALL DVINDY_CORE(X,0,YH,NYH,Y,IFLAG)
         IF (BOUNDS) THEN
@@ -11309,8 +12378,6 @@
           END DO
         END IF
         IRT = 1
-        RETURN
-130     CONTINUE
         RETURN
 
       END SUBROUTINE DVCHECK
@@ -11420,17 +12487,17 @@
         IMAX = 0
         TMAX = ZERO
         ZROOT = .FALSE.
-        DO 20 I = 1, NG
+        DO I = 1, NG
           IF (ABS(G1(I))>ZERO) GOTO 10
           ZROOT = .TRUE.
-          GOTO 20
+          CYCLE
 !         At this point, G0(i) has been checked and cannot be zero.
-10        IF (ABS(SIGN(ONE,G0(I))-SIGN(ONE,G1(I)))<=ZERO) GOTO 20
+10        IF (ABS(SIGN(ONE,G0(I))-SIGN(ONE,G1(I)))<=ZERO) CYCLE
           T2 = ABS(G1(I)/(G1(I)-G0(I)))
-          IF (T2<=TMAX) GOTO 20
+          IF (T2<=TMAX) CYCLE
           TMAX = T2
           IMAX = I
-20      END DO
+        END DO
         IF (IMAX>0) GOTO 30
         SGNCHG = .FALSE.
         GOTO 40
@@ -11479,17 +12546,17 @@
         IMAX = 0
         TMAX = ZERO
         ZROOT = .FALSE.
-        DO 110 I = 1, NG
+        DO I = 1, NG
           IF (ABS(GX(I))>ZERO) GOTO 100
           ZROOT = .TRUE.
-          GOTO 110
+          CYCLE
 !         Neither G0(i) nor GX(i) can be zero at this point.
-100       IF (ABS(SIGN(ONE,G0(I))-SIGN(ONE,GX(I)))<=ZERO) GOTO 110
+100       IF (ABS(SIGN(ONE,G0(I))-SIGN(ONE,GX(I)))<=ZERO) CYCLE
           T2 = ABS(GX(I)/(GX(I)-G0(I)))
-          IF (T2<=TMAX) GOTO 110
+          IF (T2<=TMAX) CYCLE
           TMAX = T2
           IMAX = I
-110     END DO
+        END DO
         IF (IMAX>0) GOTO 120
         SGNCHG = .FALSE.
         IMAX = IMXOLD
@@ -11522,13 +12589,13 @@
 170     JFLAG = 2
         X = X1
         CALL DCOPY_F90(NG,G1,1,GX,1)
-        DO 190 I = 1, NG
+        DO I = 1, NG
           JROOT(I) = 0
           IF (ABS(G1(I))>ZERO) GOTO 180
           JROOT(I) = 1
-          GOTO 190
+          CYCLE
 180       IF (ABS(SIGN(ONE,G0(I))-SIGN(ONE,G1(I)))>ZERO) JROOT(I) = 1
-190     END DO
+        END DO
         RETURN
 
 !       No sign change in the interval. Check for zero at right endpoint.
@@ -13211,13 +14278,12 @@
         GOTO 170
 
 !       Data check to see if all indices lie between 1 and N.
-40      DO 50 I = 1, NZ
-          IF (IRN(I)>0 .AND. IRN(I)<=N .AND. ICN(I)>0 .AND. ICN(I)<=N) &
-            GOTO 50
+40      DO I = 1, NZ
+          IF (IRN(I)>0 .AND. IRN(I)<=N .AND. ICN(I)>0 .AND. ICN(I)<=N) CYCLE
           IF (IFLAG==0 .AND. LP/=0) WRITE (LP,90004)
           IFLAG = -12
           IF (LP/=0) WRITE (LP,90005) I, A(I), IRN(I), ICN(I)
-50      END DO
+        END DO
         IF (IFLAG<0) GOTO 180
 
 !       Sort matrix into row order.
@@ -13237,26 +14303,26 @@
         THEMAX = ZERO
 !       J1 is position in arrays of first non-zero in row.
         J1 = IW(1,1)
-        DO 90 I = 1, N
+        LOOP90:DO I = 1, N
           IEND = NZ + 1
           IF (I/=N) IEND = IW(I+1,1)
           LENGTH = IEND - J1
-          IF (LENGTH==0) GOTO 90
+          IF (LENGTH==0) CYCLE LOOP90
           J2 = IEND - 1
           NEWJ1 = J1 - MOVE
-          DO 80 JJ = J1, J2
+          LOOP80:DO JJ = J1, J2
             J = ICN(JJ)
             THEMAX = MAX(THEMAX,ABS(A(JJ)))
             IF (IKEEP(J,2)==I) GOTO 70
 !           First time column has ocurred in current row.
             IKEEP(J,2) = I
             IKEEP(J,3) = JJ - MOVE - NEWJ1
-            IF (MOVE==0) GOTO 80
+            IF (MOVE==0) CYCLE LOOP80
 !           Shift necessary because of previous duplicate element.
             NEWPOS = JJ - MOVE
             A(NEWPOS) = A(JJ)
             ICN(NEWPOS) = ICN(JJ)
-            GOTO 80
+            CYCLE LOOP80
 !           Duplicate element.
 70          MOVE = MOVE + 1
             LENGTH = LENGTH - 1
@@ -13264,10 +14330,10 @@
             IF (MP/=0) WRITE (MP,90006) I, J, A(JJ)
             A(JAY) = A(JAY) + A(JJ)
             THEMAX = MAX(THEMAX,ABS(A(JAY)))
-80        END DO
+          END DO LOOP80
           IKEEP(I,1) = LENGTH
           J1 = IEND
-90      END DO
+        END DO LOOP90
 
 !       KNUM is actual number of non-zeros in matrix with any multiple
 !       entries counted only once.
@@ -13529,27 +14595,27 @@
         IBLOCK = 1
         IW(1,1) = 1
         IW(1,2) = IDISP(1)
-        DO 10 I = 1, N
+        DO I = 1, N
           IW1(I,3) = IBLOCK
           IF (IP(I)<0) IBLOCK = IBLOCK + 1
-          II = IABS(IP(I)+0)
-!         II = IABS(IP(I))
+          II = ABS(IP(I)+0)
           IW1(II,1) = I
           JJ = IQ(I)
-          JJ = IABS(JJ)
+          JJ = ABS(JJ)
           IW1(JJ,2) = I
-          IF (I==1) GOTO 10
+          IF (I==1) CYCLE
           IF (BLOCKL) IW(I,1) = IW(I-1,1) + LENOFF(I-1)
           IW(I,2) = IW(I-1,2) + LENR(I-1)
-10      END DO
+        END DO
 !       Place each non-zero in turn into its correct location in
 !       the A/ICN array.
         IDISP2 = IDISP(2)
-        DO 170 I = 1, NZ
+        LOOP170: DO I = 1, NZ
 !         Necessary to avoid reference to unassigned element of ICN.
-          IF (I>IDISP2) GOTO 20
-          IF (ICN(I)<0) GOTO 170
-20        IOLD = IVECT(I)
+          IF (I<=IDISP2) THEN
+             IF (ICN(I)<0) CYCLE LOOP170
+          ENDIF
+          IOLD = IVECT(I)
           JOLD = JVECT(I)
           AA = A(I)
 !         This is a dummy loop for following a chain of interchanges.
@@ -13559,7 +14625,7 @@
             IF (IOLD<=N .AND. IOLD>0 .AND. JOLD<=N .AND. JOLD>0) GOTO 30
             IF (LP/=0) WRITE (LP,90000) I, A(I), IOLD, JOLD
             IFLAG = -12
-            GOTO 180
+            EXIT LOOP170
 30          INEW = IW1(IOLD,1)
             JNEW = IW1(JOLD,2)
 !           Are we in a valid block and is it diagonal or off-diagonal?
@@ -13569,7 +14635,7 @@
             IF (IW1(INEW,3)-IW1(JNEW,3) > 0) GOTO 50
             IFLAG = -13
             IF (LP/=0) WRITE (LP,90001) IOLD, JOLD
-            GOTO 180
+            EXIT LOOP170
 50          J1 = IW(INEW,1)
             J2 = J1 + LENOFF(INEW) - 1
             GOTO 110
@@ -13581,29 +14647,25 @@
             GOTO 110
 70          J2 = J1 + LENRL(INEW)
 !           Binary search of ordered list. Element in L part of row.
-            DO 100 JDUMMY = 1, N
+            DO JDUMMY = 1, N
               MIDPT = (J1+J2)/2
-              JCOMP = IABS(ICN(MIDPT)+0)
-!             JCOMP = IABS(ICN(MIDPT))
-!             IF (JNEW-JCOMP) 80, 130, 90
-!80           J2 = MIDPT
+              JCOMP = ABS(ICN(MIDPT)+0)
               IF (JNEW-JCOMP == 0) GOTO 130
               IF (JNEW-JCOMP > 0) GOTO 90
               J2 = MIDPT
-              GOTO 100
+              CYCLE
 90            J1 = MIDPT
-100         END DO
-            IFLAG = -13
-            IF (LP/=0) WRITE (LP,90002) IOLD, JOLD
-            GOTO 180
-!           Linear search. Element in L part of row or off-diagonal blocks.
-110         DO MIDPT = J1, J2
-              IF (IABS(ICN(MIDPT)+0)==JNEW) GOTO 130
-!             IF (IABS(ICN(MIDPT))==JNEW) GOTO 130
             END DO
             IFLAG = -13
             IF (LP/=0) WRITE (LP,90002) IOLD, JOLD
-            GOTO 180
+            EXIT LOOP170
+!           Linear search. Element in L part of row or off-diagonal blocks.
+110         DO MIDPT = J1, J2
+              IF (ABS(ICN(MIDPT)+0)==JNEW) GOTO 130
+            END DO
+            IFLAG = -13
+            IF (LP/=0) WRITE (LP,90002) IOLD, JOLD
+            EXIT LOOP170
 !           Equivalent element of ICN is in position MIDPT.
 130         IF (ICN(MIDPT)<0) GOTO 160
             IF (MIDPT>NZ .OR. MIDPT<=I) GOTO 150
@@ -13616,21 +14678,22 @@
           END DO
 150       A(MIDPT) = AA
           ICN(MIDPT) = -ICN(MIDPT)
-          GOTO 170
+          CYCLE LOOP170
 160       A(MIDPT) = A(MIDPT) + AA
 !        Set flag for duplicate elements.
           iflag = n + 1
-170     END DO
+        END DO LOOP170
 !       Reset ICN array and zero elements in LU but not in A.
 !       Also calculate the maximum element of A.
-180     W1 = ZERO
-        DO 200 I = 1, IDISP2
-          IF (ICN(I)<0) GOTO 190
-          A(I) = ZERO
-          GOTO 200
-190       ICN(I) = -ICN(I)
-          W1 = MAX(W1,ABS(A(I)))
-200     END DO
+        W1 = ZERO
+        DO I = 1, IDISP2
+          IF (ICN(I)<0) THEN
+             ICN(I) = -ICN(I)
+             W1 = MAX(W1,ABS(A(I)))
+          ELSE
+             A(I) = ZERO
+          ENDIF
+        END DO
         RETURN
 90000   FORMAT (' Element ',I6,' with value ',D22.14,' has indices ',I8, &
           ','/I8,' indices out of range')
@@ -13793,7 +14856,7 @@
 
 !       Begin the iterative process.
 
-        DO 120 ITERAT = 1, MAXIT
+        LOOP120: DO ITERAT = 1, MAXIT
           D = DD
 
 !         Calculate the residual vector.
@@ -13854,7 +14917,7 @@
 !         Check the stopping criterion.
  
           IF (DD<PREC*DXMAX) GOTO 140
-120     END DO
+        END DO LOOP120
 !       More than MAXIT iterations required.
         IFLAG = -16
         WRITE (LP,90000) IFLAG, MAXIT
@@ -14225,7 +15288,7 @@
 
 !       Each pass through this loop performs LU decomposition on one
 !       of the diagonal blocks.
-        DO 1070 NBLOCK = 1, NUM
+        LOOP1070: DO NBLOCK = 1, NUM
           ISTART = ILAST + 1
           DO IROWS = ISTART, NN
             IF (IP(IROWS)<0) GOTO 50
@@ -14275,7 +15338,7 @@
           NZROW = NZROW - 1
 90        LASTR(ISTART) = ISTART
           IPC(ISTART) = -ISING
-          GOTO 1070
+          CYCLE LOOP1070
 
 !         Non-trivial block.
 100       ITOP = LICN
@@ -14302,17 +15365,17 @@
             J = ILAST - JJ + J1 - 1
             IPC(J) = IPC(J+1) - LENC(J+1)
           END DO
-          DO 160 INDROW = ISTART, ILAST
+          DO INDROW = ISTART, ILAST
             J1 = IPTR(INDROW)
             J2 = J1 + LENR(INDROW) - 1
-            IF (J1>J2) GOTO 160
+            IF (J1>J2) CYCLE
             DO JJ = J1, J2
               J = ICN(JJ)
               IPOS = IPC(J) - 1
               IRN(IPOS) = INDROW
               IPC(J) = IPOS
             END DO
-160       END DO
+          END DO
 !         DISPC is the lowest indexed active location in the column file.
           DISPC = IPC(ISTART)
           NZCOL = LIRN - DISPC + 1
@@ -14326,43 +15389,43 @@
 
 !         Compute ordering of row and column counts.
 !         First run through columns (from column N to column 1).
-          DO 190 JJ = ISTART, ILAST
+          DO JJ = ISTART, ILAST
             J = ILAST - JJ + ISTART
             NZ = LENC(J)
             IF (NZ/=0) GOTO 180
             IPC(J) = 0
-            GOTO 190
-180         IF (NSRCH<=NN) GOTO 190
+            CYCLE
+180         IF (NSRCH<=NN) CYCLE
             ISW = IFIRST(NZ)
             IFIRST(NZ) = -J
             LASTC(J) = 0
             NEXTC(J) = -ISW
-            ISW1 = IABS(ISW)
+            ISW1 = ABS(ISW)
             IF (ISW/=0) LASTC(ISW1) = J
-190       END DO
-!        Now run through rows (again from N to 1).
-          DO 220 II = ISTART, ILAST
+          END DO
+!         Now run through rows (again from N to 1).
+          DO II = ISTART, ILAST
                I = ILAST - II + ISTART
             NZ = LENR(I)
             IF (NZ/=0) GOTO 200
             IPTR(I) = 0
             LASTR(I) = 0
-            GOTO 220
+            CYCLE
 200         ISW = IFIRST(NZ)
             IFIRST(NZ) = I
             IF (ISW>0) GOTO 210
             NEXTR(I) = 0
             LASTR(I) = ISW
-            GOTO 220
+            CYCLE
 210         NEXTR(I) = ISW
             LASTR(I) = LASTR(ISW)
             LASTR(ISW) = I
-220       END DO
+          END DO
 
 ! **********************************************
 ! ****    Start of main elimination loop    ****
 ! **********************************************
-          DO 1050 PIVOT = ISTART, ILAST
+          LOOP1050: DO PIVOT = ISTART, ILAST
 
 !           First find the pivot using MARKOWITZ criterion with
 !           stability control.
@@ -14378,7 +15441,7 @@
               LL = L
 !             A pass with L equal to 2 is only performed in the
 !             case of singularity.
-              DO 340 NZ = NZ2, N
+              LOOP340:DO NZ = NZ2, N
                 IF (JCOST<=(NZ-1)**2) GOTO 430
                 IJFIR = IFIRST(NZ)
 !               IF (IJFIR) 240, 230, 250
@@ -14386,7 +15449,7 @@
                 IF (IJFIR < 0) GOTO 240
                 IF (IJFIR > 0) GOTO 250
                 IF (LL==1) NZMIN = NZ + 1
-                GOTO 340
+                CYCLE LOOP340
 240             LL = 2
                 IJFIR = -IJFIR
                 GOTO 300
@@ -14409,15 +15472,14 @@
                   AU = AMAX*U
                   ISRCH = ISRCH + 1
 !                 Scan row for possible pivots.
-                  DO 270 JJ = J1, J2
-                    IF (ABS(A(JJ))<=AU .AND. L==1) GOTO 270
+                  DO JJ = J1, J2
+                    IF (ABS(A(JJ))<=AU .AND. L==1) CYCLE
                     J = ICN(JJ)
                     KCOST = (NZ-1)*(LENC(J)-1)
-                    IF (KCOST>JCOST) GOTO 270
+                    IF (KCOST>JCOST) CYCLE
                     PIVR = ZERO
                     IF (ABS(AMAX)>ZERO) PIVR = ABS(A(JJ))/AMAX
-                    IF (KCOST==JCOST .AND. (PIVR<=PIVRAT .OR. NSRCH>NN+1)) &
-                      GOTO 270
+                    IF (KCOST==JCOST .AND. (PIVR<=PIVRAT .OR. NSRCH>NN+1)) CYCLE
 !                   Best pivot so far is found.
                     JCOST = KCOST
                     IJPOS = JJ
@@ -14425,25 +15487,25 @@
                     JPIV = J
                     IF (MSRCH>NN+1 .AND. JCOST<=(NZ-1)**2) GOTO 430
                     PIVRAT = PIVR
-270               END DO
+                  END DO
                 END DO
 
 !               Columns with NZ non-zeros now examined.
 290             IJFIR = IFIRST(NZ)
                 IJFIR = -LASTR(IJFIR)
 300             IF (JCOST<=NZ*(NZ-1)) GOTO 430
-                IF (MSRCH<=NN) GOTO 340
-                DO 330 IDUMMY = 1, N
-                  IF (IJFIR==0) GOTO 340
+                IF (MSRCH<=NN) CYCLE LOOP340
+                LOOP330: DO IDUMMY = 1, N
+                  IF (IJFIR==0) CYCLE LOOP340
                   J = IJFIR
                   IJFIR = NEXTC(IJFIR)
                   I1 = IPC(J)
                   I2 = I1 + NZ - 1
 !                 Scan column J.
-                  DO 320 II = I1, I2
+                  LOOP320: DO II = I1, I2
                     I = IRN(II)
                     KCOST = (NZ-1)*(LENR(I)-LENRL(I)-1)
-                    IF (KCOST>=JCOST) GOTO 320
+                    IF (KCOST>=JCOST) CYCLE LOOP320
 !                   Pivot has best Markowitz count so far. Now
 !                   check its suitability on numeric grounds by
 !                   examining the other non-zeros in its row.
@@ -14457,16 +15519,16 @@
                       AMAX = MAX(AMAX,ABS(A(JJ)))
                       IF (ICN(JJ)==J) JPOS = JJ
                     END DO
-                    IF (ABS(A(JPOS))<=AMAX*U .AND. L==1) GOTO 320
+                    IF (ABS(A(JPOS))<=AMAX*U .AND. L==1) CYCLE LOOP320
                     JCOST = KCOST
                     IPIV = I
                     JPIV = J
                     IJPOS = JPOS
                     IF (ABS(AMAX)>ZERO) PIVRAT = ABS(A(JPOS))/AMAX
                     IF (JCOST<=NZ*(NZ-1)) GOTO 430
-320               END DO
-330             END DO
-340           END DO
+                  END DO LOOP320
+                END DO LOOP330
+              END DO LOOP340
 !             In the event of singularity, we must make sure all
 !             rows and columns are tested.
               MSRCH = N
@@ -14485,8 +15547,8 @@
             IF (LP/=0) WRITE (LP,90000)
             GOTO 1190
 360         K = PIVOT - 1
-            DO 400 I = ISTART, ILAST
-              IF (LASTR(I)/=0) GOTO 400
+            LOOP400: DO I = ISTART, ILAST
+              IF (LASTR(I)/=0) CYCLE LOOP400
               K = K + 1
               LASTR(I) = K
               IF (LENRL(I)==0) GOTO 390
@@ -14514,14 +15576,14 @@
               END DO
               NZROW = NZROW - LENRL(I)
 390           IF (K==ILAST) GOTO 410
-400         END DO
+            END DO LOOP400
 410         K = PIVOT - 1
-            DO 420 I = ISTART, ILAST
-              IF (IPC(I)/=0) GOTO 420
+            DO I = ISTART, ILAST
+              IF (IPC(I)/=0) CYCLE
               K = K + 1
               IPC(I) = K
               IF (K==ILAST) GOTO 1060
-420         END DO
+            END DO
 
 !           The pivot has now been found in position (IPIV,JPIV)
 !           in location IJPOS in row file.
@@ -14555,7 +15617,7 @@
             IF (LENPP>=101) LPIV(10) = LPIV(10) + 1
             MAPIV = MAX(MAPIV,LENPP)
             IAVPIV = IAVPIV + LENPP
-            DO 460 JJ = OLDPIV, OLDEND
+            DO JJ = OLDPIV, OLDEND
               J = ICN(JJ)
               LC = LASTC(J)
               NC = NEXTC(J)
@@ -14564,27 +15626,27 @@
               IF (NC/=0) LASTC(NC) = LC
               IF (LC==0) GOTO 450
               NEXTC(LC) = NC
-              GOTO 460
+              CYCLE
 450           NZ = LENC(J)
               ISW = IFIRST(NZ)
               IF (ISW>0) LASTR(ISW) = -NC
               IF (ISW<0) IFIRST(NZ) = -NC
-460         END DO
+            END DO
 !           Changes to row ordering.
 470         I1 = IPC(JPIV)
             I2 = I1 + LENC(JPIV) - 1
-            DO 490 II = I1, I2
+            DO II = I1, I2
               I = IRN(II)
               LR = LASTR(I)
               NR = NEXTR(I)
               IF (NR/=0) LASTR(NR) = LR
               IF (LR<=0) GOTO 480
               NEXTR(LR) = NR
-              GOTO 490
+              CYCLE
 480           NZ = LENR(I) - LENRL(I)
               IF (NR/=0) IFIRST(NZ) = NR
               IF (NR==0) IFIRST(NZ) = LR
-490         END DO
+            END DO
 
 !           Move pivot to position LENRL+1 in pivot row and move pivot
 !           row to the beginning of the available storage. The L part
@@ -14653,13 +15715,14 @@
               LENC(J) = LENC(J) - 1
 !             I2 is last position in new column.
               I2 = IPC(J) + LENC(J) - 1
-              IF (I2<I1) GOTO 560
-              DO 550 II = I1, I2
-                IF (IRN(II)/=IPIV) GOTO 550
-                IRN(II) = IRN(I2+1)
-                GOTO 560
-550           END DO
-560           IRN(I2+1) = 0
+              IF (I2>=I1) THEN
+                 DO II = I1, I2
+                   IF (IRN(II)/=IPIV) CYCLE
+                   IRN(II) = IRN(I2+1)
+                   EXIT
+                 END DO
+              ENDIF
+              IRN(I2+1) = 0
             END DO
             NZCOL = NZCOL - LENPIV - 1
 
@@ -14671,7 +15734,7 @@
 
             NZPC = LENC(JPIV)
             IF (NZPC==0) GOTO 940
-            DO 880 III = 1, NZPC
+            LOOP880:DO III = 1, NZPC
               II = IPC(JPIV) + III - 1
               I = IRN(II)
 !             Search row I For non-zero to be eliminated,
@@ -14682,8 +15745,8 @@
               IDROP = 0
               J1 = IPTR(I) + LENRL(I)
               IEND = IPTR(I) + LENR(I) - 1
-              DO 580 JJ = J1, IEND
-                IF (ICN(JJ)/=JPIV) GOTO 580
+              DO JJ = J1, IEND
+                IF (ICN(JJ)/=JPIV) CYCLE
 !               IF pivot is zero, rest of column is and so
 !               multiplier is zero.
                 AU = ZERO
@@ -14694,10 +15757,10 @@
                 ICN(JJ) = ICN(J1)
                 ICN(J1) = JPIV
                 LENRL(I) = LENRL(I) + 1
-                GOTO 590
-580           END DO
+                EXIT
+              END DO
 !             JUMP if pivot row is a singleton.
-590           IF (LENPIV==0) GOTO 880
+              IF (LENPIV==0) CYCLE LOOP880
 !             Now perform necessary operations on rest of non-pivot
 !             row I.
               ROWI = J1 + 1
@@ -14720,16 +15783,16 @@
               MANPIV = MAX(MANPIV,LENPP)
               IANPIV = IANPIV + LENPP
               KOUNTL = KOUNTL + 1
-              DO 600 JJ = ROWI, IEND
+              DO JJ = ROWI, IEND
                 J = ICN(JJ)
-                IF (IQ(J)>0) GOTO 600
+                IF (IQ(J)>0) CYCLE
                 IOP = IOP + 1
                 PIVROW = IJPOS - IQ(J)
                 A(JJ) = A(JJ) + AU*A(PIVROW)
                 IF (LBIG) BIG = MAX(ABS(A(JJ)),BIG)
                 ICN(PIVROW) = -ICN(PIVROW)
                 IF (ABS(A(JJ))<TOL) IDROP = IDROP + 1
-600           END DO
+              END DO
 
 !             JUMP if no non-zeros in non-pivot row have been removed
 !             because these are beneath the drop-tolerance TOL.
@@ -14741,12 +15804,12 @@
 !             less than TOL are also removed from the column structure.
 
               JNEW = ROWI
-              DO 650 JJ = ROWI, IEND
+              LOOP650:DO JJ = ROWI, IEND
                 IF (ABS(A(JJ))<TOL) GOTO 610
                 A(JNEW) = A(JJ)
                 ICN(JNEW) = ICN(JJ)
                 JNEW = JNEW + 1
-                GOTO 650
+                CYCLE LOOP650
 
 !               Remove non-zero entry from column structure.
 
@@ -14754,29 +15817,30 @@
                 I1 = IPC(J)
                 I2 = I1 + LENC(J) - 1
                 DO II = I1, I2
-                  IF (IRN(II)==I) GOTO 630
+                  IF (IRN(II)==I) EXIT
                 END DO
-630             IRN(II) = IRN(I2)
+                IRN(II) = IRN(I2)
                 IRN(I2) = 0
                 LENC(J) = LENC(J) - 1
-                IF (NSRCH<=NN) GOTO 650
+                IF (NSRCH<=NN) CYCLE LOOP650
 !               Remove column from column chain and place in
 !               update chain.
-                IF (NEXTC(J)<0) GOTO 650
+                IF (NEXTC(J)<0) CYCLE LOOP650
 !               JUMP if column already in update chain.
                 LC = LASTC(J)
                 NC = NEXTC(J)
                 NEXTC(J) = -COLUPD
                 COLUPD = J
                 IF (NC/=0) LASTC(NC) = LC
-                IF (LC==0) GOTO 640
-                NEXTC(LC) = NC
-                GOTO 650
-640             NZ = LENC(J) + 1
-                ISW = IFIRST(NZ)
-                IF (ISW>0) LASTR(ISW) = -NC
-                IF (ISW<0) IFIRST(NZ) = -NC
-650           END DO
+                IF (LC/=0) THEN
+                  NEXTC(LC) = NC
+                ELSE
+                   NZ = LENC(J) + 1
+                   ISW = IFIRST(NZ)
+                   IF (ISW>0) LASTR(ISW) = -NC
+                   IF (ISW<0) IFIRST(NZ) = -NC
+                ENDIF
+              END DO LOOP650
               ICN(JNEW:IEND) = 0
 !             The value of IDROP might be different from that
 !             calculated earlier because we may now have dropped
@@ -14865,7 +15929,7 @@
 770           NZROW = NZROW + IFILL
 !             Innermost fill-in loop which also resets ICN.
               IDROP = 0
-              DO 850 JJ = IJP1, PIVEND
+              LOOP850:DO JJ = IJP1, PIVEND
                 J = ICN(JJ)
                 IF (J<0) GOTO 840
                 ANEW = AU*A(JJ)
@@ -14876,7 +15940,7 @@
                 NZROW = NZROW - 1
                 MINICN = MINICN - 1
                 IFILL = IFILL - 1
-                GOTO 850
+                CYCLE LOOP850
 780             IF (LBIG) BIG = MAX(AANEW,BIG)
                 A(IEND) = ANEW
                 ICN(IEND) = J
@@ -14915,53 +15979,52 @@
                 NZCOL = NZCOL + 1
                 LENC(J) = LENC(J) + 1
 !               End of adjustment to column file.
-                GOTO 850
+                CYCLE LOOP850
 840             ICN(JJ) = -J
-850           END DO
-              IF (IDROP==0) GOTO 870
-              DO KDROP = 1, IDROP
-                ICN(IEND) = 0
-                IEND = IEND + 1
-              END DO
-870           LENR(I) = LENR(I) + IFILL
+              END DO LOOP850
+              IF (IDROP/=0) THEN
+                 DO KDROP = 1, IDROP
+                   ICN(IEND) = 0
+                   IEND = IEND + 1
+                 END DO
+              ENDIF
+              LENR(I) = LENR(I) + IFILL
 !             End of scan of pivot column.
-880         END DO
+            END DO LOOP880
 
 !           Remove pivot column from column oriented storage
 !           and update row ordering arrays.
             I1 = IPC(JPIV)
             I2 = IPC(JPIV) + LENC(JPIV) - 1
             NZCOL = NZCOL - LENC(JPIV)
-            DO 930 II = I1, I2
+            LOOP930:DO II = I1, I2
               I = IRN(II)
               IRN(II) = 0
               NZ = LENR(I) - LENRL(I)
               IF (NZ/=0) GOTO 890
               LASTR(I) = 0
-              GOTO 930
+              CYCLE LOOP930
 890           IFIR = IFIRST(NZ)
               IFIRST(NZ) = I
-!             IF (IFIR) 900, 920, 910
-!900          LASTR(I) = IFIR
               IF (IFIR == 0) GOTO 920
               IF (IFIR > 0) GOTO 910
               LASTR(I) = IFIR
               NEXTR(I) = 0
-              GOTO 930
+              CYCLE LOOP930
 910           LASTR(I) = LASTR(IFIR)
               NEXTR(I) = IFIR
               LASTR(IFIR) = I
-              GOTO 930
+              CYCLE LOOP930
 920           LASTR(I) = 0
               NEXTR(I) = 0
               NZMIN = MIN(NZMIN,NZ)
-930         END DO
+930         END DO LOOP930
 !           Restore IQ and nullify U part of old pivot row.
 !           Record the column permutation in LASTC(JPIV) and
 !           the row permutation in LASTR(IPIV).
 940         IPC(JPIV) = -ISING
             LASTR(IPIV) = PIVOT
-            IF (LENPIV==0) GOTO 1050
+            IF (LENPIV==0) CYCLE LOOP1050
             NZROW = NZROW - LENPIV
             JVAL = IJP1
             JZER = IPTR(IPIV)
@@ -14974,36 +16037,36 @@
               JZER = JZER + 1
             END DO
 !           Adjust column ordering arrays.
-            IF (NSRCH>NN) GOTO 980
-            DO 970 JJ = IJP1, PIVEND
-              J = ICN(JJ)
-              NZ = LENC(J)
-              IF (NZ/=0) GOTO 960
-              IPC(J) = 0
-              GOTO 970
-960           NZMIN = MIN(NZMIN,NZ)
-970         END DO
-            GOTO 1050
-980         JJ = COLUPD
-            DO 1040 JDUMMY = 1, NN
+            IF (NSRCH<=NN) THEN
+               DO JJ = IJP1, PIVEND
+                 J = ICN(JJ)
+                 NZ = LENC(J)
+                 IF (NZ==0) THEN
+                    IPC(J) = 0
+                 ELSE
+                    NZMIN = MIN(NZMIN,NZ)
+                 ENDIF
+               END DO
+               CYCLE LOOP1050
+            ENDIF
+            JJ = COLUPD
+            LOOP1040: DO JDUMMY = 1, NN
               J = JJ
-              IF (J==NN+1) GOTO 1050
+              IF (J==NN+1) CYCLE LOOP1050
               JJ = -NEXTC(J)
               NZ = LENC(J)
               IF (NZ/=0) GOTO 990
               IPC(J) = 0
-              GOTO 1040
+              CYCLE LOOP1040
 990           IFIR = IFIRST(NZ)
               LASTC(J) = 0
-!             IF (IFIR) 1000, 1010, 1020
-!1000         IFIRST(NZ) = -J
               IF (IFIR == 0) GOTO 1010
               IF (IFIR > 0) GOTO 1020
               IFIRST(NZ) = -J
               IFIR = -IFIR
               LASTC(IFIR) = J
               NEXTC(J) = IFIR
-              GOTO 1040
+              CYCLE LOOP1040
 1010          IFIRST(NZ) = -J
               NEXTC(J) = 0
               GOTO 1030
@@ -15012,8 +16075,8 @@
               NEXTC(J) = LC
               IF (LC/=0) LASTC(LC) = J
 1030          NZMIN = MIN(NZMIN,NZ)
-1040        END DO
-1050      END DO
+            END DO LOOP1040
+          END DO LOOP1050
 ! ********************************************
 ! ****    End of main elimination loop    ****
 ! ********************************************
@@ -15021,32 +16084,33 @@
 !         Reset IACTIV to point to the beginning of the
 !         next block.
 1060      IF (ILAST/=NN) IACTIV = IPTR(ILAST+1)
-1070    END DO
+        END DO LOOP1070
 
 ! ********************************************
 ! ****    End of deomposition of block    ****
 ! ********************************************
 
 !     Record singularity (if any) in IQ array.
-        IF (IRANK==NN) GOTO 1090
-        DO 1080 I = 1, NN
-          IF (IPC(I)<0) GOTO 1080
-          ISING = IPC(I)
-          IQ(ISING) = -IQ(ISING)
-          IPC(I) = -ISING
-1080    END DO
-
+        IF (IRANK/=NN) THEN
+           DO I = 1, NN
+             IF (IPC(I)<0) CYCLE
+             ISING = IPC(I)
+             IQ(ISING) = -IQ(ISING)
+             IPC(I) = -ISING
+           END DO
+        ENDIF
 !       Run through LU decomposition changing column indices
 !       to that of new order and permuting LENR and LENRL
 !       arrays according to pivot permutations.
-1090    ISTART = IDISP(1)
+        ISTART = IDISP(1)
         IEND = IBEG - 1
-        IF (IEND<ISTART) GOTO 1110
-        DO JJ = ISTART, IEND
-          JOLD = ICN(JJ)
-          ICN(JJ) = -IPC(JOLD)
-        END DO
-1110    DO II = 1, NN
+        IF (IEND>=ISTART) THEN
+           DO JJ = ISTART, IEND
+             JOLD = ICN(JJ)
+             ICN(JJ) = -IPC(JOLD)
+           END DO
+        ENDIF
+        DO II = 1, NN
           I = LASTR(II)
           NEXTR(I) = LENR(II)
           IPTR(I) = LENRL(II)
@@ -15058,10 +16122,8 @@
         DO II = 1, NN
           I = LASTR(II)
           J = -IPC(II)
-          NEXTR(I) = IABS(IP(II)+0)
-          IPTR(J) = IABS(IQ(II)+0)
-!         NEXTR(I) = IABS(IP(II))
-!         IPTR(J) = IABS(IQ(II))
+          NEXTR(I) = ABS(IP(II)+0)
+          IPTR(J) = ABS(IQ(II)+0)
         END DO
         DO I = 1, NN
           IF (IP(I)<0) NEXTR(I) = -NEXTR(I)
@@ -15069,8 +16131,7 @@
           IF (IQ(I)<0) IPTR(I) = -IPTR(I)
           IQ(I) = IPTR(I)
         END DO
-        IP(NN) = IABS(IP(NN)+0)
-!       IP(NN) = IABS(IP(NN))
+        IP(NN) = ABS(IP(NN)+0)
         IDISP(2) = IEND
         GOTO 1190
 
@@ -15134,29 +16195,30 @@
 !       row/col number and hold this row/col index in the row/col
 !       pointer. This is so that the beginning of each row/col can
 !       be recognized in the subsequent scan.
-        DO 10 J = 1, N
+        DO J = 1, N
           K = IPTR(J)
-          IF (K<IACTIV) GOTO 10
+          IF (K<IACTIV) CYCLE
           IPTR(J) = ICN(K)
           ICN(K) = -J
-10      END DO
+        END DO
         KN = ITOP + 1
         KL = ITOP - IACTIV + 1
 !       Go through arrays in reverse order compressing to the back so
 !       that there are no zeros held in positions IACTIV to ITOP in ICN.
 !       Reset first entry of each row/col and pointer array IPTR.
-        DO 30 K = 1, KL
+        DO K = 1, KL
           JPOS = ITOP - K + 1
-          IF (ICN(JPOS)==0) GOTO 30
+          IF (ICN(JPOS)==0) CYCLE
           KN = KN - 1
           IF (REALS) A(KN) = A(JPOS)
-          IF (ICN(JPOS)>=0) GOTO 20
-!         First non-zero of row/col has been located.
-          J = -ICN(JPOS)
-          ICN(JPOS) = IPTR(J)
-          IPTR(J) = KN
-20        ICN(KN) = ICN(JPOS)
-30      END DO
+          IF (ICN(JPOS)<0) THEN
+   !         First non-zero of row/col has been located.
+             J = -ICN(JPOS)
+             ICN(JPOS) = IPTR(J)
+             IPTR(J) = KN
+          ENDIF
+          ICN(KN) = ICN(JPOS)
+        END DO
         IACTIV = KN
         RETURN
 
@@ -15241,7 +16303,7 @@
 !       At step I, row I of A is transformed to row I of LU by
 !       adding appropriate multiples of rows 1 TO I-1 using row
 !       Gauss elimination.
-30      DO 170 I = 1, N
+30      LOOP170: DO I = 1, N
 !         ISTART is beginning of row I of A and row I of L.
           ISTART = IW(I)
 !         IFIN is end of row I of A and row I of U.
@@ -15256,7 +16318,7 @@
           END DO
 
 !         Add multiples of appropriate rows of I to I-1 to row I.
-          DO 80 JJ = ISTART, ILEND
+          LOOP80: DO JJ = ISTART, ILEND
             J = ICN(JJ)
 !           IPIVJ is position of pivot in row J.
             IPIVJ = IW(J) + LENRL(J)
@@ -15267,20 +16329,21 @@
 !           AU * ROW J (U part) is added to row I.
             IPIVJ = IPIVJ + 1
             JFIN = IW(J) + LENR(J) - 1
-            IF (IPIVJ>JFIN) GOTO 80
+            IF (IPIVJ>JFIN) CYCLE LOOP80
 !           Innermost loop.
-            IF (LBIG) GOTO 60
-            DO JAYJAY = IPIVJ, JFIN
-              JAY = ICN(JAYJAY)
-              W(JAY) = W(JAY) + AU*A(JAYJAY)
-            END DO
-            GOTO 80
-60          DO JAYJAY = IPIVJ, JFIN
-              JAY = ICN(JAYJAY)
-              W(JAY) = W(JAY) + AU*A(JAYJAY)
-              BIG = MAX(ABS(W(JAY)),BIG)
-            END DO
-80        END DO
+            IF (.NOT. LBIG) THEN
+               DO JAYJAY = IPIVJ, JFIN
+                 JAY = ICN(JAYJAY)
+                 W(JAY) = W(JAY) + AU*A(JAYJAY)
+               END DO
+            ELSE
+               DO JAYJAY = IPIVJ, JFIN
+                 JAY = ICN(JAYJAY)
+                 W(JAY) = W(JAY) + AU*A(JAYJAY)
+                 BIG = MAX(ABS(W(JAY)),BIG)
+               END DO
+            ENDIF
+          END DO LOOP80
 
 !         Reload W back into A (now LU).
           DO JJ = ISTART, IFIN
@@ -15301,33 +16364,33 @@
 !         block. Check to see that appropriate part of LU is zero
 !         or null.
 110       IF (ISTART>IFIN) GOTO 130
-          DO 120 JJ = ISTART, IFIN
-            IF (ICN(JJ)<ISING) GOTO 120
+          DO JJ = ISTART, IFIN
+            IF (ICN(JJ)<ISING) CYCLE
             IF (ABS(A(JJ))>ZERO) GOTO 180
-120       END DO
+          END DO
 130       IF (PIVPOS<=IFIN) A(PIVPOS) = ONE
-          IF (IP(I)>0 .AND. I/=N) GOTO 170
+          IF (IP(I)>0 .AND. I/=N) CYCLE LOOP170
 !         End of current block. Reset zero pivots and ISING.
-          DO 140 J = ISING, I
-            IF ((LENR(J)-LENRL(J))==0) GOTO 140
+          DO J = ISING, I
+            IF ((LENR(J)-LENRL(J))==0) CYCLE
             JJ = IW(J) + LENRL(J)
             A(JJ) = ZERO
-140       END DO
+          END DO
           ISING = 0
-          GOTO 170
+          CYCLE LOOP170
 !         Matrix had non-zero pivot in MA30AD at this stage.
 150       IF (PIVPOS>IFIN) GOTO 180
           IF (ABS(A(PIVPOS))<=ZERO) GOTO 180
-          IF (.NOT.STAB) GOTO 170
+          IF (.NOT.STAB) CYCLE LOOP170
           ROWMAX = ZERO
           DO JJ = PIVPOS, IFIN
             ROWMAX = MAX(ROWMAX,ABS(A(JJ)))
           END DO
-          IF (ABS(A(PIVPOS))/ROWMAX>=RMIN) GOTO 170
+          IF (ABS(A(PIVPOS))/ROWMAX>=RMIN) CYCLE LOOP170
           IFLAG = I
           RMIN = ABS(A(PIVPOS))/ROWMAX
 !         End of main loop.
-170     END DO
+        END DO LOOP170
 
         GOTO 190
 !       Error return
@@ -15438,7 +16501,7 @@
 !       Preorder VECTOR ... W(I) = X(IP(I))
         DO II = 1, N
           I = IP(II)
-          I = IABS(I)
+          I = ABS(I)
           W(II) = X(I)
         END DO
 !       LT holds the position of the first non-zero in the current
@@ -15455,7 +16518,7 @@
 !       LU decomposition. If I is the last row of a block then, after
 !       performing these aforementioned operations, back substitution
 !       is performed using the rows of the block.
-        DO 120 I = 1, N
+        LOOP120: DO I = 1, N
           WI = W(I)
           IF (NOBLOC) GOTO 30
           IF (LENOFF(I)==0) GOTO 30
@@ -15481,7 +16544,7 @@
 !         IBLOCK is adjusted to point to the start of the next row.
 50        IBLOCK = IBLOCK + LENR(I)
           W(I) = WI
-          IF (.NOT.NEG) GOTO 120
+          IF (.NOT.NEG) CYCLE LOOP120
 !         Back substitution phase.
 !         J1 is position in A/ICN after end of block beginning in
 !         row IFIRST and ending in row I.
@@ -15523,12 +16586,12 @@
           END DO
 110       IFIRST = I + 1
           NEG = .FALSE.
-120     END DO
+        END DO LOOP120
 
 !       Reorder solution vector, X(I) = W(IQINVERSE(I)).
         DO II = 1, N
           I = IQ(II)
-          I = IABS(I)
+          I = ABS(I)
           X(I) = W(II)
         END DO
         IP(N) = -IP(N)
@@ -15538,7 +16601,7 @@
 !       Preorder vector, W(I) = X(IQ(I)).
 140     DO II = 1, N
           I = IQ(II)
-          I = IABS(I)
+          I = ABS(I)
           W(II) = X(I)
         END DO
 !       LJ1 points to the beginning the current row in the off-diagonal
@@ -15608,7 +16671,7 @@
 !         the L TRANSPOSE part of the diagonal blocks and the
 !         off-diagonal blocks.
 240       J1 = IBLEND
-          DO 280 IBACK = IFIRST, ILAST
+          LOOP280: DO IBACK = IFIRST, ILAST
             I = ILAST - IBACK + IFIRST
 !           J1 points to the beginning of row I.
             J1 = J1 - LENR(I)
@@ -15619,9 +16682,9 @@
               J = ICN(JJ)
               W(J) = W(J) + A(JJ)*W(I)
             END DO
-260         IF (NOBLOC) GOTO 280
+260         IF (NOBLOC) CYCLE LOOP280
 !           Operations using lower triangular blocks.
-            IF (LENOFF(I)==0) GOTO 280
+            IF (LENOFF(I)==0) CYCLE LOOP280
 !           LJ2 points to the end of row I of the off-diagonal blocks.
             LJ2 = LJ1 - 1
 !           LJ1 points to the beginning of row I of the off-diagonal
@@ -15631,14 +16694,14 @@
               J = ICN(JJ)
               W(J) = W(J) - A(JJ)*W(I)
             END DO
-280       END DO
+          END DO LOOP280
           IBLEND = J1
           ILAST = IFIRST - 1
         END DO
 !       Reorder solution vector, X(I) = W(IPINVERSE(I)).
 300     DO II = 1, N
           I = IP(II)
-          I = IABS(I)
+          I = ABS(I)
           X(I) = W(II)
         END DO
 
@@ -15850,9 +16913,9 @@
           ARP(J) = LENR(J) - 1
         END DO
 
-        DO 90 ISN = 1, N
+        LOOP90:DO ISN = 1, N
 !         Look for a starting node.
-          IF (NUMB(ISN)/=0) GOTO 90
+          IF (NUMB(ISN)/=0) CYCLE LOOP90
           IV = ISN
 !         IST is the number of nodes on the stack. It is the
 !         stack pointer.
@@ -15864,57 +16927,69 @@
 
 !         The body of this loop puts a new node on the stack
 !         or backtracks.
-          DO 80 DUMMY = 1, NNM1
+          LOOP80:DO DUMMY = 1, NNM1
             I1 = ARP(IV)
 !           Have all edges leaving node iv been searched?
-            IF (I1<0) GOTO 30
-            I2 = IP(IV) + LENR(IV) - 1
-            I1 = I2 - I1
+            IF (I1>=0) THEN
+               I2 = IP(IV) + LENR(IV) - 1
+               I1 = I2 - I1
 
-!           Look at edges leaving node iv until one enters a
-!           new node or all edges are exhausted.
-            DO 20 II = I1, I2
-              IW = ICN(II)
-!             Has node iw been on stack already?
-              IF (NUMB(IW)==0) GOTO 70
-!             Update value of LOWL(IV) if necessary.
-20          LOWL(IV) = MIN(LOWL(IV),LOWL(IW))
+   !           Look at edges leaving node iv until one enters a
+   !           new node or all edges are exhausted.
+               DO II = I1, I2
+                 IW = ICN(II)
+   !             Has node iw been on stack already?
+                 IF (NUMB(IW)==0) THEN
+                   ARP(IV) = I2 - II - 1
+                   PREV(IW) = IV
+                   IV = IW
+                   IST = IST + 1
+                   LOWL(IV) = IST
+                   NUMB(IV) = IST
+                   K = N + 1 - IST
+                   IB(K) = IV
+                   CYCLE LOOP80
+                 ENDIF
+   !             Update value of LOWL(IV) if necessary.
+                 LOWL(IV) = MIN(LOWL(IV),LOWL(IW))
+               ENDDO
+   !           There are no more edges leaving node IV.
+               ARP(IV) = -1
+   !           Is node IV the root of a block.
+            ENDIF
+            IF (LOWL(IV)>=NUMB(IV)) THEN
 
-!           There are no more edges leaving node IV.
-            ARP(IV) = -1
-!           Is node IV the root of a block.
-30          IF (LOWL(IV)<NUMB(IV)) GOTO 60
-
-!           Order nodes in a block.
-            NUM = NUM + 1
-            IST1 = N + 1 - IST
-            LCNT = ICNT + 1
-!           Peel block off the top of the stack starting at the
-!           top and working down to the root of the block.
-            DO STP = IST1, N
-              IW = IB(STP)
-              LOWL(IW) = N + 1
-              ICNT = ICNT + 1
-              NUMB(IW) = ICNT
-              IF (IW==IV) GOTO 50
-            END DO
-50          IST = N - STP
-            IB(NUM) = LCNT
-!           Are there any nodes left on the stack?
-            IF (IST/=0) GOTO 60
-!           Have all the nodes been ordered?
-            IF (ICNT<N) GOTO 90
-            GOTO 100
-
+   !           Order nodes in a block.
+               NUM = NUM + 1
+               IST1 = N + 1 - IST
+               LCNT = ICNT + 1
+   !           Peel block off the top of the stack starting at the
+   !           top and working down to the root of the block.
+               DO STP = IST1, N
+                 IW = IB(STP)
+                 LOWL(IW) = N + 1
+                 ICNT = ICNT + 1
+                 NUMB(IW) = ICNT
+                 IF (IW==IV) EXIT
+               END DO
+               IST = N - STP
+               IB(NUM) = LCNT
+   !           Are there any nodes left on the stack?
+               IF (IST==0) THEN
+      !           Have all the nodes been ordered?
+                  IF (ICNT<N) CYCLE LOOP90
+                  EXIT LOOP90
+               ENDIF
+            ENDIF
 !           Backtrack to previous node on path.
-60          IW = IV
+            IW = IV
             IV = PREV(IV)
 !           Update value of LOWL(IV) if necessary.
             LOWL(IV) = MIN(LOWL(IV),LOWL(IW))
-            GOTO 80
+            CYCLE LOOP80
 
 !           Put new node on the stack.
-70          ARP(IV) = I2 - II - 1
+            ARP(IV) = I2 - II - 1
             PREV(IW) = IV
             IV = IW
             IST = IST + 1
@@ -15922,12 +16997,12 @@
             NUMB(IV) = IST
             K = N + 1 - IST
             IB(K) = IV
-80        END DO
+          END DO LOOP80
 
-90      END DO
+        END DO LOOP90
 
 !       Put permutation in the required form.
-100     DO I = 1, N
+        DO I = 1, N
           II = NUMB(I)
           ARP(II) = I
         END DO
@@ -15972,16 +17047,16 @@
 
 !       Reorder the elements into column order. The algorithm is an
 !       in-place sort and is of order MAXA.
-        DO 50 I = 1, MAXA
+        LOOP50:DO I = 1, MAXA
 !         Establish the current entry.
           JCE = JNUM(I) + JDISP
-          IF (JCE==0) GOTO 50
+          IF (JCE==0) CYCLE LOOP50
           ACE = A(I)
           ICE = INUM(I)
 !         Clear the location vacated.
           JNUM(I) = MYNULL
 !         Chain from current entry to store items.
-          DO 40 J = 1, MAXA
+          LOOP40: DO J = 1, MAXA
 !           Current entry not in correct position. Determine the
 !           correct position to store entry.
             LOC = JPTR(JCE)
@@ -15995,13 +17070,13 @@
             INUM(LOC) = ICE
             JNUM(LOC) = MYNULL
 !           Check if next current entry needs to be processed.
-            IF (JCEP==MYNULL) GOTO 50
+            IF (JCEP==MYNULL) CYCLE LOOP50
 !           It does. Copy into current entry.
             ACE = ACEP
             ICE = ICEP
-40        JCE = JCEP + JDISP
-
-50      END DO
+            JCE = JCEP + JDISP
+          ENDDO LOOP40
+        END DO LOOP50
 
 !       Reset JPTR vector.
         JA = 1
@@ -16039,25 +17114,26 @@
         DO JJ = 1, NC
           J = NC + 1 - JJ
           KLO = JPTR(J) + 1
-          IF (KLO>KMAX) GOTO 40
-          KOR = KMAX
-          DO KDUMMY = KLO, KMAX
-!           Items KOR,KOR+1,...,KMAX are in order.
-            ACE = A(KOR-1)
-            ICE = INUM(KOR-1)
-            DO K = KOR, KMAX
-              IK = INUM(K)
-              IF (IABS(ICE)<=IABS(IK)) GOTO 20
-              INUM(K-1) = IK
-              A(K-1) = A(K)
-            END DO
-            K = KMAX + 1
-20          INUM(K-1) = ICE
-            A(K-1) = ACE
-            KOR = KOR - 1
-          END DO
+          IF (KLO<=KMAX) THEN
+             KOR = KMAX
+             DO KDUMMY = KLO, KMAX
+   !           Items KOR,KOR+1,...,KMAX are in order.
+               ACE = A(KOR-1)
+               ICE = INUM(KOR-1)
+               DO K = KOR, KMAX
+                 IK = INUM(K)
+                 IF (ABS(ICE)<=ABS(IK)) GOTO 20
+                 INUM(K-1) = IK
+                 A(K-1) = A(K)
+               END DO
+               K = KMAX + 1
+   20          INUM(K-1) = ICE
+               A(K-1) = ACE
+               KOR = KOR - 1
+             END DO
+          ENDIF
 !         Next column.
-40        KMAX = KLO - 2
+          KMAX = KLO - 2
         END DO
         RETURN
 
@@ -16126,10 +17202,10 @@
 !       Main loop.
 !       Each pass round this loop either results in a new
 !       assignment or gives a row with no assignment.
-        DO 100 JORD = 1, N
+        LOOP100: DO JORD = 1, N
           J = JORD
           PR(J) = -1
-          DO 70 K = 1, JORD
+          LOOP70: DO K = 1, JORD
 !           Look for a cheap assignment.
             IN1 = ARP(J)
             IF (IN1<0) GOTO 30
@@ -16146,28 +17222,28 @@
 !           Inner loop. Extends chain by one or backtracks.
             DO KK = 1, JORD
               IN1 = OUT(J)
-              IF (IN1<0) GOTO 50
-              IN2 = IP(J) + LENR(J) - 1
-              IN1 = IN2 - IN1
-!             Forward scan.
-              DO 40 II = IN1, IN2
-                I = ICN(II)
-                IF (CV(I)==JORD) GOTO 40
-!               Column I has not yet been accessed during this pass.
-                J1 = J
-                J = IPERM(I)
-                CV(I) = JORD
-                PR(J) = J1
-                OUT(J1) = IN2 - II - 1
-                GOTO 70
-40            END DO
-
+              IF (IN1>=0) THEN
+                 IN2 = IP(J) + LENR(J) - 1
+                 IN1 = IN2 - IN1
+   !             Forward scan.
+                 DO II = IN1, IN2
+                   I = ICN(II)
+                   IF (CV(I)==JORD) CYCLE
+   !               Column I has not yet been accessed during this pass.
+                   J1 = J
+                   J = IPERM(I)
+                   CV(I) = JORD
+                   PR(J) = J1
+                   OUT(J1) = IN2 - II - 1
+                   CYCLE LOOP70
+                 END DO
+              ENDIF
 !             Backtracking step.
-50            J = PR(J)
-              IF (J==-1) GOTO 100
+              J = PR(J)
+              IF (J==-1) CYCLE LOOP100
             END DO
 
-70        END DO
+          END DO LOOP70
 
 !         New assignment is made.
 80        IPERM(I) = J
@@ -16175,34 +17251,35 @@
           NUMNZ = NUMNZ + 1
           DO K = 1, JORD
             J = PR(J)
-            IF (J==-1) GOTO 100
+            IF (J==-1) CYCLE LOOP100
             II = IP(J) + LENR(J) - OUT(J) - 2
             I = ICN(II)
             IPERM(I) = J
           END DO
 
-100     END DO
+        END DO LOOP100
 
 !       If matrix is structurally singular, we now complete the
 !       permutation IPERM.
         IF (NUMNZ==N) RETURN
         ARP(1:N) = 0
         K = 0
-        DO 130 I = 1, N
-          IF (IPERM(I)/=0) GOTO 120
-          K = K + 1
-          OUT(K) = I
-          GOTO 130
-120       J = IPERM(I)
-          ARP(J) = I
-130     END DO
+        DO I = 1, N
+          IF (IPERM(I)==0) THEN
+             K = K + 1
+             OUT(K) = I
+          ELSE
+             J = IPERM(I)
+             ARP(J) = I
+          ENDIF
+        END DO
         K = 0
-        DO 140 I = 1, N
-          IF (ARP(I)/=0) GOTO 140
+        DO I = 1, N
+          IF (ARP(I)/=0) CYCLE
           K = K + 1
           IOUTK = OUT(K)
           IPERM(IOUTK) = I
-140     END DO
+        END DO
         RETURN
 
       END SUBROUTINE MC21B
@@ -16221,7 +17298,7 @@
 ! ..
 ! .. Local Scalars ..
         REAL (WP) :: AVAL
-        INTEGER :: I, ICHAIN, IOLD, IPOS, J, J2, JJ, JNUM, JVAL, LENGTH, &
+        INTEGER :: I, ICHAIN, IOLD, IPOS, J2, JJ, JNUM, JVAL, LENGTH, &
           NEWPOS
 ! ..
 ! .. Intrinsic Functions ..
@@ -16229,8 +17306,7 @@
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT MA22AD
 ! ..
-        IF (NZ<=0) GOTO 90
-        IF (N<=0) GOTO 90
+        IF (NZ<=0 .OR. N<=0) RETURN
 !       Set start of row I in IW(I,1) and LENROW(I) in IW(I,2)
         IW(1,1) = 1
         IW(1,2) = LENROW(1)
@@ -16243,22 +17319,21 @@
 !       indices in IW1 in positions corresponding to the new
 !       position of this row in A/ICN.
         JJ = 1
-        DO 30 I = 1, N
+        DO I = 1, N
           IOLD = IP(I)
-          IOLD = IABS(IOLD)
+          IOLD = ABS(IOLD)
           LENGTH = IW(IOLD,2)
           LENROW(I) = LENGTH
-          IF (LENGTH==0) GOTO 30
+          IF (LENGTH==0) CYCLE
           IW(IOLD,1) = IW(IOLD,1) - JJ
           J2 = JJ + LENGTH - 1
-          DO 20 J = JJ, J2
-20        IW1(J) = IOLD
+          IW1(JJ:J2) = IOLD
           JJ = J2 + 1
-30      END DO
+        END DO
 !       Set inverse permutation to IQ in IW(:,2).
         DO I = 1, N
           IOLD = IQ(I)
-          IOLD = IABS(IOLD)
+          IOLD = ABS(IOLD)
           IW(IOLD,2) = I
         END DO
 !       Permute A and ICN in place, changing to new column numbers.
@@ -16268,38 +17343,38 @@
 !       This is recorded by setting the iw1 entry to zero so
 !       that any which are subsequently encountered during
 !       this major scan can be bypassed.
-        DO 80 I = 1, NZ
+        LOOP80:DO I = 1, NZ
           IOLD = IW1(I)
-          IF (IOLD==0) GOTO 80
+          IF (IOLD==0) CYCLE LOOP80
           IPOS = I
           JVAL = ICN(I)
 !         If row IOLD is in same positions after permutation,
-!         GOTO 150.
-          IF (IW(IOLD,1)==0) GOTO 70
-          AVAL = A(I)
-!         Chain loop.
-!         Each pass through this loop places one(permuted) column
-!         index in its final position, viz. IPOS.
-          DO ICHAIN = 1, NZ
-!           NEWPOS is the original position in A/ICN of the
-!           element to be placed in position IPOS. It is also
-!           the position of the next element in the chain.
-            NEWPOS = IPOS + IW(IOLD,1)
-!           Is chain complete?
-            IF (NEWPOS==I) GOTO 60
-            A(IPOS) = A(NEWPOS)
-            JNUM = ICN(NEWPOS)
-            ICN(IPOS) = IW(JNUM,2)
-            IPOS = NEWPOS
-            IOLD = IW1(IPOS)
-            IW1(IPOS) = 0
-!           End of chain loop.
-          END DO
-60        A(IPOS) = AVAL
-70        ICN(IPOS) = IW(JVAL,2)
+          IF (IW(IOLD,1)/=0) THEN
+             AVAL = A(I)
+   !         Chain loop.
+   !         Each pass through this loop places one(permuted) column
+   !         index in its final position, viz. IPOS.
+             DO ICHAIN = 1, NZ
+   !           NEWPOS is the original position in A/ICN of the
+   !           element to be placed in position IPOS. It is also
+   !           the position of the next element in the chain.
+               NEWPOS = IPOS + IW(IOLD,1)
+   !           Is chain complete?
+               IF (NEWPOS==I) EXIT
+               A(IPOS) = A(NEWPOS)
+               JNUM = ICN(NEWPOS)
+               ICN(IPOS) = IW(JNUM,2)
+               IPOS = NEWPOS
+               IOLD = IW1(IPOS)
+               IW1(IPOS) = 0
+   !           End of chain loop.
+             END DO
+             A(IPOS) = AVAL
+          ENDIF
+          ICN(IPOS) = IW(JVAL,2)
 !         END OF MAIN LOOP
-80      END DO
-90      RETURN
+        END DO LOOP80
+        RETURN
 
       END SUBROUTINE MC22AD
 !_______________________________________________________________________
@@ -16330,20 +17405,26 @@
 !     and set LENOFF equal to LENR.
         IW1(1,1) = 1
         LENOFF(1) = LENR(1)
-        IF (N==1) GOTO 20
-        DO I = 2, N
-          LENOFF(I) = LENR(I)
-          IW1(I,1) = IW1(I-1,1) + LENR(I-1)
-        END DO
+        IF (N/=1) THEN
+           DO I = 2, N
+             LENOFF(I) = LENR(I)
+             IW1(I,1) = IW1(I-1,1) + LENR(I-1)
+           END DO
+        ENDIF
 !       IDISP(1) points to the first position in A/ICN after
 !       the off-diagonal blocks and untreated rows.
-20      IDISP(1) = IW1(N,1) + LENR(N)
+        IDISP(1) = IW1(N,1) + LENR(N)
 
 !       Find row permutation ip to make diagonal zero-free.
         CALL MC21A(N,ICN,LICN,IW1(1,1),LENR,IP,NUMNZ,IW(1,1))
 
 !       Possible error return for structurally singular matrices.
-        IF (NUMNZ/=N .AND. ABORT) GOTO 170
+        IF (NUMNZ/=N .AND. ABORT) THEN
+           IF (LP/=0) WRITE (LP,90000) NUMNZ
+           IDISP(1) = -1
+           IF (LP/=0) WRITE (LP,90002)
+           RETURN
+        ENDIF
 
 !       IW1(:,2) and LENR are permutations of IW1(:,1) and
 !       LENR/LENOFF suitable for entry to MC13D since matrix
@@ -16358,37 +17439,37 @@
 !       Find symmetric permutation IQ to block lower triangular form.
         CALL MC13D(N,ICN,LICN,IW1(1,2),LENR,IQ,IW(1,4),NUM,IW)
 
-        IF (NUM/=1) GOTO 60
+        IF (NUM/=1) THEN
 
-!       Action taken if matrix is irreducible: The
-!       whole matrix is just moved to the end of the storage.
-        DO I = 1, N
-          LENR(I) = LENOFF(I)
-          IP(I) = I
-          IQ(I) = I
-        END DO
-        LENOFF(1) = -1
-!       IDISP(1) is the first position after the last element in
-!       the off-diagonal blocks and untreated rows.
-        NZ = IDISP(1) - 1
-        IDISP(1) = 1
-!       IDISP(2) Is the position in A/ICN of the first element
-!       in the diagonal blocks.
-        IDISP(2) = LICN - NZ + 1
-        LARGE = N
-        IF (NZ==LICN) GOTO 200
-        DO K = 1, NZ
-          J = NZ - K + 1
-          JJ = LICN - K + 1
-          A(JJ) = A(J)
-          ICN(JJ) = ICN(J)
-        END DO
-        GOTO 200
-
+   !       Action taken if matrix is irreducible: The
+   !       whole matrix is just moved to the end of the storage.
+           DO I = 1, N
+             LENR(I) = LENOFF(I)
+             IP(I) = I
+             IQ(I) = I
+           END DO
+           LENOFF(1) = -1
+   !       IDISP(1) is the first position after the last element in
+   !       the off-diagonal blocks and untreated rows.
+           NZ = IDISP(1) - 1
+           IDISP(1) = 1
+   !       IDISP(2) Is the position in A/ICN of the first element
+   !       in the diagonal blocks.
+           IDISP(2) = LICN - NZ + 1
+           LARGE = N
+           IF (NZ==LICN) RETURN
+           DO K = 1, NZ
+             J = NZ - K + 1
+             JJ = LICN - K + 1
+             A(JJ) = A(J)
+             ICN(JJ) = ICN(J)
+           END DO
+           RETURN
+        ENDIF
 !       Data structure reordered.
 
 !       Form composite row permutation, IP(I) = IP(IQ(I)).
-60      DO II = 1, N
+        DO II = 1, N
           I = IQ(II)
           IW(II,1) = IP(I)
         END DO
@@ -16429,55 +17510,67 @@
             IOLD = IP(INEW)
 !           If there is space to move up diagonal block portion
 !           of row GOTO 110.
-            IF (IEND-IDISP(1)>=LENOFF(IOLD)) GOTO 110
+            IF (IEND-IDISP(1)<LENOFF(IOLD)) THEN
 
-!           In-line compress.
-!           Moves separated off-diagonal elements and untreated
-!           rows to front of storage.
-            JNPOS = IBEG
-            ILEND = IDISP(1) - 1
-            IF (ILEND<IBEG) GOTO 180
-            DO 90 J = IBEG, ILEND
-              IF (ICN(J)==0) GOTO 90
-              ICN(JNPOS) = ICN(J)
-              A(JNPOS) = A(J)
-              JNPOS = JNPOS + 1
-90          END DO
-            IDISP(1) = JNPOS
-            IF (IEND-JNPOS<LENOFF(IOLD)) GOTO 180
-            IBEG = LICN + 1
-!           Reset pointers to the beginning of the rows.
-            DO 100 I = 2, N
-100         IW1(I,1) = IW1(I-1,1) + LENOFF(I-1)
-
+   !           In-line compress.
+   !           Moves separated off-diagonal elements and untreated
+   !           rows to front of storage.
+               JNPOS = IBEG
+               ILEND = IDISP(1) - 1
+               IF (ILEND<IBEG) THEN
+                 IF (LP/=0) WRITE (LP,90001) N
+                 IDISP(1) = -2
+                 IF (LP/=0) WRITE (LP,90002)
+                 RETURN
+               ENDIF
+               DO J = IBEG, ILEND
+                 IF (ICN(J)==0) CYCLE
+                 ICN(JNPOS) = ICN(J)
+                 A(JNPOS) = A(J)
+                 JNPOS = JNPOS + 1
+               END DO
+               IDISP(1) = JNPOS
+               IF (IEND-JNPOS<LENOFF(IOLD)) THEN
+                 IF (LP/=0) WRITE (LP,90001) N
+                 IDISP(1) = -2
+                 IF (LP/=0) WRITE (LP,90002)
+                 RETURN
+               ENDIF
+               IBEG = LICN + 1
+   !           Reset pointers to the beginning of the rows.
+               DO I = 2, N
+                  IW1(I,1) = IW1(I-1,1) + LENOFF(I-1)
+               ENDDO
+            ENDIF
 !           Row IOLD is now split into diagonal and off-diagonal parts.
-110         IROWB = IW1(IOLD,1)
+            IROWB = IW1(IOLD,1)
             LENI = 0
             IROWE = IROWB + LENOFF(IOLD) - 1
 !           Backward scan of whole of row IOLD (in original matrix).
-            IF (IROWE<IROWB) GOTO 130
-            DO 120 JJ = IROWB, IROWE
-              J = IROWE - JJ + IROWB
-              JOLD = ICN(J)
-!             IW(:,2) holds the inverse permutation to IQ.
-!             It was set to this in MC13D.
-              JNEW = IW(JOLD,2)
-!             IF (JNEW < I1) THEN ...
-!             Element is in off-diagonal block and so is
-!             left in situ.
-              IF (JNEW<I1) GOTO 120
-!             Element is in diagonal block and is moved to
-!             the end of the storage.
-              IEND = IEND - 1
-              A(IEND) = A(J)
-              ICN(IEND) = JNEW
-              IBEG = MIN(IBEG,J)
-              ICN(J) = 0
-              LENI = LENI + 1
-120         END DO
+            IF (IROWE>=IROWB) THEN
+               DO JJ = IROWB, IROWE
+                 J = IROWE - JJ + IROWB
+                 JOLD = ICN(J)
+   !             IW(:,2) holds the inverse permutation to IQ.
+   !             It was set to this in MC13D.
+                 JNEW = IW(JOLD,2)
+   !             IF (JNEW < I1) THEN ...
+   !             Element is in off-diagonal block and so is
+   !             left in situ.
+                 IF (JNEW<I1) CYCLE
+   !             Element is in diagonal block and is moved to
+   !             the end of the storage.
+                 IEND = IEND - 1
+                 A(IEND) = A(J)
+                 ICN(IEND) = JNEW
+                 IBEG = MIN(IBEG,J)
+                 ICN(J) = 0
+                 LENI = LENI + 1
+               END DO
 
-            LENOFF(IOLD) = LENOFF(IOLD) - LENI
-130         LENR(INEW) = LENI
+               LENOFF(IOLD) = LENOFF(IOLD) - LENI
+            ENDIF
+            LENR(INEW) = LENI
           END DO
 
           IP(I2) = -IP(I2)
@@ -16489,31 +17582,24 @@
 
 !       This compress is used to move all off-diagonal elements
 !       to the front of the storage.
-        IF (IBEG>LICN) GOTO 200
+        IF (IBEG>LICN) RETURN
         JNPOS = IBEG
         ILEND = IDISP(1) - 1
-        DO 160 J = IBEG, ILEND
-          IF (ICN(J)==0) GOTO 160
+        DO J = IBEG, ILEND
+          IF (ICN(J)==0) CYCLE
           ICN(JNPOS) = ICN(J)
           A(JNPOS) = A(J)
           JNPOS = JNPOS + 1
-160     END DO
+        END DO
 !       IDISP(1) is first position after last element of
 !       off-diagonal blocks.
         IDISP(1) = JNPOS
-        GOTO 200
+        RETURN
 
 !       Error return
-170     IF (LP/=0) WRITE (LP,90000) NUMNZ
 90000   FORMAT (' Matrix is structurally singular, rank = ',I6)
-        IDISP(1) = -1
-        GOTO 190
-180     IF (LP/=0) WRITE (LP,90001) N
 90001   FORMAT (' LICN is not big enough; increase by ',I6)
-        IDISP(1) = -2
-190     IF (LP/=0) WRITE (LP,90002)
 90002   FORMAT (' + Error return from MC23AD')
-200     RETURN
 
       END SUBROUTINE MC23AD
 !_______________________________________________________________________
@@ -16541,26 +17627,30 @@
         AMAXL = ZERO
         W(1:N) = ZERO
         J0 = 1
-        DO 60 I = 1, N
-          IF (LENR(I)==0) GOTO 60
+        DO I = 1, N
+          IF (LENR(I)==0) CYCLE
           J2 = J0 + LENR(I) - 1
-          IF (LENRL(I)==0) GOTO 30
-!         Calculation of 1-norm of L.
-          J1 = J0 + LENRL(I) - 1
-          WROWL = ZERO
-          DO 20 JJ = J0, J1
-20        WROWL = WROWL + ABS(A(JJ))
-!         AMAXL is the maximum norm of columns of L so far found.
-          AMAXL = MAX(AMAXL,WROWL)
-          J0 = J1 + 1
+          IF (LENRL(I)/=0) THEN
+   !         Calculation of 1-norm of L.
+             J1 = J0 + LENRL(I) - 1
+             WROWL = ZERO
+             DO JJ = J0, J1
+                WROWL = WROWL + ABS(A(JJ))
+             ENDDO
+   !         AMAXL is the maximum norm of columns of L so far found.
+             AMAXL = MAX(AMAXL,WROWL)
+             J0 = J1 + 1
+          ENDIF
 !         Calculation of norms of columns of U(MAX-NORMS).
-30        J0 = J0 + 1
-          IF (J0>J2) GOTO 50
-          DO 40 JJ = J0, J2
-            J = ICN(JJ)
-40        W(J) = MAX(ABS(A(JJ)),W(J))
-50        J0 = J2 + 1
-60      END DO
+          J0 = J0 + 1
+          IF (J0<=J2) THEN
+             DO JJ = J0, J2
+               J = ICN(JJ)
+               W(J) = MAX(ABS(A(JJ)),W(J))
+             ENDDO
+          ENDIF
+          J0 = J2 + 1
+        END DO
 !       AMAXU is set to maximum max-norm of columns of U.
         AMAXU = ZERO
         DO I = 1, N
@@ -16614,9 +17704,11 @@
 ! ..
 !       Check scalar data.
         IFAIL = 1
-        IF (N<1) GOTO 210
+        IF (N<1) THEN
+           IF (LP>0) WRITE (LP,90001) IFAIL
+           RETURN
+        ENDIF
         IFAIL = 2
-!       IF (N > 32767)GOTO 230
         IFAIL = 2
         IFAIL = 0
 
@@ -16624,27 +17716,29 @@
         C(1:N) = ZERO
         R(1:N) = ZERO
         W(1:N,1:4) = ZERO
-        IF (NA<=0) GOTO 220
-        DO 40 K = 1, NA
+        IF (NA<=0) RETURN
+        LOOP40: DO K = 1, NA
           U = ABS(A(K))
-!         IF (U == ZERO) GOTO 30
-          IF (ABS(U-ZERO)<=ZERO) GOTO 40
+          IF (ABS(U-ZERO)<=ZERO) CYCLE LOOP40
           U = LOG(U)
           I1 = IRN(K)
           I2 = ICN(K)
-          IF (I1>=1 .AND. I1<=N .AND. I2>=1 .AND. I2<=N) GOTO 30
-          IF (LP>0) WRITE (LP,90000) K, I1, I2
-90000     FORMAT (' MC19 error. Element ',I5,' is in row ',I5,' and column ', &
-            I5)
-          IFAIL = 3
-          GOTO 40
+          IF (I1>=1 .AND. I1<=N .AND. I2>=1 .AND. I2<=N) THEN
 !         Count row/col non-zeros and compute rhs vectors.
-30        W(I1,1) = W(I1,1) + 1.
-          W(I2,2) = W(I2,2) + 1.
-          R(I1) = R(I1) + U
-          W(I2,3) = W(I2,3) + U
-40      END DO
-        IF (IFAIL==3) GOTO 210
+             W(I1,1) = W(I1,1) + 1.
+             W(I2,2) = W(I2,2) + 1.
+             R(I1) = R(I1) + U
+             W(I2,3) = W(I2,3) + U
+          ELSE
+             IF (LP>0) WRITE (LP,90000) K, I1, I2
+90000        FORMAT (' MC19 error. Element ',I5,' is in row ',I5,' and column ',I5)
+             IFAIL = 3
+          ENDIF
+        END DO LOOP40
+        IF (IFAIL==3) THEN
+           IF (LP>0) WRITE (LP,90001) IFAIL
+           RETURN
+        ENDIF
 
 !       Divide rhs by diagonal matrices.
         DO I = 1, N
@@ -16653,20 +17747,18 @@
           R(I) = R(I)/W(I,1)
 !         SAVE R(I) FOR USE AT END.
           W(I,5) = R(I)
-!         IF (W(I,2) == ZERO) W(I,2) = 1.
           IF (ABS(W(I,2))<=ZERO) W(I,2) = ONE
           W(I,3) = W(I,3)/W(I,2)
         END DO
 !       SM = SMIN*FLOAT(NA)
         SM = SMIN*REAL(NA)
 !       Sweep to compute initial residual vector.
-        DO 60 K = 1, NA
-!         IF (A(K) == ZERO) GOTO 80
-          IF (ABS(A(K))<=ZERO) GOTO 60
+        DO K = 1, NA
+          IF (ABS(A(K))<=ZERO) CYCLE
           I = IRN(K)
           J = ICN(K)
           R(I) = R(I) - W(J,3)/W(I,1)
-60      END DO
+        END DO
 
 !       Initialise iteration.
         E = ZERO
@@ -16675,90 +17767,88 @@
         DO I = 1, N
           S = S + W(I,1)*R(I)**2
         END DO
-        IF (S<=SM) GOTO 160
-
-!       Iteration loop.
-        DO ITER = 1, MAXIT
-!         Sweep through matrix to update residual vector.
-          DO 80 K = 1, NA
-!           IF (A(K) == ZERO) GOTO 130
-            IF (ABS(A(K))<=ZERO) GOTO 80
-            I = ICN(K)
-            J = IRN(K)
-            C(I) = C(I) + R(J)
-80        END DO
-          S1 = S
-          S = ZERO
-          DO I = 1, N
-            V = -C(I)/Q
-            C(I) = V/W(I,2)
-            S = S + V*C(I)
-          END DO
-          E1 = E
-          E = Q*S/S1
-          Q = 1. - E
-          IF (S<=SM) E = ZERO
-!         Update residual.
-          DO I = 1, N
-            R(I) = R(I)*E*W(I,1)
-          END DO
-          IF (S<=SM) GOTO 180
-          EM = E*E1
-!         Sweep through matrix to update residual vector.
-          DO 110 K = 1, NA
-!           IF (A(K) == ZERO) GOTO 152
-            IF (ABS(A(K))<=ZERO) GOTO 110
-            I = IRN(K)
-            J = ICN(K)
-            R(I) = R(I) + C(J)
-110       END DO
-          S1 = S
-          S = ZERO
-          DO I = 1, N
-            V = -R(I)/Q
-            R(I) = V/W(I,1)
-            S = S + V*R(I)
-          END DO
-          E1 = E
-          E = Q*S/S1
-          Q1 = Q
-          Q = 1. - E
-!         Special fixup for last iteration.
-          IF (S<=SM) Q = 1.
-!         Update colulm scaling powers.
-          QM = Q*Q1
-          DO I = 1, N
-            W(I,4) = (EM*W(I,4)+C(I))/QM
-            W(I,3) = W(I,3) + W(I,4)
-          END DO
-          IF (S<=SM) GOTO 160
-!         Update residual.
-          DO I = 1, N
-            C(I) = C(I)*E*W(I,2)
-          END DO
-        END DO
-160     DO I = 1, N
+        IF (S>SM) THEN
+   !       Iteration loop.
+           ITERDO: DO ITER = 1, MAXIT
+   !         Sweep through matrix to update residual vector.
+             DO K = 1, NA
+               IF (ABS(A(K))<=ZERO) CYCLE
+               I = ICN(K)
+               J = IRN(K)
+               C(I) = C(I) + R(J)
+             END DO
+             S1 = S
+             S = ZERO
+             DO I = 1, N
+               V = -C(I)/Q
+               C(I) = V/W(I,2)
+               S = S + V*C(I)
+             END DO
+             E1 = E
+             E = Q*S/S1
+             Q = 1. - E
+             IF (S<=SM) E = ZERO
+   !         Update residual.
+             DO I = 1, N
+               R(I) = R(I)*E*W(I,1)
+             END DO
+             IF (S<=SM) GOTO 180
+             EM = E*E1
+   !         Sweep through matrix to update residual vector.
+             DO K = 1, NA
+   !           IF (A(K) == ZERO) GOTO 152
+               IF (ABS(A(K))<=ZERO) CYCLE
+               I = IRN(K)
+               J = ICN(K)
+               R(I) = R(I) + C(J)
+             END DO
+             S1 = S
+             S = ZERO
+             DO I = 1, N
+               V = -R(I)/Q
+               R(I) = V/W(I,1)
+               S = S + V*R(I)
+             END DO
+             E1 = E
+             E = Q*S/S1
+             Q1 = Q
+             Q = 1. - E
+   !         Special fixup for last iteration.
+             IF (S<=SM) Q = 1.
+   !         Update colulm scaling powers.
+             QM = Q*Q1
+             DO I = 1, N
+               W(I,4) = (EM*W(I,4)+C(I))/QM
+               W(I,3) = W(I,3) + W(I,4)
+             END DO
+             IF (S<=SM) EXIT ITERDO
+   !         Update residual.
+             DO I = 1, N
+               C(I) = C(I)*E*W(I,2)
+             END DO
+           END DO ITERDO
+        ENDIF
+        DO I = 1, N
           R(I) = R(I)*W(I,1)
         END DO
 
 !       Sweep through matrix to prepare to get row scaling powers.
-180     DO 190 K = 1, NA
-!         IF (A(K) == ZERO) GOTO 200
-          IF (ABS(A(K))<=ZERO) GOTO 190
+180     DO K = 1, NA
+          IF (ABS(A(K))<=ZERO) CYCLE
           I = IRN(K)
           J = ICN(K)
           R(I) = R(I) + W(J,3)
-190     END DO
+        END DO
 
 !       Final conversion to output values.
         DO I = 1, N
           R(I) = R(I)/W(I,1) - W(I,5)
           C(I) = -W(I,3)
         END DO
-        GOTO 220
-210     IF (LP>0) WRITE (LP,90001) IFAIL
+        RETURN
+
 90001   FORMAT (' Error return ',I2,' from MC19')
-220     RETURN
+
       END SUBROUTINE MC19AD
 ! End of  MA28 subroutines.
 !_______________________________________________________________________
@@ -17131,13 +18221,9 @@
 
       IF (IOPT(4) == 0) THEN
         IOPT(4) = 1
-        DO 10 J = 1, N
-          FAC(J) = USQT
-10      CONTINUE
+        FAC(1:N) = USQT
       END IF
-      DO 20 J = 1, 50
-        IWK(J) = 0
-20    CONTINUE
+      IWK(1:50) = 0
       KT1 = NID1
       KT2 = NID2
       KT3 = NID3
@@ -17149,9 +18235,7 @@
 !       COMPUTE AND SAVE THE INCREMENTS FOR THE COLUMNS IN GROUP NUMGRP.
         IRCMP = 0
         ITRY = 0
-        DO 30 J = NID5 + 1, NID6
-          IWK(J) = 0
-30      CONTINUE
+        IWK(NID5 + 1:NID6) = 0
 40      CONTINUE
         DO JCOL = 1, N
           IF (NGRP(JCOL) == NUMGRP) THEN
@@ -17171,7 +18255,7 @@
             END IF
             DELM = U7EGT*AY
 
-            DO 50 J = 1, NIFAC
+            LOOP50: DO J = 1, NIFAC
               DEL = FAC(JCOL)*AY*SGN
 !             IF (DEL == ZERO) THEN
               IF (ABS(DEL) <= ZERO) THEN
@@ -17182,7 +18266,7 @@
               T1 = Y(JCOL) + DEL
               DEL = T1 - Y(JCOL)
               IF (ABS(DEL) < DELM) THEN
-                IF (J >= NIFAC) GOTO 50
+                IF (J >= NIFAC) CYCLE LOOP50
                 IF (IRDEL == 0) THEN
                   IRDEL = 1
                   IWK(1) = IWK(1) + 1
@@ -17192,7 +18276,7 @@
               ELSE
                 GOTO 60
               END IF
-50          END DO
+            END DO LOOP50
 
             FAC(JCOL) = USQT
             DEL = USQT*AY*SGN
@@ -17261,9 +18345,9 @@
             IF (ITRY == 1) THEN
               IFLAG1 = 0
               IFLAG2 = 0
-              DO 100 J = NID5 + 1, NID6
+              DO J = NID5 + 1, NID6
                 IF (IWK(J) == JCOL) IFLAG1 = 1
-100           CONTINUE
+              ENDDO
               IF (IFLAG1 == 1) THEN
                 IFLAG1 = 0
                 T1 = WK(IROWMX+N)
@@ -18423,9 +19507,6 @@
 ! .. Local Scalars ..
       INTEGER :: I, IR, J, JP, K, MAXCLQ, NNZ, NUMGRP
 ! ..
-! .. External Subroutines ..
-!     EXTERNAL DEGR, IDO, NUMSRT, SEQ, SETR, SLO, SRTDAT
-! ..
 ! .. Intrinsic Functions ..
       INTRINSIC MAX
 ! ..
@@ -18601,12 +19682,10 @@
         IROWMX, ITRY, J, JCOL, JFIRST, JINC, JLAST, KT1, KT2, KT3, KT4,    &
         KT5, L, MBAND, ML, MU, NID1, NID2, NID3, NID4, NID5, NID6,         &
         NIFAC, NT2, NUMGRP
-!       KT5, L, MBAND, MEB1, ML, MU, NID1, NID2, NID3, NID4, NID5, NID6,   &
       LOGICAL :: DOTHISBLOCK
       CHARACTER (80) :: MSG
 ! ..
 ! .. Intrinsic Functions ..
-!     INTRINSIC ABS, EPSILON, KIND, MAX, MIN, SIGN, SQRT
       INTRINSIC ABS, EPSILON, MAX, MIN, SIGN, SQRT
 ! ..
 ! .. Data Statements ..
@@ -18642,13 +19721,9 @@
 
       IF (IOPT(4) == 0) THEN
         IOPT(4) = 1
-        DO 10 J = 1, N
-          FAC(J) = USQT
-10      CONTINUE
+        FAC(1:N) = USQT
       END IF
-      DO 20 J = 1, 50
-        IWK(J) = 0
-20    CONTINUE
+      IWK(1:50) = 0
       KT1 = NID1
       KT2 = NID2
       KT3 = NID3
@@ -18661,9 +19736,7 @@
 !       COMPUTE AND SAVE THE INCREMENTS FOR THE COLUMNS IN GROUP NUMGRP.
         IRCMP = 0
         ITRY = 0
-        DO 30 J = NID5 + 1, NID6
-          IWK(J) = 0
-30      CONTINUE
+        IWK(NID5 + 1:NID6) = 0
 40      CONTINUE
 
 !       Note: For banded in DVJAC:
@@ -18712,7 +19785,7 @@
             END IF
             DELM = U7EGT*AY
 
-            DO 50 J = 1, NIFAC
+            LOOP50:DO J = 1, NIFAC
               DEL = FAC(JCOL)*AY*SGN
               IF (ABS(DEL) <= ZERO) THEN
                 DEL = USQT*SGN
@@ -18721,7 +19794,7 @@
               T1 = Y(JCOL) + DEL
               DEL = T1 - Y(JCOL)
               IF (ABS(DEL) < DELM) THEN
-                IF (J >= NIFAC) GOTO 50
+                IF (J >= NIFAC) CYCLE LOOP50
                 IF (IRDEL == 0) THEN
                   IRDEL = 1
                   IWK(1) = IWK(1) + 1
@@ -18731,7 +19804,7 @@
               ELSE
                 GOTO 60
               END IF
-50          END DO
+            END DO LOOP50
 
             FAC(JCOL) = USQT
             DEL = USQT*AY*SGN
@@ -18821,9 +19894,6 @@
                 IROWB = IROW - JCOL + IOPT(2)
                 IF (ITRY == 1) WK(IROW+N) = FJAC(IROWB,JCOL)
                 FJAC(IROWB,JCOL) = FJACL
-!               IROWB = JCOL * MEB1 - ML + L
-!               IF (ITRY == 1) WK(IROW+N) = FJAC(IROWB,1)
-!               FJAC(IROWB,1) = FJACL
               END IF
               IF (IOPT(1) == 2) THEN
                 IF (ITRY == 1) WK(IROW+N) = FJAC(L,1)
@@ -18839,9 +19909,9 @@
             IF (ITRY == 1) THEN
               IFLAG1 = 0
               IFLAG2 = 0
-              DO 100 J = NID5 + 1, NID6
+              DO J = NID5 + 1, NID6
                 IF (IWK(J) == JCOL) IFLAG1 = 1
-100           CONTINUE
+              ENDDO
               IF (IFLAG1 == 1) THEN
                 IFLAG1 = 0
                 T1 = WK(IROWMX+N)
