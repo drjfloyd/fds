@@ -6509,7 +6509,6 @@ READ_MATL_LOOP: DO N=1,N_MATL
    CALL ChkMemErr('READ','ML%H_R',IZERO)
    DO NR=1,N_REACTIONS
       ML%H_R(NR,:) = 1000._EB*HEAT_OF_REACTION(NR)
-      WRITE(*,*) 'H_R1',TRIM(ID),NR,ML%H_R(NR,500)
    ENDDO
    ML%ID                               = ID
    ML%KAPPA_S                          = ABSORPTION_COEFFICIENT
@@ -13344,7 +13343,7 @@ PROC_CTRL_LOOP: DO NC = 1, N_CTRL
             CALL SHUTDOWN(MESSAGE) ; RETURN
          ENDIF
          IF (CF%CONSTANT < -8.E30_EB) THEN
-            WRITE(MESSAGE,'(A,I0,A)')  'ERROR: CTRL ',TRIM(CF%ID),' has the INPUT_ID CONSTANT but no constant value was specified'
+            WRITE(MESSAGE,'(A,A,A)')  'ERROR: CTRL ',TRIM(CF%ID),' has the INPUT_ID CONSTANT but no constant value was specified'
             CALL SHUTDOWN(MESSAGE) ; RETURN
          ENDIF
          CF%INPUT_TYPE(NN) = CONSTANT_INPUT
