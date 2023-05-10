@@ -334,7 +334,7 @@ REAL(EB) :: ERR_EST,ERR_TOL,A1(1:N_TRACKED_SPECIES),A2(1:N_TRACKED_SPECIES),A4(1
             Q_REAC_SUB(1:N_REACTIONS),Q_REAC_1(1:N_REACTIONS),Q_REAC_2(1:N_REACTIONS),Q_REAC_4(1:N_REACTIONS),&
             Q_REAC_SUM(1:N_REACTIONS),Q_SUM_CHI_R,CHI_R_SUM,TIME_RAMP_FACTOR,&
             TOTAL_MIXED_MASS_1,TOTAL_MIXED_MASS_2,TOTAL_MIXED_MASS_4,TOTAL_MIXED_MASS,&
-            ZETA_1,ZETA_2,ZETA_4,D_F,TMP_IN,C_U,DT_SUB_OLD
+            ZETA_1,ZETA_2,ZETA_4,D_F,TMP_IN,C_U,DT_SUB_OLD,TNOW2
 INTEGER :: NR,NS,ITER,TVI,RICH_ITER,TIME_ITER,RICH_ITER_MAX,ITASK=1,ISTATE=1
 DOUBLE PRECISION :: ZZ_DVODE(N_TRACKED_SPECIES)
 INTEGER, PARAMETER :: TV_ITER_MIN=5
@@ -402,7 +402,7 @@ TAU_MIX = MIX_TIME_OUT
 
 IF (ALLOCATED(DZ_F0)) DZ_F0 = -1._EB
 IF (ALLOCATED(KG))    KG    = -1._EB
-
+TNOW2 = CURRENT_TIME()
 INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
 
    IF (SUPPRESSION) THEN
@@ -472,7 +472,6 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
          DT_SUB = DT
          RTOL = DBLE(RICHARDSON_ERROR_TOLERANCE)
          DO NS =1,N_TRACKED_SPECIES
-!            ATOL(NS) = MAX(DBLE(ZZ_MIN_GLOBAL*0.001D0),DBLE(RICHARDSON_ERROR_TOLERANCE*ZZ_MIXED(NS)))
             ATOL(NS) = MAX(DVODE_MIN_ATOL,DBLE(RICHARDSON_ERROR_TOLERANCE*ZZ_MIXED(NS)))
          ENDDO
 ! In the two pairs of commented lines, top line uses the DVODE_JAC routine and bottom line uses a numerical Jacobian
@@ -523,7 +522,7 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
    IF ( DT_ITER > (DT-TWO_EPSILON_EB) ) EXIT INTEGRATION_LOOP
 
 ENDDO INTEGRATION_LOOP
-
+T_USED(16) = T_USED(16) + CURRENT_TIME() - TNOW2
 ! Compute heat release rate
 
 Q_OUT = -RHO_IN*SUM(SPECIES_MIXTURE%H_F*(ZZ_GET-ZZ_0))/DT ! FDS Tech Guide (5.47)
@@ -1054,7 +1053,13 @@ END SUBROUTINE DVODE_Y
 
 !> \brief Computes the Jacobian of f(y,t) for the vode solver.
 !>
-!> \param TMP_FLAME  Adiabatic flame temperature in stoichiometric reaction pocket (K)
+!> \param NEQ Number of rows
+!> \param T Time (s), not used here but needed for DVODES call
+!> \param ZZ_OLD Input values for Y
+!> \param ML For banded solver, not used here but needed for DVODES call
+!> \param MU For banded solver, not used here but needed for DVODES call
+!> \param DZZ Jacobian output
+!> \param NRPD Number of columns
 
 SUBROUTINE DVODE_JAC(NEQ,T,ZZ_OLD,ML,MU,DZZ,NRPD)
 USE DVODECONS
@@ -1108,7 +1113,7 @@ ENDDO REACTION_LOOP
 END SUBROUTINE DVODE_JAC
 
 
-!> \brief Compute adiabatic flame temperature for reaction mixture
+!> \brief Compute adiabatic flame tmperature for reaction mixture
 !>
 !> \param TMP_FLAME  Adiabatic flame temperature in stoichiometric reaction pocket (K)
 !> \param PHI_TILDE  Equivalence ratio in stoich reaction pocket
