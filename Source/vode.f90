@@ -16018,7 +16018,7 @@
 920           LASTR(I) = 0
               NEXTR(I) = 0
               NZMIN = MIN(NZMIN,NZ)
-930         END DO LOOP930
+            END DO LOOP930
 !           Restore IQ and nullify U part of old pivot row.
 !           Record the column permutation in LASTC(JPIV) and
 !           the row permutation in LASTR(IPIV).
