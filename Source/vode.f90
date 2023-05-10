@@ -2051,8 +2051,9 @@
   !DVSRCO
   DVSTEP        , GDUMMY        , IUMACH        ,  &
   IXSAV         , JACSPDB       , JDUMMY        , MA28AD        ,  &
-  MA28BD        , MA28CD        , MA28DD        , MA28ID        ,  &
-  MA30AD        , MA30BD        , MA30CD        , MA30DD        ,  &
+!  MA28ID        ,  &
+  MA28BD        , MA28CD        , MA28DD        ,  &
+     MA30AD        , MA30BD        , MA30CD        , MA30DD        ,  &
 !  MC20BD        ,  &
   MC13E         , MC19AD        , MC20AD        ,  &
   MC21A         , MC21B         , MC22AD        , MC23AD        ,  &
@@ -3363,53 +3364,53 @@
     USE_JACSP = .FALSE.
 
 !   If only f77 options are to be changed, do it and return.
-    IF (PRESENT(CHANGE_ONLY_f77_OPTIONS)) THEN
-       IF (CHANGE_ONLY_f77_OPTIONS) THEN
-          IF (.NOT.OPTS_CALLED) THEN
-             MSG = 'You have not previously called SET_OPTS before attempting'
-             CALL XERRDV(MSG,250,1,0,0,0,0,ZERO,ZERO)
-             MSG = 'to change one or more of the vode.f77 optional parameters.'
-             CALL XERRDV(MSG,250,2,0,0,0,0,ZERO,ZERO)
-          END IF
-          IF (PRESENT(HMAX)) THEN
-             IOPT = 1
-             RUSER(6) = HMAX
-             MSG = 'HMAX changed in SET_INTERMEDIATE_OPTS.'
-             CALL XERRDV(MSG,260,1,0,0,0,1,HMAX,ZERO)
-          END IF
-          IF (PRESENT(HMIN)) THEN
-             IOPT = 1
-             RUSER(7) = HMIN
-             MSG = 'HMIN changed in SET_INTERMEDIATE_OPTS.'
-             CALL XERRDV(MSG,270,1,0,0,0,1,HMIN,ZERO)
-          END IF
-          IF (PRESENT(TCRIT)) THEN
-             IOPT = 1
-             RUSER(1) = TCRIT
-             MSG = 'TCRIT changed in SET_INTERMEDIATE_OPTS.'
-             CALL XERRDV(MSG,280,1,0,0,0,1,TCRIT,ZERO)
-          END IF
-          IF (PRESENT(MXSTEP)) THEN
-             IOPT = 1
-             IUSER(6) = MXSTEP
-             MSG = 'MXSTEP changed in SET_INTERMEDIATE_OPTS.'
-             CALL XERRDV(MSG,290,1,1,MXSTEP,0,0,ZERO,ZERO)
-          END IF
-          IF (PRESENT(MAXORD)) THEN
-             IOPT = 1
-             IUSER(5) = MAXORD
-             MSG = 'MAXORD changed in SET_INTERMEDIATE_OPTS.'
-             CALL XERRDV(MSG,300,1,1,MAXORD,0,0,ZERO,ZERO)
-          END IF
-          IF (PRESENT(MXHNIL)) THEN
-             IOPT = 1
-             IUSER(7) = MXHNIL
-             MSG = 'MXHNIL changed in SET_INTERMEDIATE_OPTS.'
-             CALL XERRDV(MSG,310,1,1,MXHNIL,0,0,ZERO,ZERO)
-          END IF
-       END IF
-       RETURN
-    END IF
+!    IF (PRESENT(CHANGE_ONLY_f77_OPTIONS)) THEN
+!       IF (CHANGE_ONLY_f77_OPTIONS) THEN
+!          IF (.NOT.OPTS_CALLED) THEN
+!             MSG = 'You have not previously called SET_OPTS before attempting'
+!             CALL XERRDV(MSG,250,1,0,0,0,0,ZERO,ZERO)
+!             MSG = 'to change one or more of the vode.f77 optional parameters.'
+!             CALL XERRDV(MSG,250,2,0,0,0,0,ZERO,ZERO)
+!          END IF
+!          IF (PRESENT(HMAX)) THEN
+!             IOPT = 1
+!             RUSER(6) = HMAX
+!             MSG = 'HMAX changed in SET_INTERMEDIATE_OPTS.'
+!             CALL XERRDV(MSG,260,1,0,0,0,1,HMAX,ZERO)
+!          END IF
+!          IF (PRESENT(HMIN)) THEN
+!             IOPT = 1
+!             RUSER(7) = HMIN
+!             MSG = 'HMIN changed in SET_INTERMEDIATE_OPTS.'
+!             CALL XERRDV(MSG,270,1,0,0,0,1,HMIN,ZERO)
+!          END IF
+!          IF (PRESENT(TCRIT)) THEN
+!             IOPT = 1
+!             RUSER(1) = TCRIT
+!             MSG = 'TCRIT changed in SET_INTERMEDIATE_OPTS.'
+!             CALL XERRDV(MSG,280,1,0,0,0,1,TCRIT,ZERO)
+!          END IF
+!          IF (PRESENT(MXSTEP)) THEN
+!             IOPT = 1
+!             IUSER(6) = MXSTEP
+!             MSG = 'MXSTEP changed in SET_INTERMEDIATE_OPTS.'
+!             CALL XERRDV(MSG,290,1,1,MXSTEP,0,0,ZERO,ZERO)
+!          END IF
+!          IF (PRESENT(MAXORD)) THEN
+!             IOPT = 1
+!             IUSER(5) = MAXORD
+!             MSG = 'MAXORD changed in SET_INTERMEDIATE_OPTS.'
+!             CALL XERRDV(MSG,300,1,1,MAXORD,0,0,ZERO,ZERO)
+!          END IF
+!          IF (PRESENT(MXHNIL)) THEN
+!             IOPT = 1
+!             IUSER(7) = MXHNIL
+!             MSG = 'MXHNIL changed in SET_INTERMEDIATE_OPTS.'
+!             CALL XERRDV(MSG,310,1,1,MXHNIL,0,0,ZERO,ZERO)
+!          END IF
+!       END IF
+!       RETURN
+!    END IF
 
 !       Set the flag to indicate that SET_INTERMEDIATE_OPTS has been called.
         OPTS_CALLED = .TRUE.
@@ -4551,53 +4552,53 @@
     END IF
 
 !   If only f77 options are to be changed, do it and return.
-    IF (PRESENT(CHANGE_ONLY_f77_OPTIONS)) THEN
-       IF (CHANGE_ONLY_f77_OPTIONS) THEN
-          IF (.NOT.OPTS_CALLED) THEN
-             MSG = 'You have not previously called SET_OPTS before attempting'
-             CALL XERRDV(MSG,500,1,0,0,0,0,ZERO,ZERO)
-             MSG = 'to change one or more of the vode.f77 optional parameters.'
-             CALL XERRDV(MSG,500,2,0,0,0,0,ZERO,ZERO)
-          END IF
-          IF (PRESENT(HMAX)) THEN
-             IOPT = 1
-             RUSER(6) = HMAX
-             MSG = 'HMAX changed in SET_OPTS.'
-             CALL XERRDV(MSG,510,1,0,0,0,1,HMAX,ZERO)
-          END IF
-          IF (PRESENT(HMIN)) THEN
-             IOPT = 1
-             RUSER(7) = HMIN
-             MSG = 'HMIN changed in SET_OPTS.'
-             CALL XERRDV(MSG,520,1,0,0,0,1,HMIN,ZERO)
-          END IF
-          IF (PRESENT(TCRIT)) THEN
-             IOPT = 1
-             RUSER(1) = TCRIT
-             MSG = 'TCRIT changed in SET_OPTS.'
-             CALL XERRDV(MSG,530,1,0,0,0,1,TCRIT,ZERO)
-          END IF
-          IF (PRESENT(MXSTEP)) THEN
-             IOPT = 1
-             IUSER(6) = MXSTEP
-             MSG = 'MXSTEP changed in SET_OPTS.'
-             CALL XERRDV(MSG,530,1,1,MXSTEP,0,0,ZERO,ZERO)
-          END IF
-          IF (PRESENT(MAXORD)) THEN
-             IOPT = 1
-             IUSER(5) = MAXORD
-             MSG = 'MAXORD changed in SET_OPTS.'
-             CALL XERRDV(MSG,540,1,1,MAXORD,0,0,ZERO,ZERO)
-          END IF
-          IF (PRESENT(MXHNIL)) THEN
-             IOPT = 1
-             IUSER(7) = MXHNIL
-             MSG = 'MXHNIL changed in SET_OPTS.'
-             CALL XERRDV(MSG,550,1,1,MXHNIL,0,0,ZERO,ZERO)
-          END IF
-       END IF
-       RETURN
-    END IF
+!    IF (PRESENT(CHANGE_ONLY_f77_OPTIONS)) THEN
+!       IF (CHANGE_ONLY_f77_OPTIONS) THEN
+!          IF (.NOT.OPTS_CALLED) THEN
+!             MSG = 'You have not previously called SET_OPTS before attempting'
+!             CALL XERRDV(MSG,500,1,0,0,0,0,ZERO,ZERO)
+!             MSG = 'to change one or more of the vode.f77 optional parameters.'
+!             CALL XERRDV(MSG,500,2,0,0,0,0,ZERO,ZERO)
+!          END IF
+!          IF (PRESENT(HMAX)) THEN
+!             IOPT = 1
+!             RUSER(6) = HMAX
+!             MSG = 'HMAX changed in SET_OPTS.'
+!             CALL XERRDV(MSG,510,1,0,0,0,1,HMAX,ZERO)
+!          END IF
+!          IF (PRESENT(HMIN)) THEN
+!             IOPT = 1
+!             RUSER(7) = HMIN
+!             MSG = 'HMIN changed in SET_OPTS.'
+!             CALL XERRDV(MSG,520,1,0,0,0,1,HMIN,ZERO)
+!          END IF
+!          IF (PRESENT(TCRIT)) THEN
+!             IOPT = 1
+!             RUSER(1) = TCRIT
+!             MSG = 'TCRIT changed in SET_OPTS.'
+!             CALL XERRDV(MSG,530,1,0,0,0,1,TCRIT,ZERO)
+!          END IF
+!          IF (PRESENT(MXSTEP)) THEN
+!             IOPT = 1
+!             IUSER(6) = MXSTEP
+!             MSG = 'MXSTEP changed in SET_OPTS.'
+!             CALL XERRDV(MSG,530,1,1,MXSTEP,0,0,ZERO,ZERO)
+!          END IF
+!          IF (PRESENT(MAXORD)) THEN
+!             IOPT = 1
+!             IUSER(5) = MAXORD
+!             MSG = 'MAXORD changed in SET_OPTS.'
+!             CALL XERRDV(MSG,540,1,1,MAXORD,0,0,ZERO,ZERO)
+!          END IF
+!          IF (PRESENT(MXHNIL)) THEN
+!             IOPT = 1
+!             IUSER(7) = MXHNIL
+!             MSG = 'MXHNIL changed in SET_OPTS.'
+!             CALL XERRDV(MSG,550,1,1,MXHNIL,0,0,ZERO,ZERO)
+!          END IF
+!       END IF
+!       RETURN
+!    END IF
 
 !   Set the flag to indicate that SET_OPTS has been called.
     OPTS_CALLED = .TRUE.
@@ -6773,7 +6774,7 @@
                     END IF
                     RETURN
                  ENDIF
-                 IF (IHIT) T = TCRIT
+                 !IF (IHIT) T = TCRIT
                  ISTATE = 2
                  RWORK(11) = HU
                  RWORK(12) = HNEW
@@ -14761,8 +14762,8 @@
       END SUBROUTINE MA28CD
 !_______________________________________________________________________
 
-      SUBROUTINE MA28ID(N,NZ,AORG,IRNORG,ICNORG,LICN,A,ICN,IKEEP,RHS, &
-        X,R,W,MTYPE,PREC,IFLAG)
+!      SUBROUTINE MA28ID(N,NZ,AORG,IRNORG,ICNORG,LICN,A,ICN,IKEEP,RHS, &
+!        X,R,W,MTYPE,PREC,IFLAG)
 ! ..
 ! This subroutine uses the factors from an earlier call to MA28AD or
 ! MA28BD to solve the system of equations with iterative refinement.
@@ -14813,139 +14814,139 @@
 !        -16 indicating that more than MAXIT iteartions are required.
 !        -17 indicating that more convergence was too slow.
 ! ..
-     IMPLICIT NONE
+!     IMPLICIT NONE
 ! ..
 ! .. Scalar Arguments ..
-        REAL (WP) :: PREC
-        INTEGER :: IFLAG, LICN, MTYPE, N, NZ
+!        REAL (WP) :: PREC
+!        INTEGER :: IFLAG, LICN, MTYPE, N, NZ
 ! ..
 ! .. Array Arguments ..
-        REAL (WP) :: A(LICN), AORG(NZ), R(N), RHS(N), W(N), X(N)
-        INTEGER :: ICN(LICN), ICNORG(NZ), IKEEP(N,5), IRNORG(NZ)
+!        REAL (WP) :: A(LICN), AORG(NZ), R(N), RHS(N), W(N), X(N)
+!        INTEGER :: ICN(LICN), ICNORG(NZ), IKEEP(N,5), IRNORG(NZ)
 ! ..
 ! .. Local Scalars ..
-        REAL (WP) :: CONVER, D, DD
-        INTEGER :: I, ITERAT, NCOL, NROW
+!        REAL (WP) :: CONVER, D, DD
+!        INTEGER :: I, ITERAT, NCOL, NROW
 ! ..
 ! .. Intrinsic Functions ..
-        INTRINSIC ABS, MAX
+!        INTRINSIC ABS, MAX
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT MA28ID
 ! ..
 !       Initialization of NOITER, ERRMAX, and IFLAG.
-        NOITER = 0
-        ERRMAX = ZERO
-        IFLAG = 0
+!        NOITER = 0
+!        ERRMAX = ZERO
+!        IFLAG = 0
 
 !       Jump if a starting vector has been supplied by the user.
 
-        IF (ISTART==1) GOTO 20
+!        IF (ISTART==1) GOTO 20
 
 !       Make a copy of the right-hand side vector.
 
-        X(1:N) = RHS(1:N)
+!        X(1:N) = RHS(1:N)
 
 !       Find the first solution.
 
-        CALL MA28CD(N,A,LICN,ICN,IKEEP,X,W,MTYPE)
+!        CALL MA28CD(N,A,LICN,ICN,IKEEP,X,W,MTYPE)
 
 !       Stop the computations if MAXIT = 0.
 
-20      IF (MAXIT==0) GOTO 160
+!20      IF (MAXIT==0) GOTO 160
 
 !       Calculate the max-norm of the first solution.
 
-        DD = 0.0
-        DO I = 1, N
-          DD = MAX(DD,ABS(X(I)))
-        END DO
-        DXMAX = DD
+!        DD = 0.0
+!        DO I = 1, N
+!          DD = MAX(DD,ABS(X(I)))
+!        END DO
+!        DXMAX = DD
 
 !       Begin the iterative process.
 
-        LOOP120: DO ITERAT = 1, MAXIT
-          D = DD
+!        LOOP120: DO ITERAT = 1, MAXIT
+!          D = DD
 
 !         Calculate the residual vector.
 
-          R(1:N) = RHS(1:N)
-          IF (MTYPE==1) GOTO 60
-          DO I = 1, NZ
-            NROW = IRNORG(I)
-            NCOL = ICNORG(I)
-            R(NCOL) = R(NCOL) - AORG(I)*X(NROW)
-          END DO
-          GOTO 80
+!          R(1:N) = RHS(1:N)
+!          IF (MTYPE==1) GOTO 60
+!          DO I = 1, NZ
+!            NROW = IRNORG(I)
+!            NCOL = ICNORG(I)
+!            R(NCOL) = R(NCOL) - AORG(I)*X(NROW)
+!          END DO
+!          GOTO 80
 !         MTYPE = 1.
-60        DO I = 1, NZ
-            NROW = IRNORG(I)
-            NCOL = ICNORG(I)
-            R(NROW) = R(NROW) - AORG(I)*X(NCOL)
-          END DO
-80        DRES = 0.0
+!60        DO I = 1, NZ
+!            NROW = IRNORG(I)
+!            NCOL = ICNORG(I)
+!            R(NROW) = R(NROW) - AORG(I)*X(NCOL)
+!          END DO
+!80        DRES = 0.0
 
 !         Find the max-norm of the residual vector.
 
-          DO I = 1, N
-            DRES = MAX(DRES,ABS(R(I)))
-          END DO
+!          DO I = 1, N
+!            DRES = MAX(DRES,ABS(R(I)))
+!          END DO
 
 !         Stop the calculations if the max-norm of
 !         the residual vector is zero.
 
 !         IF (DRES == 0.0) GOTO 150
-          IF (ABS(DRES)<=ZERO) GOTO 150
+!          IF (ABS(DRES)<=ZERO) GOTO 150
 
 !         Calculate the correction vector.
 
-          NOITER = NOITER + 1
-          CALL MA28CD(N,A,LICN,ICN,IKEEP,R,W,MTYPE)
+!          NOITER = NOITER + 1
+!          CALL MA28CD(N,A,LICN,ICN,IKEEP,R,W,MTYPE)
 
 !         Find the max-norm of the correction vector.
 
-          DD = 0.0
-          DO I = 1, N
-            DD = MAX(DD,ABS(R(I)))
-          END DO
+!          DD = 0.0
+!          DO I = 1, N
+!            DD = MAX(DD,ABS(R(I)))
+!          END DO
 
 !         Check the convergence.
 
-          IF (DD>D*CGCE .AND. ITERAT>=2) GOTO 130
-          IF (ABS((DXMAX*TEN+DD)-(DXMAX*TEN))<=ZERO) GOTO 140
+!          IF (DD>D*CGCE .AND. ITERAT>=2) GOTO 130
+!          IF (ABS((DXMAX*TEN+DD)-(DXMAX*TEN))<=ZERO) GOTO 140
 
 !         Attempt to improve the solution.
 
-          DXMAX = 0.0
-          DO I = 1, N
-            X(I) = X(I) + R(I)
-            DXMAX = MAX(DXMAX,ABS(X(I)))
-          END DO
+!          DXMAX = 0.0
+!          DO I = 1, N
+!            X(I) = X(I) + R(I)
+!            DXMAX = MAX(DXMAX,ABS(X(I)))
+!          END DO
 
 !         Check the stopping criterion.
  
-          IF (DD<PREC*DXMAX) GOTO 140
-        END DO LOOP120
+!          IF (DD<PREC*DXMAX) GOTO 140
+!        END DO LOOP120
 !       More than MAXIT iterations required.
-        IFLAG = -16
-        WRITE (LP,90000) IFLAG, MAXIT
-        GOTO 140
+!        IFLAG = -16
+!        WRITE (LP,90000) IFLAG, MAXIT
+!        GOTO 140
 !       Convergence rate unacceptably slow.
-130     IFLAG = -17
-        CONVER = DD/D
-        WRITE (LP,90001) IFLAG, CONVER, CGCE
+!130     IFLAG = -17
+!        CONVER = DD/D
+!        WRITE (LP,90001) IFLAG, CONVER, CGCE
 
 !       The iterative process is terminated.
 
-140     ERRMAX = DD
-150     CONTINUE
-160     RETURN
-90000   FORMAT (' Error return from MA28ID with IFLAG = ',I3/' More than ', &
-          I5,' iterations required')
-90001   FORMAT (' Error return from MA28I with IFLAG = ', &
-          I3/' Convergence rate of ',1P,E9.2,' too slow'/ &
-          ' Maximum acceptable rate set to ',1P,E9.2)
-
-      END SUBROUTINE MA28ID
+!140     ERRMAX = DD
+!150     CONTINUE
+!160     RETURN
+!90000   FORMAT (' Error return from MA28ID with IFLAG = ',I3/' More than ', &
+!          I5,' iterations required')
+!90001   FORMAT (' Error return from MA28I with IFLAG = ', &
+!          I3/' Convergence rate of ',1P,E9.2,' too slow'/ &
+!          ' Maximum acceptable rate set to ',1P,E9.2)
+!
+!      END SUBROUTINE MA28ID
 !_______________________________________________________________________
 
 ! Private Variable Information.

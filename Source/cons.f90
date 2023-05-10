@@ -631,7 +631,7 @@ LOGICAL :: CFL_VELOCITY_NORM_USER_SPECIFIED=.FALSE.
 INTEGER, PARAMETER :: TRAPEZOID_QUADRATURE=0, SIMPSON_QUADRATURE=1, MIDPOINT_QUADRATURE=2
 INTEGER :: TEST_FILTER_QUADRATURE=TRAPEZOID_QUADRATURE
 
-INTEGER, PARAMETER :: N_TIMERS=15                   !< Number of subroutine timers
+INTEGER, PARAMETER :: N_TIMERS=16                   !< Number of subroutine timers
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: T_USED       !< Array of subroutine timings
 REAL(EB) :: WALL_CLOCK_START                        !< MPI_WTIME i.e. wall clock time when FDS starts
 REAL(EB) :: WALL_CLOCK_START_ITERATIONS=0._EB       !< MPI_WTIME i.e. wall clock time when main iteration loop starts
@@ -828,4 +828,3 @@ INTEGER, ALLOCATABLE, DIMENSION(:) :: YP2ZZ
 DOUBLE PRECISION :: DVODE_MIN_ATOL=DBLE(1E-14_EB)
 
 END MODULE DVODECONS
-   
