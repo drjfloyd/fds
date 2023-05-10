@@ -2006,7 +2006,8 @@
         ISTART, ISTATC, ITASKC, JADIM, JCUR, JMIN, JSTART, JSV, KFLAG, KOUNTL,  &
         KUTH, L, LARGE, LAST, LENIGP, LICN_ALL, LIRN_ALL, LIW, LIWM, LMAX,      &
         LOCJS, LP, LRW, LWM, LWMDIM, LWMTEMP, LYH, LYHTEMP, MANPIV, MAPIV, MAXG,&
-        MAXIT, MAXORD, MB28, MB48, METH, MICN, MICNCP, MINICN, MINIRN, MIRANK,  &
+        MAXIT, MAXORD, MB28, METH, MICN, MICNCP, MINICN, MINIRN, MIRANK,  &
+!       MB48, &
         MIRN, MIRNCP, MITER, MLP, MOSS, MP, MSBG, MSBJ, MXHNIL, MXSTEP, N, NZB, &
         NCFN, NDROP, NDROP1, NDX, NETF, NEWH, NEWQ, NFE, NGC, NGE, NGP, NHNIL,  &
         NJE, NLP, NLU, NNI, NNZ, NOITER, NQ, NQNYH, NQU, NQWAIT, NSLG, NSLJ,    &
@@ -2047,16 +2048,20 @@
   DVNLSD        , DVNLSS28      , DVNORM        , DVNRDN        ,  &
   DVNRDP        , DVNRDS        , DVODE         , DVPREPS       ,  &
   DVROOTS       , DVSET         , DVSOL         , DVSOLS28      ,  &
-  DVSRCO        , DVSTEP        , GDUMMY        , IUMACH        ,  &
+  !DVSRCO
+  DVSTEP        , GDUMMY        , IUMACH        ,  &
   IXSAV         , JACSPDB       , JDUMMY        , MA28AD        ,  &
   MA28BD        , MA28CD        , MA28DD        , MA28ID        ,  &
   MA30AD        , MA30BD        , MA30CD        , MA30DD        ,  &
-  MC13E         , MC19AD        , MC20AD        , MC20BD        ,  &
+!  MC20BD        ,  &
+  MC13E         , MC19AD        , MC20AD        ,  &
   MC21A         , MC21B         , MC22AD        , MC23AD        ,  &
-  MC24AD        , SET_ICN       , XERRDV        , XSETF         ,  &
-  XSETUN        , DEGR          , IDO           , NUMSRT        ,  &
-  SEQ           , SETR          , SLO           , SRTDAT        ,  &
-  FDJS
+!  XSETF         ,  &
+  MC24AD        , SET_ICN       , XERRDV        ,  &
+!  XSETUN        , 
+  DEGR          , IDO           , NUMSRT        ,  &
+  SEQ           , SETR          , SLO           , SRTDAT        !,  &
+!  FDJS
 ! DVJACS48      , DVNLSS48      , DVPREPS48     , DVSOLS48
 !_______________________________________________________________________
 ! *****MA48 build change point. Insert the above line.
@@ -6622,9 +6627,9 @@
         IF (IRFP==1 .AND. (ABS(TLAST-TN)>ZERO) .AND. ITASK==2) THEN
            CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
            T = TN
-           IF (ITASK==4 .OR. ITASK==5) THEN
-              IF (IHIT) T = TCRIT
-           ENDIF
+!           IF (ITASK==4 .OR. ITASK==5) THEN
+!              IF (IHIT) T = TCRIT
+!           ENDIF
            ISTATE = 2
            RWORK(11) = HU
            RWORK(12) = HNEW
@@ -8079,7 +8084,9 @@
         INTRINSIC ABS, MAX, MIN, REAL
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT DVSTEP
-! ..
+! . 
+        ETAQ = ONE
+        ETAQM1 = ONE
         KFLAG = 0
         TOLD = TN
         NCF = 0
@@ -9619,7 +9626,7 @@
       END SUBROUTINE DVSOL
 !_______________________________________________________________________
 
-      SUBROUTINE DVSRCO(RSAV,ISAV,JOB)
+!      SUBROUTINE DVSRCO(RSAV,ISAV,JOB)
 ! ..
 ! Save or restore (depending on JOB) the contents of the PRIVATE
 ! variable blocks, which are used internally by DVODE (not called
@@ -9635,147 +9642,147 @@
 !                 (read from RSAV/ISAV).
 !        A call with JOB = 2 presumes a prior call with JOB = 1.
 ! ..
-     IMPLICIT NONE
+!     IMPLICIT NONE
 ! ..
 ! .. Scalar Arguments ..
-        INTEGER, INTENT (IN) :: JOB
+!        INTEGER, INTENT (IN) :: JOB
 ! ..
 ! .. Array Arguments ..
-        REAL (WP), INTENT (INOUT) :: RSAV(*)
-        INTEGER, INTENT (INOUT) :: ISAV(*)
+!        REAL (WP), INTENT (INOUT) :: RSAV(*)
+!        INTEGER, INTENT (INOUT) :: ISAV(*)
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT DVSRCO
 ! ..
-        IF (JOB/=2) THEN
+!        IF (JOB/=2) THEN
 !         Save the contents of the PRIVATE blocks.
-          RSAV(1) = ACNRM
-          RSAV(2) = CCMXJ
-          RSAV(3) = CONP
-          RSAV(4) = CRATE
-          RSAV(5) = DRC
-          RSAV(6:18) = EL(1:13)
-          RSAV(19) = ETA
-          RSAV(20) = ETAMAX
-          RSAV(21) = H
-          RSAV(22) = HMIN
-          RSAV(23) = HMXI
-          RSAV(24) = HNEW
-          RSAV(25) = HSCAL
-          RSAV(26) = PRL1
-          RSAV(27) = RC
-          RSAV(28) = RL1
-          RSAV(29:41) = TAU(1:13)
-          RSAV(42:46) = TQ(1:5)
-          RSAV(47) = TN
-          RSAV(48) = UROUND
-          RSAV(LENRV1+1) = HU
-          ISAV(1) = ICF
-          ISAV(2) = INIT
-          ISAV(3) = IPUP
-          ISAV(4) = JCUR
-          ISAV(5) = JSTART
-          ISAV(6) = JSV
-          ISAV(7) = KFLAG
-          ISAV(8) = KUTH
-          ISAV(9) = L
-          ISAV(10) = LMAX
-          ISAV(11) = LYH
-          ISAV(12) = 0
-          ISAV(13) = 0
-          ISAV(14) = 0
-          ISAV(15) = LWM
-          ISAV(16) = LIWM
-          ISAV(17) = LOCJS
-          ISAV(18) = MAXORD
-          ISAV(19) = METH
-          ISAV(20) = MITER
-          ISAV(21) = MSBJ
-          ISAV(22) = MXHNIL
-          ISAV(23) = MXSTEP
-          ISAV(24) = N
-          ISAV(25) = NEWH
-          ISAV(26) = NEWQ
-          ISAV(27) = NHNIL
-          ISAV(28) = NQ
-          ISAV(29) = NQNYH
-          ISAV(30) = NQWAIT
-          ISAV(31) = NSLJ
-          ISAV(32) = NSLP
-          ISAV(33) = NYH
-          ISAV(LENIV1+1) = NCFN
-          ISAV(LENIV1+2) = NETF
-          ISAV(LENIV1+3) = NFE
-          ISAV(LENIV1+4) = NJE
-          ISAV(LENIV1+5) = NLU
-          ISAV(LENIV1+6) = NNI
-          ISAV(LENIV1+7) = NQU
-          ISAV(LENIV1+8) = NST
-          RETURN
-        ELSE
+!    !      RSAV(1) = ACNRM
+!    !      RSAV(2) = CCMXJ
+!    !      RSAV(3) = CONP
+!    !      RSAV(4) = CRATE
+!    !      RSAV(5) = DRC
+!    !      RSAV(6:18) = EL(1:13)
+!    !      RSAV(19) = ETA
+!    !      RSAV(20) = ETAMAX
+!    !      RSAV(21) = H
+!    !      RSAV(22) = HMIN
+!    !      RSAV(23) = HMXI
+!    !      RSAV(24) = HNEW
+!    !      RSAV(25) = HSCAL
+!    !      RSAV(26) = PRL1
+!    !      RSAV(27) = RC
+!    !      RSAV(28) = RL1
+!    !      RSAV(29:41) = TAU(1:13)
+!    !      RSAV(42:46) = TQ(1:5)
+!    !      RSAV(47) = TN
+!    !      RSAV(48) = UROUND
+!    !      RSAV(LENRV1+1) = HU
+!    !      ISAV(1) = ICF
+!    !      ISAV(2) = INIT
+!    !      ISAV(3) = IPUP
+!    !      ISAV(4) = JCUR
+!    !      ISAV(5) = JSTART
+!    !      ISAV(6) = JSV
+!    !      ISAV(7) = KFLAG
+!    !      ISAV(8) = KUTH
+!    !      ISAV(9) = L
+!    !      ISAV(10) = LMAX
+!    !      ISAV(11) = LYH
+!    !      ISAV(12) = 0
+!    !      ISAV(13) = 0
+!    !      ISAV(14) = 0
+!    !      ISAV(15) = LWM
+!    !      ISAV(16) = LIWM
+!    !      ISAV(17) = LOCJS
+!    !      ISAV(18) = MAXORD
+!    !      ISAV(19) = METH
+!    !      ISAV(20) = MITER
+!    !      ISAV(21) = MSBJ
+!    !      ISAV(22) = MXHNIL
+!    !      ISAV(23) = MXSTEP
+!    !      ISAV(24) = N
+!    !      ISAV(25) = NEWH
+!    !      ISAV(26) = NEWQ
+!    !      ISAV(27) = NHNIL
+!    !      ISAV(28) = NQ
+!    !      ISAV(29) = NQNYH
+!    !      ISAV(30) = NQWAIT
+!    !      ISAV(31) = NSLJ
+!    !      ISAV(32) = NSLP
+!    !      ISAV(33) = NYH
+!    !      ISAV(LENIV1+1) = NCFN
+!    !      ISAV(LENIV1+2) = NETF
+!    !      ISAV(LENIV1+3) = NFE
+!    !      ISAV(LENIV1+4) = NJE
+!    !      ISAV(LENIV1+5) = NLU
+!    !      ISAV(LENIV1+6) = NNI
+!    !      ISAV(LENIV1+7) = NQU
+!    !      ISAV(LENIV1+8) = NST
+!    !      RETURN
+!    !    ELSE
 !         Replace the contents of the PRIVATE blocks.
-          ACNRM = RSAV(1)
-          CCMXJ = RSAV(2)
-          CONP = RSAV(3)
-          CRATE = RSAV(4)
-          DRC = RSAV(5)
-          EL(1:13) = RSAV(6:18)
-          ETA = RSAV(19)
-          ETAMAX = RSAV(20)
-          H = RSAV(21)
-          HMIN = RSAV(22)
-          HMXI = RSAV(23)
-          HNEW = RSAV(24)
-          HSCAL = RSAV(25)
-          PRL1 = RSAV(26)
-          RC = RSAV(27)
-          RL1 = RSAV(28)
-          TAU(1:13) = RSAV(29:41)
-          TQ(1:5) = RSAV(42:46)
-          TN = RSAV(47)
-          UROUND = RSAV(48)
-          HU = RSAV(LENRV1+1)
-          ICF = ISAV(1)
-          INIT = ISAV(2)
-          IPUP = ISAV(3)
-          JCUR = ISAV(4)
-          JSTART = ISAV(5)
-          JSV = ISAV(6)
-          KFLAG = ISAV(7)
-          KUTH = ISAV(8)
-          L = ISAV(9)
-          LMAX = ISAV(10)
-          LYH = ISAV(11)
-          LWM = ISAV(15)
-          LIWM = ISAV(16)
-          LOCJS = ISAV(17)
-          MAXORD = ISAV(18)
-          METH = ISAV(19)
-          MITER = ISAV(20)
-          MSBJ = ISAV(21)
-          MXHNIL = ISAV(22)
-          MXSTEP = ISAV(23)
-          N = ISAV(24)
-          NEWH = ISAV(25)
-          NEWQ = ISAV(26)
-          NHNIL = ISAV(27)
-          NQ = ISAV(28)
-          NQNYH = ISAV(29)
-          NQWAIT = ISAV(30)
-          NSLJ = ISAV(31)
-          NSLP = ISAV(32)
-          NYH = ISAV(33)
-          NCFN = ISAV(LENIV1+1)
-          NETF = ISAV(LENIV1+2)
-          NFE = ISAV(LENIV1+3)
-          NJE = ISAV(LENIV1+4)
-          NLU = ISAV(LENIV1+5)
-          NNI = ISAV(LENIV1+6)
-          NQU = ISAV(LENIV1+7)
-          NST = ISAV(LENIV1+8)
-          RETURN
-        END IF
-
-      END SUBROUTINE DVSRCO
+!          ACNRM = RSAV(1)
+!          CCMXJ = RSAV(2)
+!          CONP = RSAV(3)
+!          CRATE = RSAV(4)
+!          DRC = RSAV(5)
+!          EL(1:13) = RSAV(6:18)
+!          ETA = RSAV(19)
+!          ETAMAX = RSAV(20)
+!          H = RSAV(21)
+!          HMIN = RSAV(22)
+!          HMXI = RSAV(23)
+!          HNEW = RSAV(24)
+!          HSCAL = RSAV(25)
+!          PRL1 = RSAV(26)
+!          RC = RSAV(27)
+!          RL1 = RSAV(28)
+!          TAU(1:13) = RSAV(29:41)
+!          TQ(1:5) = RSAV(42:46)
+!          TN = RSAV(47)
+!          UROUND = RSAV(48)
+!          HU = RSAV(LENRV1+1)
+!          ICF = ISAV(1)
+!          INIT = ISAV(2)
+!          IPUP = ISAV(3)
+!          JCUR = ISAV(4)
+!          JSTART = ISAV(5)
+!          JSV = ISAV(6)
+!          KFLAG = ISAV(7)
+!          KUTH = ISAV(8)
+!          L = ISAV(9)
+!          LMAX = ISAV(10)
+!          LYH = ISAV(11)
+!          LWM = ISAV(15)
+!          LIWM = ISAV(16)
+!          LOCJS = ISAV(17)
+!          MAXORD = ISAV(18)
+!          METH = ISAV(19)
+!          MITER = ISAV(20)
+!          MSBJ = ISAV(21)
+!          MXHNIL = ISAV(22)
+!          MXSTEP = ISAV(23)
+!          N = ISAV(24)
+!          NEWH = ISAV(25)
+!          NEWQ = ISAV(26)
+!          NHNIL = ISAV(27)
+!          NQ = ISAV(28)
+!          NQNYH = ISAV(29)
+!          NQWAIT = ISAV(30)
+!          NSLJ = ISAV(31)
+!          NSLP = ISAV(32)
+!          NYH = ISAV(33)
+!          NCFN = ISAV(LENIV1+1)
+!          NETF = ISAV(LENIV1+2)
+!          NFE = ISAV(LENIV1+3)
+!          NJE = ISAV(LENIV1+4)
+!          NLU = ISAV(LENIV1+5)
+!          NNI = ISAV(LENIV1+6)
+!          NQU = ISAV(LENIV1+7)
+!          NST = ISAV(LENIV1+8)
+!          RETURN
+!        END IF
+!
+!      END SUBROUTINE DVSRCO
 !_______________________________________________________________________
 
       SUBROUTINE DEWSET(N,ITOL,RTOL,ATOL,YCUR,EWT)
@@ -9934,50 +9941,50 @@
       END SUBROUTINE XERRDV
 !_______________________________________________________________________
 
-      SUBROUTINE XSETF(MFLAG)
+!      SUBROUTINE XSETF(MFLAG)
 ! ..
 !     Reset the error print control flag.
 ! ..
-     IMPLICIT NONE
+!     IMPLICIT NONE
 ! ..
 ! .. Scalar Arguments ..
-        INTEGER, INTENT (IN) :: MFLAG
+!        INTEGER, INTENT (IN) :: MFLAG
 ! ..
 ! .. Local Scalars ..
-        INTEGER :: JUNK
+!        INTEGER :: JUNK
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT XSETF
 ! ..
-        IF (MFLAG==0 .OR. MFLAG==1) JUNK = IXSAV(2,MFLAG,.TRUE.)
+!        IF (MFLAG==0 .OR. MFLAG==1) JUNK = IXSAV(2,MFLAG,.TRUE.)
 !       Get rid of a compiler warning message:
-        IF (JUNK/=JUNK) STOP
-        RETURN
+!        IF (JUNK/=JUNK) STOP
+!        RETURN
 
-      END SUBROUTINE XSETF
+!      END SUBROUTINE XSETF
 !_______________________________________________________________________
 
-      SUBROUTINE XSETUN(LUN)
+!      SUBROUTINE XSETUN(LUN)
 ! ..
 !     Reset the logical unit number for error messages.
 ! ..
 !     XSETUN sets the logical unit number for error messages to LUN.
 ! ..
-     IMPLICIT NONE
+!     IMPLICIT NONE
 ! ..
 ! .. Scalar Arguments ..
-        INTEGER :: LUN
+!        INTEGER :: LUN
 ! ..
 ! .. Local Scalars ..
-        INTEGER :: JUNK
+!        INTEGER :: JUNK
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT XSETUN
 ! ..
-        IF (LUN>0) JUNK = IXSAV(1,LUN,.TRUE.)
+!        IF (LUN>0) JUNK = IXSAV(1,LUN,.TRUE.)
 !       Get rid of a compiler warning message:
-        IF (JUNK/=JUNK) STOP
-        RETURN
+!        IF (JUNK/=JUNK) STOP
+!        RETURN
 
-      END SUBROUTINE XSETUN
+!      END SUBROUTINE XSETUN
 !_______________________________________________________________________
 
       FUNCTION IXSAV(IPAR,IVALUE,ISET)
@@ -17090,54 +17097,54 @@
       END SUBROUTINE MC20AD
 !_______________________________________________________________________
 
-      SUBROUTINE MC20BD(NC,MAXA,A,INUM,JPTR)
+!      SUBROUTINE MC20BD(NC,MAXA,A,INUM,JPTR)
 ! ..
-     IMPLICIT NONE
+!     IMPLICIT NONE
 ! ..
 ! .. Scalar Arguments ..
-        INTEGER :: MAXA, NC
+!        INTEGER :: MAXA, NC
 ! ..
 ! .. Array Arguments ..
-        REAL (WP) :: A(MAXA)
-        INTEGER :: INUM(MAXA), JPTR(NC)
+!        REAL (WP) :: A(MAXA)
+!        INTEGER :: INUM(MAXA), JPTR(NC)
 ! ..
 ! .. Local Scalars ..
-        REAL (WP) :: ACE
-        INTEGER :: ICE, IK, J, JJ, K, KDUMMY, KLO, KMAX, KOR
+!        REAL (WP) :: ACE
+!        INTEGER :: ICE, IK, J, JJ, K, KDUMMY, KLO, KMAX, KOR
 ! ..
 ! .. Intrinsic Functions ..
-        INTRINSIC IABS
+!        INTRINSIC IABS
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT MA20BD
 ! ..
-        KMAX = MAXA
-        DO JJ = 1, NC
-          J = NC + 1 - JJ
-          KLO = JPTR(J) + 1
-          IF (KLO<=KMAX) THEN
-             KOR = KMAX
-             DO KDUMMY = KLO, KMAX
-   !           Items KOR,KOR+1,...,KMAX are in order.
-               ACE = A(KOR-1)
-               ICE = INUM(KOR-1)
-               DO K = KOR, KMAX
-                 IK = INUM(K)
-                 IF (ABS(ICE)<=ABS(IK)) GOTO 20
-                 INUM(K-1) = IK
-                 A(K-1) = A(K)
-               END DO
-               K = KMAX + 1
-   20          INUM(K-1) = ICE
-               A(K-1) = ACE
-               KOR = KOR - 1
-             END DO
-          ENDIF
+!        KMAX = MAXA
+!        DO JJ = 1, NC
+!          J = NC + 1 - JJ
+!          KLO = JPTR(J) + 1
+!          IF (KLO<=KMAX) THEN
+!             KOR = KMAX
+!             DO KDUMMY = KLO, KMAX
+!   !           Items KOR,KOR+1,...,KMAX are in order.
+!               ACE = A(KOR-1)
+!               ICE = INUM(KOR-1)
+!               DO K = KOR, KMAX
+!                 IK = INUM(K)
+!                 IF (ABS(ICE)<=ABS(IK)) GOTO 20
+!                 INUM(K-1) = IK
+!                 A(K-1) = A(K)
+!               END DO
+!               K = KMAX + 1
+!   20          INUM(K-1) = ICE
+!               A(K-1) = ACE
+!               KOR = KOR - 1
+!             END DO
+!          ENDIF
 !         Next column.
-          KMAX = KLO - 2
-        END DO
-        RETURN
+!          KMAX = KLO - 2
+!        END DO
+!        RETURN
 
-      END SUBROUTINE MC20BD
+!      END SUBROUTINE MC20BD
 !_______________________________________________________________________
 
       SUBROUTINE MC21A(N,ICN,LICN,IP,LENR,IPERM,NUMNZ,IW)
@@ -19295,7 +19302,7 @@
     END SUBROUTINE SRTDAT
 !_______________________________________________________________________
 
-    SUBROUTINE FDJS(M,N,COL,IND,NPNTR,NGRP,NUMGRP,D,FJACD,FJAC)
+!    SUBROUTINE FDJS(M,N,COL,IND,NPNTR,NGRP,NUMGRP,D,FJACD,FJAC)
 
 !     GIVEN A CONSISTENT PARTITION OF THE COLUMNS OF AN M BY N
 !     JACOBIAN MATRIX INTO GROUPS, THIS SUBROUTINE COMPUTES
@@ -19368,21 +19375,21 @@
 !     ARGONNE NATIONAL LABORATORY. MINPACK PROJECT. JULY 1983.
 !     THOMAS F. COLEMAN, BURTON S. GARBOW, JORGE J. MORE'
 
-     IMPLICIT NONE
+!     IMPLICIT NONE
 
 ! .. Parameters ..
-      INTEGER, PARAMETER :: WP = KIND(0.0D0)
+!      INTEGER, PARAMETER :: WP = KIND(0.0D0)
 ! ..
 ! .. Scalar Arguments ..
-      INTEGER :: M, N, NUMGRP
-      LOGICAL :: COL
+!      INTEGER :: M, N, NUMGRP
+!      LOGICAL :: COL
 ! ..
 ! .. Array Arguments ..
-      REAL (WP) :: D(N), FJAC(*), FJACD(M)
-      INTEGER :: IND(*), NGRP(N), NPNTR(*)
+!      REAL (WP) :: D(N), FJAC(*), FJACD(M)
+!      INTEGER :: IND(*), NGRP(N), NPNTR(*)
 ! ..
 ! .. Local Scalars ..
-      INTEGER :: IP, IROW, JCOL, JP
+!      INTEGER :: IP, IROW, JCOL, JP
 ! ..
 ! .. Intrinsic Functions ..
 !     INTRINSIC KIND
@@ -19394,32 +19401,32 @@
 !     TO JAC*D, WHERE JAC DENOTES THE JACOBIAN MATRIX AND D
 !     IS A DIFFERENCE PARAMETER VECTOR WITH D(JCOL) NON-ZERO
 !     IF AND ONLY IF JCOL IS A COLUMN IN GROUP NUMGRP.
-      IF (COL) THEN
+!      IF (COL) THEN
 !       COLUMN ORIENTATION.
-        DO JCOL = 1, N
-          IF (NGRP(JCOL) == NUMGRP) THEN
-            DO JP = NPNTR(JCOL), NPNTR(JCOL+1) - 1
-              IROW = IND(JP)
-              FJAC(JP) = FJACD(IROW)/D(JCOL)
-            END DO
-          END IF
-        END DO
-      ELSE
-!       ROW ORIENTATION.
-        DO IROW = 1, M
-          DO IP = NPNTR(IROW), NPNTR(IROW+1) - 1
-            JCOL = IND(IP)
-            IF (NGRP(JCOL) == NUMGRP) THEN
-              FJAC(IP) = FJACD(IROW)/D(JCOL)
-              GOTO 40
-            END IF
-          END DO
-40        CONTINUE
-        END DO
-      END IF
-      RETURN
+!        DO JCOL = 1, N
+!          IF (NGRP(JCOL) == NUMGRP) THEN
+!            DO JP = NPNTR(JCOL), NPNTR(JCOL+1) - 1
+!              IROW = IND(JP)
+!              FJAC(JP) = FJACD(IROW)/D(JCOL)
+!            END DO
+!          END IF
+!        END DO
+!      ELSE
+!!       ROW ORIENTATION.
+!        DO IROW = 1, M
+!          DO IP = NPNTR(IROW), NPNTR(IROW+1) - 1
+!            JCOL = IND(IP)
+!            IF (NGRP(JCOL) == NUMGRP) THEN
+!              FJAC(IP) = FJACD(IROW)/D(JCOL)
+!              GOTO 40
+!            END IF
+!          END DO
+!40        CONTINUE
+!        END DO
+!      END IF
+!      RETURN
 
-    END SUBROUTINE FDJS
+!    END SUBROUTINE FDJS
 !_______________________________________________________________________
 
     SUBROUTINE DVDSM(M,N,NPAIRS,INDROW,INDCOL,NGRP,MAXGRP,MINGRP,INFO, &
