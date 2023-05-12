@@ -2735,10 +2735,6 @@
             MSG = 'In SET_NORMAL_OPTS MOSS=1 but MITER is not 6.'
             CALL XERRDV(MSG,160,2,0,0,0,0,ZERO,ZERO)
           END IF
-!         IF (MOSS==0 .AND. MITER/=7) THEN
-!           MSG = 'In SET_NORMAL_OPTS MOSS=0 but MITER is not 7.'
-!           CALL XERRDV(MSG,170,2,0,0,0,0,ZERO,ZERO)
-!         END IF
         END IF
 
 !       Define the number of event functions.
@@ -3366,55 +3362,6 @@
 
 !   Use JACSP to approximate Jacobian?
     USE_JACSP = .FALSE.
-
-!   If only f77 options are to be changed, do it and return.
-!    IF (PRESENT(CHANGE_ONLY_f77_OPTIONS)) THEN
-!       IF (CHANGE_ONLY_f77_OPTIONS) THEN
-!          IF (.NOT.OPTS_CALLED) THEN
-!             MSG = 'You have not previously called SET_OPTS before attempting'
-!             CALL XERRDV(MSG,250,1,0,0,0,0,ZERO,ZERO)
-!             MSG = 'to change one or more of the vode.f77 optional parameters.'
-!             CALL XERRDV(MSG,250,2,0,0,0,0,ZERO,ZERO)
-!          END IF
-!          IF (PRESENT(HMAX)) THEN
-!             IOPT = 1
-!             RUSER(6) = HMAX
-!             MSG = 'HMAX changed in SET_INTERMEDIATE_OPTS.'
-!             CALL XERRDV(MSG,260,1,0,0,0,1,HMAX,ZERO)
-!          END IF
-!          IF (PRESENT(HMIN)) THEN
-!             IOPT = 1
-!             RUSER(7) = HMIN
-!             MSG = 'HMIN changed in SET_INTERMEDIATE_OPTS.'
-!             CALL XERRDV(MSG,270,1,0,0,0,1,HMIN,ZERO)
-!          END IF
-!          IF (PRESENT(TCRIT)) THEN
-!             IOPT = 1
-!             RUSER(1) = TCRIT
-!             MSG = 'TCRIT changed in SET_INTERMEDIATE_OPTS.'
-!             CALL XERRDV(MSG,280,1,0,0,0,1,TCRIT,ZERO)
-!          END IF
-!          IF (PRESENT(MXSTEP)) THEN
-!             IOPT = 1
-!             IUSER(6) = MXSTEP
-!             MSG = 'MXSTEP changed in SET_INTERMEDIATE_OPTS.'
-!             CALL XERRDV(MSG,290,1,1,MXSTEP,0,0,ZERO,ZERO)
-!          END IF
-!          IF (PRESENT(MAXORD)) THEN
-!             IOPT = 1
-!             IUSER(5) = MAXORD
-!             MSG = 'MAXORD changed in SET_INTERMEDIATE_OPTS.'
-!             CALL XERRDV(MSG,300,1,1,MAXORD,0,0,ZERO,ZERO)
-!          END IF
-!          IF (PRESENT(MXHNIL)) THEN
-!             IOPT = 1
-!             IUSER(7) = MXHNIL
-!             MSG = 'MXHNIL changed in SET_INTERMEDIATE_OPTS.'
-!             CALL XERRDV(MSG,310,1,1,MXHNIL,0,0,ZERO,ZERO)
-!          END IF
-!       END IF
-!       RETURN
-!    END IF
 
 !       Set the flag to indicate that SET_INTERMEDIATE_OPTS has been called.
         OPTS_CALLED = .TRUE.
@@ -7137,23 +7084,23 @@
              IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
              RETURN
            END IF
-           IF (ABS((TN+H)-TN)<=ZERO) THEN
-              NHNIL = NHNIL + 1
-              IF (NHNIL<=MXHNIL) THEN
-                 MSG = 'Warning: internal T(=R1) and H(=R2) are such that'
-                 CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
-                 MSG = 'in the machine, T + H = T on the next step.'
-                 CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
-                 MSG = '(H = step size). The solver will continue anyway.'
-                 CALL XERRDV(MSG,950,1,0,0,0,2,TN,H)
-                 IF (NHNIL>=MXHNIL) THEN
-                    MSG = 'The above warning has been issued I1 times.'
-                    CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
-                    MSG = 'It will not be issued again for this problem.'
-                    CALL XERRDV(MSG,950,1,1,MXHNIL,0,0,ZERO,ZERO)
-                 ENDIF
-              ENDIF
-           ENDIF
+           !IF (ABS((TN+H)-TN)<=ZERO) THEN
+           !   NHNIL = NHNIL + 1
+           !   IF (NHNIL<=MXHNIL) THEN
+           !      MSG = 'Warning: internal T(=R1) and H(=R2) are such that'
+           !      CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
+           !      MSG = 'in the machine, T + H = T on the next step.'
+           !      CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
+           !      MSG = '(H = step size). The solver will continue anyway.'
+           !      CALL XERRDV(MSG,950,1,0,0,0,2,TN,H)
+           !      IF (NHNIL>=MXHNIL) THEN
+           !         MSG = 'The above warning has been issued I1 times.'
+           !         CALL XERRDV(MSG,950,1,0,0,0,0,ZERO,ZERO)
+           !         MSG = 'It will not be issued again for this problem.'
+           !         CALL XERRDV(MSG,950,1,1,MXHNIL,0,0,ZERO,ZERO)
+           !      ENDIF
+           !   ENDIF
+           !ENDIF
 
            IF (BOUNDS) THEN
    !         Check positive components for infeasible prediction; reduce 
@@ -7237,22 +7184,22 @@
                           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
                   !       Warn the user if |y(t)| < ATOL:
-                          IF (ISTATE==2 .OR. ISTATE==3) THEN
-                            IF (YMAXWARN) THEN
-                              ATOLI = OPTS%ATOL(1)
-                              DO I = 1, N
-                                IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                                IF (ABS(Y(I))<ATOLI) THEN
-                                  MSG = 'Warning: Component I1 of the solution is'
-                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                                  MSG = 'smaller in magnitude than component I1'
-                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                                  MSG = 'of the absolute error tolerance vector.'
-                                  CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                                END IF
-                              END DO
-                            END IF
-                          END IF
+!                          IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                            IF (YMAXWARN) THEN
+!                              ATOLI = OPTS%ATOL(1)
+!                              DO I = 1, N
+!                                IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                                IF (ABS(Y(I))<ATOLI) THEN
+!                                  MSG = 'Warning: Component I1 of the solution is'
+!                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                                  MSG = 'smaller in magnitude than component I1'
+!                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                                  MSG = 'of the absolute error tolerance vector.'
+!                                  CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                                END IF
+!                              END DO
+!                            END IF
+!                          END IF
                        ENDIF
                     ENDIF
                     IF ((TN-TOUT)*H<ZERO) GOTO 200
@@ -7283,22 +7230,22 @@
                     RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                     IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
             !       Warn the user if |y(t)| < ATOL:
-                    IF (ISTATE==2 .OR. ISTATE==3) THEN
-                      IF (YMAXWARN) THEN
-                        ATOLI = OPTS%ATOL(1)
-                        DO I = 1, N
-                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                          IF (ABS(Y(I))<ATOLI) THEN
-                            MSG = 'Warning: Component I1 of the solution is'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'smaller in magnitude than component I1'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'of the absolute error tolerance vector.'
-                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                          END IF
-                        END DO
-                      END IF
-                    END IF
+!                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                      IF (YMAXWARN) THEN
+!                        ATOLI = OPTS%ATOL(1)
+!                        DO I = 1, N
+!                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                          IF (ABS(Y(I))<ATOLI) THEN
+!                            MSG = 'Warning: Component I1 of the solution is'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'smaller in magnitude than component I1'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'of the absolute error tolerance vector.'
+!                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                          END IF
+!                        END DO
+!                      END IF
+!                    END IF
               CASE (2) ITASK_SEL
                     CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
                     T = TN
@@ -7323,22 +7270,22 @@
                     RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                     IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
             !       Warn the user if |y(t)| < ATOL:
-                    IF (ISTATE==2 .OR. ISTATE==3) THEN
-                      IF (YMAXWARN) THEN
-                        ATOLI = OPTS%ATOL(1)
-                        DO I = 1, N
-                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                          IF (ABS(Y(I))<ATOLI) THEN
-                            MSG = 'Warning: Component I1 of the solution is'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'smaller in magnitude than component I1'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'of the absolute error tolerance vector.'
-                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                          END IF
-                        END DO
-                      END IF
-                    END IF
+!                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                      IF (YMAXWARN) THEN
+!                        ATOLI = OPTS%ATOL(1)
+!                        DO I = 1, N
+!                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                          IF (ABS(Y(I))<ATOLI) THEN
+!                            MSG = 'Warning: Component I1 of the solution is'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'smaller in magnitude than component I1'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'of the absolute error tolerance vector.'
+!                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                          END IF
+!                        END DO
+!                      END IF
+!                    END IF
                  CASE (3) ITASK_SEL
                     IF ((TN-TOUT)*H<ZERO) GOTO 200
                     CALL DCOPY_F90(N,RWORK(LYH),1,Y,1)
@@ -7364,22 +7311,22 @@
                     RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                     IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
             !       Warn the user if |y(t)| < ATOL:
-                    IF (ISTATE==2 .OR. ISTATE==3) THEN
-                      IF (YMAXWARN) THEN
-                        ATOLI = OPTS%ATOL(1)
-                        DO I = 1, N
-                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                          IF (ABS(Y(I))<ATOLI) THEN
-                            MSG = 'Warning: Component I1 of the solution is'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'smaller in magnitude than component I1'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'of the absolute error tolerance vector.'
-                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                          END IF
-                        END DO
-                      END IF
-                    END IF
+!                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                      IF (YMAXWARN) THEN
+!                        ATOLI = OPTS%ATOL(1)
+!                        DO I = 1, N
+!                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                          IF (ABS(Y(I))<ATOLI) THEN
+!                            MSG = 'Warning: Component I1 of the solution is'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'smaller in magnitude than component I1'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'of the absolute error tolerance vector.'
+!                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                          END IF
+!                        END DO
+!                      END IF
+!                    END IF
                  CASE (4) ITASK_SEL
                     IF ((TN-TOUT)*H<ZERO) THEN
                        HMX = ABS(TN) + ABS(H)
@@ -7408,22 +7355,22 @@
                           RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                           IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
                   !       Warn the user if |y(t)| < ATOL:
-                          IF (ISTATE==2 .OR. ISTATE==3) THEN
-                            IF (YMAXWARN) THEN
-                              ATOLI = OPTS%ATOL(1)
-                              DO I = 1, N
-                                IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                                IF (ABS(Y(I))<ATOLI) THEN
-                                  MSG = 'Warning: Component I1 of the solution is'
-                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                                  MSG = 'smaller in magnitude than component I1'
-                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                                  MSG = 'of the absolute error tolerance vector.'
-                                  CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                                END IF
-                              END DO
-                            END IF
-                          END IF
+!                          IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                            IF (YMAXWARN) THEN
+!                              ATOLI = OPTS%ATOL(1)
+!                              DO I = 1, N
+!                                IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                                IF (ABS(Y(I))<ATOLI) THEN
+!                                  MSG = 'Warning: Component I1 of the solution is'
+!                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                                  MSG = 'smaller in magnitude than component I1'
+!                                  CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                                  MSG = 'of the absolute error tolerance vector.'
+!                                  CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                                END IF
+!                              END DO
+!                            END IF
+!                          END IF
                           RETURN
                        ENDIF
                        TNEXT = TN + HNEW*(ONE+FOUR*UROUND)
@@ -7459,22 +7406,22 @@
                        RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                        IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
                !       Warn the user if |y(t)| < ATOL:
-                       IF (ISTATE==2 .OR. ISTATE==3) THEN
-                         IF (YMAXWARN) THEN
-                           ATOLI = OPTS%ATOL(1)
-                           DO I = 1, N
-                             IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                             IF (ABS(Y(I))<ATOLI) THEN
-                               MSG = 'Warning: Component I1 of the solution is'
-                               CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                               MSG = 'smaller in magnitude than component I1'
-                               CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                               MSG = 'of the absolute error tolerance vector.'
-                               CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                             END IF
-                           END DO
-                         END IF
-                       END IF
+!                       IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                         IF (YMAXWARN) THEN
+!                           ATOLI = OPTS%ATOL(1)
+!                           DO I = 1, N
+!                             IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                             IF (ABS(Y(I))<ATOLI) THEN
+!                               MSG = 'Warning: Component I1 of the solution is'
+!                               CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                               MSG = 'smaller in magnitude than component I1'
+!                               CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                               MSG = 'of the absolute error tolerance vector.'
+!                               CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                             END IF
+!                           END DO
+!                         END IF
+!                       END IF
                     ENDIF
                  CASE (5) ITASK_SEL
                     HMX = ABS(TN) + ABS(H)
@@ -7502,22 +7449,22 @@
                     RUSER(1:LRWUSER) = RWORK(1:LRWUSER)
                     IUSER(1:LIWUSER) = IWORK(1:LIWUSER)
             !       Warn the user if |y(t)| < ATOL:
-                    IF (ISTATE==2 .OR. ISTATE==3) THEN
-                      IF (YMAXWARN) THEN
-                        ATOLI = OPTS%ATOL(1)
-                        DO I = 1, N
-                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                          IF (ABS(Y(I))<ATOLI) THEN
-                            MSG = 'Warning: Component I1 of the solution is'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'smaller in magnitude than component I1'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'of the absolute error tolerance vector.'
-                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                          END IF
-                        END DO
-                      END IF
-                    END IF
+!                    IF (ISTATE==2 .OR. ISTATE==3) THEN
+!                      IF (YMAXWARN) THEN
+!                        ATOLI = OPTS%ATOL(1)
+!                        DO I = 1, N
+!                          IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
+!                          IF (ABS(Y(I))<ATOLI) THEN
+!                            MSG = 'Warning: Component I1 of the solution is'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'smaller in magnitude than component I1'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'of the absolute error tolerance vector.'
+!                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                          END IF
+!                        END DO
+!                      END IF
+!                    END IF
               END SELECT ITASK_SEL
            CASE (2) KGO_SEL
       !       KFLAG = -1. Error test failed repeatedly or with ABS(H) = HMIN.
@@ -9941,7 +9888,7 @@
 90003   FORMAT ('In the above message, R1 = ',D21.13)
         IF (NR==2) WRITE (LUNIT,90004) R1, R2
 90004   FORMAT ('In the above message, R1 = ',D21.13,3X,'R2 = ',D21.13)
-
+        RETURN
 90005   FORMAT ('LEVEL = 2 in XERRDV. Stopping.')
         STOP
 
@@ -10184,12 +10131,12 @@
                    CALL XERRDV(MSG,1460,2,0,0,0,0,ZERO,ZERO)
                  END IF
                  IF (NZ>NZ_ALL) THEN
-                    IF (LP /= 0) THEN
-                       MSG = 'NZ_ALL (=I1) is not large enough.'
-                       CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
-                       MSG = 'Allocating more space for another try.'
-                       CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
-                    END IF
+!                    IF (LP /= 0) THEN
+!                       MSG = 'NZ_ALL (=I1) is not large enough.'
+!                       CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
+!                       MSG = 'Allocating more space for another try.'
+!                       CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!                    END IF
                     GOTO 10
                  END IF
                  CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
@@ -10210,12 +10157,12 @@
                  NFE = NFE + 1
                  DO J = 1, N
                    IF (K>NZ_ALL) THEN
-                      IF (LP /= 0) THEN
-                         MSG = 'NZ_ALL (=I1) is not large enough.'
-                         CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'Allocating more space for another try.'
-                         CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
-                      END IF
+!                      IF (LP /= 0) THEN
+!                         MSG = 'NZ_ALL (=I1) is not large enough.'
+!                         CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'Allocating more space for another try.'
+!                         CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!                      END IF
                       GOTO 10
                    END IF
                    YJ = Y(J)
@@ -10251,12 +10198,12 @@
                  CALL XERRDV(MSG,1460,2,0,0,0,0,ZERO,ZERO)
               END IF
               IF (NZ>NZ_ALL) THEN
-                 IF (LP /= 0) THEN
-                    MSG = 'NZ_ALL (=I1) is not large enough.'
-                    CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
-                    MSG = 'Allocating more space for another try.'
-                    CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
-                 END IF
+!                 IF (LP /= 0) THEN
+!                    MSG = 'NZ_ALL (=I1) is not large enough.'
+!                    CALL XERRDV(MSG,1470,1,0,0,0,0,ZERO,ZERO)
+!                    MSG = 'Allocating more space for another try.'
+!                    CALL XERRDV(MSG,1470,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!                 END IF
                  GOTO 10
               END IF
               CALL JAC(NEQ,TN,Y,IAN,JAN,NZ,PMAT)
@@ -10277,12 +10224,12 @@
               NFE = NFE + 1
               DO J = 1, N
                  IF (K>NZ_ALL) THEN
-                    IF (LP /= 0) THEN
-                       MSG = 'NZ_ALL (=I1) is not large enough.'
-                       CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
-                       MSG = 'Allocating more space for another try.'
-                       CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
-                    END IF
+!                    IF (LP /= 0) THEN
+!                       MSG = 'NZ_ALL (=I1) is not large enough.'
+!                       CALL XERRDV(MSG,1480,1,0,0,0,0,ZERO,ZERO)
+!                       MSG = 'Allocating more space for another try.'
+!                       CALL XERRDV(MSG,1480,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!                    END IF
                     GOTO 10
                  END IF
                  YJ = Y(J)
@@ -10305,15 +10252,15 @@
         ELSE
    !       MOSS = 0
    !       Process user's IA,JA. Add diagonal entries if necessary:
-           IF (IAJA_CALLED) THEN
-           ELSE
-             MSG = 'You have indicated that you wish to supply the'
-             CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
-             MSG = 'sparsity arrays IA and JA directly but you did'
-             CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
-             MSG = 'not call SET_IAJA after calling SET_OPTS.'
-             CALL XERRDV(MSG,1430,2,0,0,0,0,ZERO,ZERO)
-           END IF
+!           IF (IAJA_CALLED) THEN
+!           ELSE
+!             MSG = 'You have indicated that you wish to supply the'
+!             CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
+!             MSG = 'sparsity arrays IA and JA directly but you did'
+!             CALL XERRDV(MSG,1430,1,0,0,0,0,ZERO,ZERO)
+!             MSG = 'not call SET_IAJA after calling SET_OPTS.'
+!             CALL XERRDV(MSG,1430,2,0,0,0,0,ZERO,ZERO)
+!           END IF
            KNEW = 1
            KMIN = IA(1)
            IAN(1) = 1
@@ -10325,12 +10272,12 @@
                I = JA(K)
                IF (I==J) JFOUND = 1
                IF (KNEW>NZ_ALL) THEN
-                  IF (LP /= 0) THEN
-                     MSG = 'NZ_ALL (=I1) is not large enough.'
-                     CALL XERRDV(MSG,1440,1,0,0,0,0,ZERO,ZERO)
-                     MSG = 'Allocating more space for another try.'
-                     CALL XERRDV(MSG,1440,1,1,NZ_ALL,0,0,ZERO,ZERO)
-                  END IF
+!                  IF (LP /= 0) THEN
+!                     MSG = 'NZ_ALL (=I1) is not large enough.'
+!                     CALL XERRDV(MSG,1440,1,0,0,0,0,ZERO,ZERO)
+!                     MSG = 'Allocating more space for another try.'
+!                     CALL XERRDV(MSG,1440,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!                  END IF
                   GOTO 10
                END IF
                JAN(KNEW) = I
@@ -10338,12 +10285,12 @@
              END DO
              IF (JFOUND==1) GOTO 50
    40        IF (KNEW>NZ_ALL) THEN
-                IF (LP /= 0) THEN
-                   MSG = 'NZ_ALL (=I1) is not large enough.'
-                   CALL XERRDV(MSG,1450,1,0,0,0,0,ZERO,ZERO)
-                   MSG = 'Allocating more space for another try.'
-                   CALL XERRDV(MSG,1450,1,1,NZ_ALL,0,0,ZERO,ZERO)
-                END IF
+!                IF (LP /= 0) THEN
+!                   MSG = 'NZ_ALL (=I1) is not large enough.'
+!                   CALL XERRDV(MSG,1450,1,0,0,0,0,ZERO,ZERO)
+!                   MSG = 'Allocating more space for another try.'
+!                   CALL XERRDV(MSG,1450,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!                END IF
                 GOTO 10
              END IF
              JAN(KNEW) = J
@@ -10451,14 +10398,14 @@
               CALL CHECK_STAT(IER,660)
            END IF
         END IF
-        IF (LP /= 0) THEN
-           MSG = 'The final DVPRPEPS storage allocations are:'
-           CALL XERRDV(MSG,1510,1,0,0,0,0,ZERO,ZERO)
-           MSG = '   NZ_ALL (=I1):'
-           CALL XERRDV(MSG,1510,1,1,NZ_ALL,0,0,ZERO,ZERO)
-           MSG = '   LIRN_ALL (=I1) and LICN_ALL (=I2):'
-           CALL XERRDV(MSG,1510,1,2,LIRN_ALL,LICN_ALL,0,ZERO,ZERO)
-         END IF
+!        IF (LP /= 0) THEN
+!           MSG = 'The final DVPRPEPS storage allocations are:'
+!           CALL XERRDV(MSG,1510,1,0,0,0,0,ZERO,ZERO)
+!           MSG = '   NZ_ALL (=I1):'
+!           CALL XERRDV(MSG,1510,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!           MSG = '   LIRN_ALL (=I1) and LICN_ALL (=I2):'
+!           CALL XERRDV(MSG,1510,1,2,LIRN_ALL,LICN_ALL,0,ZERO,ZERO)
+!         END IF
         RETURN
 
       END SUBROUTINE DVPREPS
@@ -10586,21 +10533,21 @@
         DO J = 1, N
           KVAL = K
           IF (KVAL > LIRN_ALL) THEN
-             IF (LP /= 0) THEN
-                MSG = 'LIRN_ALL (=I1) is not large enough.'
-                CALL XERRDV(MSG,1550,1,0,0,0,0,ZERO,ZERO)
-                MSG = 'Allocating more space for another try.'
-                CALL XERRDV(MSG,1550,1,1,LIRN_ALL,0,0,ZERO,ZERO)
-             END IF
+!             IF (LP /= 0) THEN
+!                MSG = 'LIRN_ALL (=I1) is not large enough.'
+!                CALL XERRDV(MSG,1550,1,0,0,0,0,ZERO,ZERO)
+!                MSG = 'Allocating more space for another try.'
+!                CALL XERRDV(MSG,1550,1,1,LIRN_ALL,0,0,ZERO,ZERO)
+!             END IF
              GOTO 10
           END IF
           IF (KVAL > LICN_ALL) THEN
-             IF (LP /= 0) THEN
-                MSG = 'LICN_ALL (=I1) is not large enough.'
-                CALL XERRDV(MSG,1560,1,0,0,0,0,ZERO,ZERO)
-                MSG = 'Allocating more space for another try.'
-                CALL XERRDV(MSG,1560,1,1,LICN_ALL,0,0,ZERO,ZERO)
-             END IF
+!             IF (LP /= 0) THEN
+!                MSG = 'LICN_ALL (=I1) is not large enough.'
+!                CALL XERRDV(MSG,1560,1,0,0,0,0,ZERO,ZERO)
+!                MSG = 'Allocating more space for another try.'
+!                CALL XERRDV(MSG,1560,1,1,LICN_ALL,0,0,ZERO,ZERO)
+!             END IF
              GOTO 10
           END IF
           YJ = Y(J)
@@ -10623,12 +10570,12 @@
         IF (NNZ > NZ_ALL .AND. JSV == 1) THEN
 !          Increase the size of JMAT if necessary.
            NZ_ALL = NNZ
-           IF (LP /= 0) THEN
-              MSG = 'NZ_ALL (=I1) is not large enough.'
-              CALL XERRDV(MSG,1570,1,0,0,0,0,ZERO,ZERO)
-              MSG = 'Allocating more space for another try.'
-              CALL XERRDV(MSG,1570,1,1,NZ_ALL,0,0,ZERO,ZERO)
-           END IF
+!           IF (LP /= 0) THEN
+!              MSG = 'NZ_ALL (=I1) is not large enough.'
+!              CALL XERRDV(MSG,1570,1,0,0,0,0,ZERO,ZERO)
+!              MSG = 'Allocating more space for another try.'
+!              CALL XERRDV(MSG,1570,1,1,NZ_ALL,0,0,ZERO,ZERO)
+!           END IF
            IF (NZ_ALL>MAX_ARRAY_SIZE) THEN
               MSG = 'Maximum array size exceeded. Stopping in DVRENEW.'
               CALL XERRDV(MSG,1580,2,0,0,0,0,ZERO,ZERO)
@@ -11671,12 +11618,12 @@
                IF (IER==-1 .OR. IER==-2) IERPJ = 1
                IF (IER==-3) THEN
        !         LIRN_ALL is not large enough.
-                 IF (LP /= 0) THEN
-                    MSG = 'LIRN_ALL (=I1) is not large enough.'
-                    CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
-                    MSG = 'Allocating more space for another try.'
-                    CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
-                 END IF
+!                 IF (LP /= 0) THEN
+!                    MSG = 'LIRN_ALL (=I1) is not large enough.'
+!                    CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
+!                    MSG = 'Allocating more space for another try.'
+!                    CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
+!                 END IF
        !         Allocate more space for JAN and JVECT and try again.
                  LIRN_ALL = LIRN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
                  LIRN_ALL = MAX(LIRN_ALL,(11*MINIRN)/10)
@@ -11703,12 +11650,12 @@
                END IF
                IF (IER==-4 .OR. IER==-5 .OR. IER==-6) THEN
        !         LICN_ALL is not large enough.
-                 IF (LP /= 0) THEN
-                    MSG = 'LICN_ALL (=I1) is not large enough.'
-                    CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
-                    MSG = 'Allocating more space for another try.'
-                    CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
-                 END IF
+!                 IF (LP /= 0) THEN
+!                    MSG = 'LICN_ALL (=I1) is not large enough.'
+!                    CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
+!                    MSG = 'Allocating more space for another try.'
+!                    CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
+!                 END IF
        !         Allocate more space for JAN and JVECT and try again.
                  LICN_ALL = LICN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
                  LICN_ALL = MAX(LICN_ALL,(11*MINICN)/10)
@@ -12066,12 +12013,12 @@
                  IF (IER==-1 .OR. IER==-2) IERPJ = 1
                  IF (IER==-3) THEN
          !         LIRN_ALL is not large enough.
-                   IF (LP /= 0) THEN
-                      MSG = 'LIRN_ALL (=I1) is not large enough.'
-                      CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
-                      MSG = 'Allocating more space for another try.'
-                      CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
-                   END IF
+!                   IF (LP /= 0) THEN
+!                      MSG = 'LIRN_ALL (=I1) is not large enough.'
+!                      CALL XERRDV(MSG,1690,1,0,0,0,0,ZERO,ZERO)
+!                      MSG = 'Allocating more space for another try.'
+!                      CALL XERRDV(MSG,1690,1,1,LIRN_ALL,0,0,ZERO,ZERO)
+!                   END IF
          !         Allocate more space for JAN and JVECT and try again.
                    LIRN_ALL = LIRN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
                    LIRN_ALL = MAX(LIRN_ALL,(11*MINIRN)/10)
@@ -12098,12 +12045,12 @@
                  END IF
                  IF (IER==-4 .OR. IER==-5 .OR. IER==-6) THEN
          !         LICN_ALL is not large enough.
-                   IF (LP /= 0) THEN
-                      MSG = 'LICN_ALL (=I1) is not large enough.'
-                      CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
-                      MSG = 'Allocating more space for another try.'
-                      CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
-                   END IF
+!                   IF (LP /= 0) THEN
+!                      MSG = 'LICN_ALL (=I1) is not large enough.'
+!                      CALL XERRDV(MSG,1710,1,0,0,0,0,ZERO,ZERO)
+!                      MSG = 'Allocating more space for another try.'
+!                      CALL XERRDV(MSG,1710,1,1,LICN_ALL,0,0,ZERO,ZERO)
+!                   END IF
          !         Allocate more space for JAN and JVECT and try again.
                    LICN_ALL = LICN_ALL + MAX(MAX(1000,ELBOW_ROOM*NZ_SWAG),10*N)
                    LICN_ALL = MAX(LICN_ALL,(11*MINICN)/10)
@@ -13040,10 +12987,10 @@
 !_______________________________________________________________________
 
 !       Print the amount of storage used.
-        MSG = 'I1 = Total length of REAL arrays used.'
-        CALL XERRDV(MSG,1760,1,1,IR,0,0,ZERO,ZERO)
-        MSG = 'I1 = Total length of INTEGER arrays used.'
-        CALL XERRDV(MSG,1760,1,1,II,0,0,ZERO,ZERO)
+!        MSG = 'I1 = Total length of REAL arrays used.'
+!        CALL XERRDV(MSG,1760,1,1,IR,0,0,ZERO,ZERO)
+!        MSG = 'I1 = Total length of INTEGER arrays used.'
+!        CALL XERRDV(MSG,1760,1,1,II,0,0,ZERO,ZERO)
 
 !       In case DVODE_F90 is subsequently called:
         OPTS_CALLED = .FALSE.
