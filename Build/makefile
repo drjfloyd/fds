@@ -377,7 +377,7 @@ data.o : prec.o func.o cons.o prop.o
 rcal.o : func.o prec.o cons.o
 mesh.o : prec.o type.o
 func.o : prec.o cons.o type.o mesh.o devc.o
-numerics.o : prec.o, func.o
+numerics.o : prec.o func.o
 gsmv.o : prec.o func.o cons.o mesh.o
 smvv.o : geom.o prec.o func.o cons.o data.o
 turb.o : prec.o func.o cons.o mesh.o
