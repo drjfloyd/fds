@@ -12687,7 +12687,7 @@
 ! ..
 ! .. Local Scalars ..
         INTEGER :: IER, II, IR
-        CHARACTER (80) :: MSG
+!        CHARACTER (80) :: MSG
 ! ..
 ! .. Intrinsic Functions ..
         INTRINSIC ALLOCATED, SIZE
