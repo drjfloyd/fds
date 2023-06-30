@@ -482,6 +482,8 @@ TYPE SPECIES_TYPE
    REAL(EB) :: PR_LIQUID                          !< Prandtl number of the liquid
    REAL(EB) :: THERMOPHORETIC_DIAMETER=0.03E-6_EB !< For use in aerosol deposition (m)
    REAL(EB) :: ODE_REL_ERROR                      !< Relative error for finite rate chemistry
+   REAL(EB) :: POLYNOMIAL_TEMP(4)                 !< Temperature bands for user polynomial
+   REAL(EB) :: POLYNOMIAL_COEFF(9,3)              !< Coefficients for user polynomial
 
    LOGICAL ::  ISFUEL=.FALSE.                     !< Fuel species
    LOGICAL ::  LISTED=.FALSE.                     !< Properties are known to FDS
@@ -497,7 +499,8 @@ TYPE SPECIES_TYPE
    CHARACTER(LABEL_LENGTH) :: RAMP_MU             !< Name of viscosity rame
    CHARACTER(LABEL_LENGTH) :: RAMP_D              !< Name of diffusivity ramp
    CHARACTER(LABEL_LENGTH) :: RADCAL_ID           !< Name of closest species with RADCAL properties
-   CHARACTER(LABEL_LENGTH) :: RAMP_G_F
+   CHARACTER(LABEL_LENGTH) :: RAMP_G_F            !< Name of Gibbs energy ramp
+   CHARACTER(LABEL_LENGTH) :: POLYNOMIAL          !< Polynomial type for user specified data
    CHARACTER(LABEL_LENGTH) :: PROP_ID             !< Name of PROPerty parameters
    CHARACTER(FORMULA_LENGTH) :: FORMULA           !< Chemical formula
    INTEGER :: MODE=2
@@ -510,6 +513,7 @@ TYPE SPECIES_TYPE
    INTEGER :: RAMP_G_F_INDEX=-1                   !< Index of Gibbs energy ramp
    INTEGER :: PROP_INDEX=-1                       !< Index of species in THERMO_DAT
    INTEGER :: AWM_INDEX=-1                        !< Index of species in wall deposition arrays
+   INTEGER :: POLYNOMIAL_BANDS                     !< Number of temperature bands in used polynomial
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: H_V       !< Heat of vaporization as a function of temperature
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: C_P_L     !< Liquid specific heat as a function of temperature
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: C_P_L_BAR !< Average liquid specific heat as a function of temperture
