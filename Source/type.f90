@@ -603,8 +603,8 @@ END TYPE AIT_EXCLUSION_ZONE_TYPE
 
 
 TYPE REACTION_TYPE
-   CHARACTER(LABEL_LENGTH) :: FUEL        !< Name of reaction fuel species
-   CHARACTER(LABEL_LENGTH) :: ID          !< Identifer of reaction
+   CHARACTER(LABEL_LENGTH) :: FUEL='null' !< Name of reaction fuel species
+   CHARACTER(LABEL_LENGTH) :: ID='null'   !< Identifer of reaction
    CHARACTER(LABEL_LENGTH) :: RAMP_CHI_R  !< Name of ramp for radiative fraction
    CHARACTER(LABEL_LENGTH), ALLOCATABLE, DIMENSION(:) :: SPEC_ID_NU_READ  !< Holding array for SPEC_ID_NU
    CHARACTER(LABEL_LENGTH), ALLOCATABLE, DIMENSION(:) :: SPEC_ID_N_S_READ !< Holding array of finite rate species exponents
@@ -778,7 +778,6 @@ TYPE SURFACE_TYPE
    REAL(EB) :: MLRPUA                                    !< Specified Mass Loss Rate Per Unit Area (kg/m2/s)
    REAL(EB) :: T_IGN                                     !< Specified ignition time (s)
    REAL(EB) :: SURFACE_DENSITY                           !< Mass per unit area (kg/m2)
-   REAL(EB) :: CELL_SIZE_FACTOR
    REAL(EB) :: CELL_SIZE
    REAL(EB) :: E_COEFFICIENT
    REAL(EB) :: TEXTURE_WIDTH
@@ -850,7 +849,7 @@ TYPE SURFACE_TYPE
    INTEGER, DIMENSION(MAX_LAYERS) :: N_LAYER_MATL,N_LAYER_CELLS_MAX
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: MIN_DIFFUSIVITY
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: LAYER_THICKNESS,INTERNAL_HEAT_SOURCE
-   REAL(EB), DIMENSION(MAX_LAYERS) :: LAYER_DENSITY,STRETCH_FACTOR,&
+   REAL(EB), DIMENSION(MAX_LAYERS) :: LAYER_DENSITY,CELL_SIZE_FACTOR,STRETCH_FACTOR,&
                                       MOISTURE_FRACTION,SURFACE_VOLUME_RATIO,PACKING_RATIO,KAPPA_S=-1._EB,RENODE_DELTA_T
    REAL(EB), DIMENSION(MAX_LAYERS,MAX_MATERIALS) :: DENSITY_ADJUST_FACTOR=1._EB,RHO_S
    CHARACTER(LABEL_LENGTH), ALLOCATABLE, DIMENSION(:) :: MATL_NAME
@@ -859,7 +858,7 @@ TYPE SURFACE_TYPE
    LOGICAL :: BURN_AWAY,ADIABATIC,INTERNAL_RADIATION,USER_DEFINED=.TRUE., &
               FREE_SLIP=.FALSE.,NO_SLIP=.FALSE.,SPECIFIED_NORMAL_VELOCITY=.FALSE.,SPECIFIED_TANGENTIAL_VELOCITY=.FALSE., &
               SPECIFIED_NORMAL_GRADIENT=.FALSE.,CONVERT_VOLUME_TO_MASS=.FALSE.,SPECIFIED_HEAT_SOURCE=.FALSE.,&
-              BOUNDARY_FUEL_MODEL=.FALSE.,SET_H=.FALSE.,DIRICHLET_FRONT=.FALSE.,DIRICHLET_BACK=.FALSE.
+              BOUNDARY_FUEL_MODEL=.FALSE.,SET_H=.FALSE.,DIRICHLET_FRONT=.FALSE.,DIRICHLET_BACK=.FALSE.,BLOWING=.FALSE.
    INTEGER :: HT_DIM=1                               !< Heat Transfer Dimension
    LOGICAL :: NORMAL_DIRECTION_ONLY=.FALSE.          !< Heat Transfer in normal direction only, even if the solid is HT3D
    LOGICAL :: INCLUDE_BOUNDARY_COORD_TYPE=.TRUE.     !< This surface requires basic coordinate information
@@ -926,7 +925,7 @@ TYPE OMESH_TYPE
    REAL(EB), ALLOCATABLE, DIMENSION(:,:,:) :: U_LNK, V_LNK, W_LNK
 
    ! Level Set
-   REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: PHI_LS,PHI1_LS,U_LS,V_LS,Z_LS
+   REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: PHI_LS,PHI1_LS,U_LS,V_LS,Z_LS,TOA
    REAL(EB), ALLOCATABLE, DIMENSION(:) :: REAL_SEND_PKG14,REAL_RECV_PKG14
 
 END TYPE OMESH_TYPE
@@ -1156,6 +1155,7 @@ END TYPE CC_CUTFACE_TYPE
 TYPE RAD_CFACE_TYPE
    INTEGER :: N_ASSIGNED_CFACES_RADI=0
    INTEGER, ALLOCATABLE, DIMENSION(:,:) :: ASSIGNED_CFACES_RADI
+   REAL(EB),ALLOCATABLE, DIMENSION(:)   :: INT_FACTOR
 END TYPE RAD_CFACE_TYPE
 
 
@@ -1222,6 +1222,7 @@ TYPE CC_CUTCELL_TYPE
    INTEGER,  ALLOCATABLE, DIMENSION(:)        :: UNKH,UNKZ ! Unknown number for pressure H, and scalars.
    REAL(EB), ALLOCATABLE, DIMENSION(:)        :: KRES,H,HS ! Kinetic Energy, Pressure H containers.
    REAL(EB), ALLOCATABLE, DIMENSION(:)        :: RTRM,R_H_G,RHO_0,WVEL,DDDTVOL
+   REAL(EB), ALLOCATABLE, DIMENSION(:)        :: DELTA_RHO,DELTA_RHO_ZZ
 
    ! Here: VIND=0, EP=1:INT_N_EXT_PTS
    INTEGER,  ALLOCATABLE, DIMENSION(:,:)      :: INT_IJK        ! (IAXIS:KAXIS,INT_NPE_LO+1:INT_NPE_LO+INT_NPE_HI)
@@ -1438,6 +1439,7 @@ TYPE INITIALIZATION_TYPE
    REAL(EB) :: DZ=0._EB         !< Spacing (m) of an array of particles
    REAL(EB) :: HEIGHT           !< Height of initialization region (m)
    REAL(EB) :: RADIUS           !< Radius of initialization region, like a cone (m)
+   REAL(EB) :: INNER_RADIUS     !< Inner radius of initialization region, like a conical shell (m)
    REAL(EB) :: DIAMETER=-1._EB  !< Diameter of liquid droplets specified on an INIT line (m)
    REAL(EB) :: PARTICLE_WEIGHT_FACTOR !< Multiplicative factor for particles specified on the INIT line
    REAL(EB) :: BULK_DENSITY_FACTOR !< Multiplicative factor for values read in from BULK_DENSITY_FILE
