@@ -11605,7 +11605,7 @@ USE DEVICE_VARIABLES, ONLY: DEVICE_TYPE,DEVICE,N_DEVC
 REAL(EB) :: DIAMETER,TEMPERATURE,DENSITY,RR_SUM,ZZ_GET(1:N_TRACKED_SPECIES),MASS_PER_VOLUME,BULK_DENSITY_FACTOR, &
             MASS_PER_TIME,DT_INSERT,UVW(3),HRRPUV,XYZ(3),DX,DY,DZ,HEIGHT,RADIUS,INNER_RADIUS,MASS_FRACTION(MAX_SPECIES), &
             PARTICLE_WEIGHT_FACTOR,VOLUME_FRACTION(MAX_SPECIES),CROWN_BASE_HEIGHT,CROWN_BASE_WIDTH,TREE_HEIGHT
-INTEGER  :: NM,N,NN,NNN,II,JJ,KK,NS,NS2,NS3,N_PARTICLES,N_INIT_NEW,N_INIT_READ,N_PARTICLES_PER_CELL,SURF_INDEX,III
+INTEGER  :: NM,N,NN,NNN,II,JJ,KK,NS,NS2,N_PARTICLES,N_INIT_NEW,N_INIT_READ,N_PARTICLES_PER_CELL,SURF_INDEX,III
 LOGICAL  :: CELL_CENTERED,UNIFORM,DRY
 CHARACTER(LABEL_LENGTH) :: ID,CTRL_ID,DEVC_ID,PART_ID,SHAPE,MULT_ID,SPEC_ID(1:MAX_SPECIES),PATH_RAMP(3),RAMP_Q,RAMP_PART,NODE_ID
 CHARACTER(MESSAGE_LENGTH) :: BULK_DENSITY_FILE
@@ -11903,34 +11903,30 @@ INIT_LOOP: DO N=1,N_INIT_READ+N_INIT_RESERVED
                   WRITE(MESSAGE,'(A,I0,A,A)') 'ERROR: Problem with INIT number ',N,'. SPEC_ID must be used with VOLUME_FRACTION'
                   CALL SHUTDOWN(MESSAGE) ; RETURN
                ENDIF
-               NS3 = MAX_SPECIES
                DO NS=1,MAX_SPECIES
-                  IF (SPEC_ID(NS)=='null') THEN
-                     VOLUME_FRACTION(NS) = 0._EB
-                     NS3 = MIN(MAX_SPECIES,NS-1)
-                     EXIT
-                  ENDIF
+                  IF (SPEC_ID(NS)=='null')  EXIT
                   DO NS2=1,N_TRACKED_SPECIES
                      IF (TRIM(SPEC_ID(NS))==TRIM(SPECIES_MIXTURE(NS2)%ID)) THEN
-                        MASS_FRACTION(NS2) = VOLUME_FRACTION(NS)*SPECIES_MIXTURE(NS2)%MW
+                        IN%MASS_FRACTION(NS2) = VOLUME_FRACTION(NS)
                         EXIT
                      ENDIF
                      IF (NS2==N_TRACKED_SPECIES)  THEN
                         WRITE(MESSAGE,'(A,I0,A,A,A)') 'ERROR: Problem with INIT number ',N,' tracked species ',&
-                           TRIM(SPEC_ID(NS)),' not found'
-                           CALL SHUTDOWN(MESSAGE) ; RETURN
+                                                      TRIM(SPEC_ID(NS)),' not found'
+                        CALL SHUTDOWN(MESSAGE) ; RETURN
                      ENDIF
                   ENDDO
                ENDDO
-
-               IF (MASS_FRACTION(1)<=TWO_EPSILON_EB) THEN
-                  MASS_FRACTION(1) = (1._EB - SUM(VOLUME_FRACTION(1:NS3)))*SPECIES_MIXTURE(1)%MW
-               ELSE
+               IF (IN%MASS_FRACTION(1) > TWO_EPSILON_EB) THEN
                   WRITE(MESSAGE,'(A,I0,A,A)') 'ERROR: Problem with INIT number ',N,&
-                                                '. Cannot specify background species for VOLUME_FRACTION'
+                                              '. Cannot specify background species for VOLUME_FRACTION'
                   CALL SHUTDOWN(MESSAGE) ; RETURN
                ENDIF
-               IN%MASS_FRACTION(1:N_TRACKED_SPECIES) = MASS_FRACTION(1:N_TRACKED_SPECIES)/SUM(MASS_FRACTION(1:N_TRACKED_SPECIES))
+               IF (SUM(IN%MASS_FRACTION) < 1._EB) IN%MASS_FRACTION(1) = 1._EB - SUM(IN%MASS_FRACTION)
+               DO NS2=1,N_TRACKED_SPECIES
+                  IN%MASS_FRACTION(NS2) = IN%MASS_FRACTION(NS2)*SPECIES_MIXTURE(NS2)%MW
+               ENDDO
+               IN%MASS_FRACTION = IN%MASS_FRACTION/SUM(IN%MASS_FRACTION)
                ZZ_GET(1:N_TRACKED_SPECIES) = IN%MASS_FRACTION(1:N_TRACKED_SPECIES)
                CALL GET_SPECIFIC_GAS_CONSTANT(ZZ_GET,RR_SUM)
                IN%ADJUST_SPECIES_CONCENTRATION = .TRUE.
