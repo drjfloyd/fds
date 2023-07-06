@@ -956,19 +956,11 @@ KINETICS_SELECT: SELECT CASE(KINETICS)
             IF (DZ_F0(I) < 0._EB) THEN
                DZ_F0(I) = RN%A_PRIME*RHO_0**RN%RHO_EXPONENT*TMP_0**RN%N_T*EXP(-RN%E*RRTMP0)
                IF (RN%THIRD_BODY) THEN
-                  IF (MOLPCM3 < 0._EB) THEN
-                     CALL GET_MOLECULAR_WEIGHT(ZZ_TMP,MW)
-                     MOLPCM3 = RHO_0/MW*0.001_EB ! mol/cm^3
-                  ENDIF
-                  IF (RN%N_THIRD > 0) THEN
-                     X_Y_SUM = 0._EB
-                     DO NS=1,N_SPECIES
-                        X_Y(NS) = YY_PRIMITIVE(NS)/SPECIES(NS)%MW
-                        X_Y_SUM = X_Y_SUM + X_Y(NS)
-                        X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
-                     ENDDO
-                     DZ_F0(I) = DZ_F0(I) * MOLPCM3 * SUM(X_Y)/X_Y_SUM
-                  ELSE
+                  IF (RN%N_THIRD <=0) THEN
+                     IF (MOLPCM3 < 0._EB) THEN
+                        CALL GET_MOLECULAR_WEIGHT(ZZ_TMP,MW)
+                        MOLPCM3 = RHO_0/MW*0.001_EB ! mol/cm^3
+                     ENDIF
                      DZ_F0(I) = DZ_F0(I)*MOLPCM3
                   ENDIF
                ENDIF
@@ -981,6 +973,17 @@ KINETICS_SELECT: SELECT CASE(KINETICS)
                ENDIF
             ENDIF
             DZ_F = DZ_F0(I)
+            IF (RN%THIRD_BODY) THEN
+               IF (RN%N_THIRD > 0) THEN
+                  X_Y_SUM = 0._EB
+                  DO NS=1,N_SPECIES
+                     X_Y(NS) = YY_PRIMITIVE(NS)/SPECIES(NS)%MW
+                     X_Y_SUM = X_Y_SUM + X_Y(NS)
+                     X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+                  ENDDO
+                  DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+               ENDIF
+            ENDIF
             DO NS=1,RN%N_SPEC
                IF (RN%N_S_FLAG(NS)) THEN
                   DZ_F = YY_PRIMITIVE(RN%N_S_INDEX(NS))**RN%N_S_INT(NS)*DZ_F
@@ -1043,7 +1046,9 @@ DO I=1,N_REACTIONS
          CALL GET_MOLECULAR_WEIGHT(ZZ_OLD,MW)
          MOLPCM3 = RHO_0/MW*0.001_EB ! mol/cm^3
       ENDIF
-      IF (RN%N_THIRD < 0) DZ_F0(I) = DZ_F0(I) * MOLPCM3
+      IF (RN%N_THIRD <=0) THEN
+         DZ_F0(I) = DZ_F0(I) * MOLPCM3
+      ENDIF
    ENDIF
    IF(RN%REVERSE) THEN ! compute equilibrium constant
       IF (MW < 0._EB) THEN
@@ -1053,7 +1058,7 @@ DO I=1,N_REACTIONS
       KG = EXP(RN%DELTA_G(MIN(I_MAX_TEMP,NINT(TMP_0)))/TMP_0)*MOLPCM3**RN%C0_EXP
       DZ_F0(I) = DZ_F0(I)*KG
    ENDIF
-ENDDO 
+ENDDO
 
 END SUBROUTINE DVODES_PRECALC
 
@@ -1080,6 +1085,11 @@ DZZ = 0.D0
 
 REACTION_LOOP: DO I=1,N_REACTIONS
    RN => REACTION(I)
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_TMP(RN%NU_INDEX(NS)) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
+   ENDDO
+   ! Check for species with concentration exponents
    DO NS=1,RN%N_SPEC
       IF(ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS))) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
    ENDDO
@@ -1088,15 +1098,18 @@ REACTION_LOOP: DO I=1,N_REACTIONS
    DO NS=1,RN%N_SPEC
       DZ_F = DZ_F*ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
    ENDDO
-   IF (RN%N_THIRD > 0) THEN
-      X_Y_SUM = 0._EB
-      DO NS=1,N_SPECIES
-         X_Y(NS) = ZZ_TMP(NS)/SPECIES(NS)%MW
-         X_Y_SUM = X_Y_SUM + X_Y(NS)
-         X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
-      ENDDO
-      DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+   IF (RN%THIRD_BODY) THEN
+      IF (RN%N_THIRD > 0) THEN
+         X_Y_SUM = 0._EB
+         DO NS=1,N_SPECIES
+            X_Y(NS) = ZZ_OLD(NS)/SPECIES(NS)%MW
+            X_Y_SUM = X_Y_SUM + X_Y(NS)
+            X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+         ENDDO
+         DZ_F0(I) = DZ_F0(I) * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+      ENDIF
    ENDIF
+
    DO NS=1,RN%N_SMIX_FR
       DZZ(RN%NU_INDEX(NS)) = DZZ(RN%NU_INDEX(NS)) + DBLE(RN%NU_MW_O_MW_F_FR(NS)*DZ_F)
    ENDDO
