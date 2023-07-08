@@ -6562,14 +6562,14 @@
                   ATOLI = OPTS%ATOL(1)
                   DO I = 1, N
                     IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                    IF (ABS(Y(I))<ATOLI) THEN
-                      MSG = 'Warning: Component I1 of the solution is'
-                      CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                      MSG = 'smaller in magnitude than component I1'
-                      CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                      MSG = 'of the absolute error tolerance vector.'
-                      CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                    END IF
+!                    IF (ABS(Y(I))<ATOLI) THEN
+!                      MSG = 'Warning: Component I1 of the solution is'
+!                      CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                      MSG = 'smaller in magnitude than component I1'
+!                      CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                      MSG = 'of the absolute error tolerance vector.'
+!                      CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                    END IF
                   END DO
                 END IF
               END IF
@@ -6607,14 +6607,14 @@
                ATOLI = OPTS%ATOL(1)
                DO I = 1, N
                  IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                 IF (ABS(Y(I))<ATOLI) THEN
-                   MSG = 'Warning: Component I1 of the solution is'
-                   CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                   MSG = 'smaller in magnitude than component I1'
-                   CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                   MSG = 'of the absolute error tolerance vector.'
-                   CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                 END IF
+!                 IF (ABS(Y(I))<ATOLI) THEN
+!                   MSG = 'Warning: Component I1 of the solution is'
+!                   CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                   MSG = 'smaller in magnitude than component I1'
+!                   CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                   MSG = 'of the absolute error tolerance vector.'
+!                   CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                 END IF
                END DO
              END IF
            END IF
@@ -6663,14 +6663,14 @@
                      ATOLI = OPTS%ATOL(1)
                      DO I = 1, N
                        IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                       IF (ABS(Y(I))<ATOLI) THEN
-                         MSG = 'Warning: Component I1 of the solution is'
-                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'smaller in magnitude than component I1'
-                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'of the absolute error tolerance vector.'
-                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                       END IF
+!                       IF (ABS(Y(I))<ATOLI) THEN
+!                         MSG = 'Warning: Component I1 of the solution is'
+!                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'smaller in magnitude than component I1'
+!                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'of the absolute error tolerance vector.'
+!                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                       END IF
                      END DO
                    END IF
                  END IF
@@ -6714,14 +6714,14 @@
                         ATOLI = OPTS%ATOL(1)
                         DO I = 1, N
                           IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                          IF (ABS(Y(I))<ATOLI) THEN
-                            MSG = 'Warning: Component I1 of the solution is'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'smaller in magnitude than component I1'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'of the absolute error tolerance vector.'
-                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                          END IF
+!                          IF (ABS(Y(I))<ATOLI) THEN
+!                            MSG = 'Warning: Component I1 of the solution is'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'smaller in magnitude than component I1'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'of the absolute error tolerance vector.'
+!                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                          END IF
                         END DO
                       END IF
                     END IF
@@ -6751,14 +6751,14 @@
                      ATOLI = OPTS%ATOL(1)
                      DO I = 1, N
                        IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                       IF (ABS(Y(I))<ATOLI) THEN
-                         MSG = 'Warning: Component I1 of the solution is'
-                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'smaller in magnitude than component I1'
-                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'of the absolute error tolerance vector.'
-                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                       END IF
+!                       IF (ABS(Y(I))<ATOLI) THEN
+!                         MSG = 'Warning: Component I1 of the solution is'
+!                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'smaller in magnitude than component I1'
+!                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'of the absolute error tolerance vector.'
+!                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                       END IF
                      END DO
                    END IF
                  END IF
@@ -6822,14 +6822,14 @@
                     ATOLI = OPTS%ATOL(1)
                     DO I = 1, N
                        IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                       IF (ABS(Y(I))<ATOLI) THEN
-                          MSG = 'Warning: Component I1 of the solution is'
-                          CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                          MSG = 'smaller in magnitude than component I1'
-                          CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                          MSG = 'of the absolute error tolerance vector.'
-                          CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                       END IF
+!                       IF (ABS(Y(I))<ATOLI) THEN
+!                          MSG = 'Warning: Component I1 of the solution is'
+!                          CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                          MSG = 'smaller in magnitude than component I1'
+!                          CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                          MSG = 'of the absolute error tolerance vector.'
+!                          CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                       END IF
                     END DO
                     END IF
                  END IF
@@ -6866,14 +6866,14 @@
                         ATOLI = OPTS%ATOL(1)
                         DO I = 1, N
                           IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                          IF (ABS(Y(I))<ATOLI) THEN
-                            MSG = 'Warning: Component I1 of the solution is'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'smaller in magnitude than component I1'
-                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                            MSG = 'of the absolute error tolerance vector.'
-                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                          END IF
+!                          IF (ABS(Y(I))<ATOLI) THEN
+!                            MSG = 'Warning: Component I1 of the solution is'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'smaller in magnitude than component I1'
+!                            CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                            MSG = 'of the absolute error tolerance vector.'
+!                            CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                          END IF
                         END DO
                       END IF
                     END IF
@@ -6926,14 +6926,14 @@
                      ATOLI = OPTS%ATOL(1)
                      DO I = 1, N
                        IF (ITOL==2 .OR. ITOL==4) ATOLI = OPTS%ATOL(I)
-                       IF (ABS(Y(I))<ATOLI) THEN
-                         MSG = 'Warning: Component I1 of the solution is'
-                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'smaller in magnitude than component I1'
-                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
-                         MSG = 'of the absolute error tolerance vector.'
-                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
-                       END IF
+!                       IF (ABS(Y(I))<ATOLI) THEN
+!                         MSG = 'Warning: Component I1 of the solution is'
+!                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'smaller in magnitude than component I1'
+!                         CALL XERRDV(MSG,960,1,0,0,0,0,ZERO,ZERO)
+!                         MSG = 'of the absolute error tolerance vector.'
+!                         CALL XERRDV(MSG,960,1,1,I,0,0,ZERO,ZERO)
+!                       END IF
                      END DO
                    END IF
                  END IF
