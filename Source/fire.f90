@@ -134,7 +134,7 @@ DO K=1,KBAR
    DO J=1,JBAR
       ILOOP: DO I=1,IBAR
          WO = .FALSE.
-         IF (I==1 .AND. J==1 .AND. K==1) WO=.TRUE.
+         IF (I==9 .AND. J==1 .AND. K==10) WO=.TRUE.
          ! Check to see if a reaction is possible
          IF (CELL(CELL_INDEX(I,J,K))%SOLID) CYCLE ILOOP
          IF (CC_IBM) THEN
@@ -988,7 +988,7 @@ KINETICS_SELECT: SELECT CASE(KINETICS)
                IF (RN%N_S_FLAG(NS)) THEN
                   DZ_F = YY_PRIMITIVE(RN%N_S_INDEX(NS))**RN%N_S_INT(NS)*DZ_F
                ELSE
-                  DZ_F = YY_PRIMITIVE(RN%N_S_INDEX(NS))**RN%N_S(NS)*DZ_F
+                  DZ_F = DZ_F*YY_PRIMITIVE(RN%N_S_INDEX(NS))**RN%N_S(NS)
                ENDIF
             ENDDO
             IF (DZ_F > TWO_EPSILON_EB) REACTANTS_PRESENT = .TRUE.
@@ -1145,10 +1145,11 @@ DZZ = 0.D0
 
 REACTION_LOOP: DO I=1,N_REACTIONS
    RN => REACTION(I)
-   IF (ZZ_TMP(RN%FUEL_SMIX_INDEX) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
-   IF (RN%AIR_SMIX_INDEX > -1) THEN
-      IF (ZZ_TMP(RN%AIR_SMIX_INDEX) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP ! no expected air
-   ENDIF
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_TMP(RN%NU_INDEX(NS)) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
+   ENDDO
+   ! Check for species with concentration exponents
    DO NS=1,RN%N_SPEC
       IF(ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS))) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
    ENDDO
@@ -1197,6 +1198,11 @@ DZZ = 0.D0
 
 REACTION_LOOP: DO I=1,N_REACTIONS
    RN => REACTION(I)
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_OLD(RN%NU_INDEX(NS)) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
+   ENDDO
+   ! Check for species with concentration exponents
    DO NS=1,RN%N_SPEC
       IF(ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS))) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
    ENDDO
@@ -1205,14 +1211,16 @@ REACTION_LOOP: DO I=1,N_REACTIONS
    DO NS=1,RN%N_SPEC
       DZ_F = DZ_F*ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
    ENDDO
-   IF (RN%N_THIRD > 0) THEN
-      X_Y_SUM = 0._EB
-      DO NS=1,N_SPECIES
-         X_Y(NS) = ZZ_OLD(NS)/SPECIES(NS)%MW
-         X_Y_SUM = X_Y_SUM + X_Y(NS)
-         X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
-      ENDDO
-      DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+   IF (RN%THIRD_BODY) THEN
+      IF (RN%N_THIRD > 0) THEN
+         X_Y_SUM = 0._EB
+         DO NS=1,N_SPECIES
+            X_Y(NS) = ZZ_OLD(NS)/SPECIES(NS)%MW
+            X_Y_SUM = X_Y_SUM + X_Y(NS)
+            X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+         ENDDO
+         DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+      ENDIF
    ENDIF
    DO NS=1,RN%N_SMIX_FR
       DZZ(RN%NU_INDEX(NS)) = DZZ(RN%NU_INDEX(NS)) + RN%NU_MW_O_MW_F_FR(NS)*DZ_F
@@ -1284,10 +1292,11 @@ ZZ_JAC = 0._EB
 
 REACTION_LOOP: DO I=1,N_REACTIONS
    RN => REACTION(I)
-   IF (ZZ_OLD(RN%FUEL_SMIX_INDEX) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
-   IF (RN%AIR_SMIX_INDEX > -1) THEN
-      IF (ZZ_OLD(RN%AIR_SMIX_INDEX) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP ! no expected air
-   ENDIF
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_OLD(RN%NU_INDEX(NS)) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
+   ENDDO
+   ! Check for species with concentration exponents
    DO NS=1,RN%N_SPEC
       IF(ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS))) < ZZ_MIN_GLOBAL) CYCLE REACTION_LOOP
    ENDDO
