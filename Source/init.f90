@@ -1305,6 +1305,10 @@ ENDDO
 
 DO NOM=1,NMESHES
    OS => MESHES(NM)%OMESH(NOM)%WALL_RECV_BUFFER
+   IF (PROCESS(NM)==PROCESS(NOM)) THEN
+      OS%N_ITEMS = MESHES(NOM)%N_WALL_CELLS
+      CYCLE
+   ENDIF
    WSCS = WALL_SAVE(NOM)%START
    WSC  = WALL_SAVE(NOM)%COUNTER
    OS%N_ITEMS = MAX(0,WSC-WSCS+1)
@@ -1412,9 +1416,13 @@ DO N=1,M%N_NEIGHBORING_MESHES
 ENDDO
 
 DO NOM=1,NMESHES
+   OS => MESHES(NM)%OMESH(NOM)%THIN_WALL_RECV_BUFFER
+   IF (PROCESS(NM)==PROCESS(NOM)) THEN
+      OS%N_ITEMS = MESHES(NOM)%N_THIN_WALL_CELLS
+      CYCLE
+   ENDIF
    WSCS = THIN_WALL_SAVE(NOM)%START
    WSC  = THIN_WALL_SAVE(NOM)%COUNTER
-   OS => MESHES(NM)%OMESH(NOM)%THIN_WALL_RECV_BUFFER
    OS%N_ITEMS = MAX(0,WSC-WSCS+1)
    OS%START_INDEX = THIN_WALL_SAVE(NOM)%START
    IF (WSC==0) CYCLE
@@ -1730,7 +1738,7 @@ EDGE_DIRECTION_2: SELECT CASE(IEC)
                ED%IIO_1 = IIO
                ED%JJO_1 = JJO
                MM => MESHES(NOM)
-               ZK  = MIN( REAL(MM%KBAR,EB)+ALMOST_ONE , MM%CELLSK(NINT((M%Z(KK)-MM%ZS)*MM%RDZINT))+1._EB )
+               ZK  = MIN( REAL(MM%KBAR,EB)+ONE_M_EPS , MM%CELLSK(NINT((M%Z(KK)-MM%ZS)*MM%RDZINT))+1._EB )
                KKO = MAX(1,FLOOR(ZK))
                ED%EDGE_INTERPOLATION_FACTOR(1) = ZK-KKO
                ED%KKO_1 = KKO
@@ -1739,7 +1747,7 @@ EDGE_DIRECTION_2: SELECT CASE(IEC)
                IF (IOR<0) ED%NOM_2 =  NOM
                ED%IIO_2 = IIO
                MM => MESHES(NOM)
-               YJ  = MIN( REAL(MM%JBAR,EB)+ALMOST_ONE , MM%CELLSJ(NINT((M%Y(JJ)-MM%YS)*MM%RDYINT))+1._EB )
+               YJ  = MIN( REAL(MM%JBAR,EB)+ONE_M_EPS , MM%CELLSJ(NINT((M%Y(JJ)-MM%YS)*MM%RDYINT))+1._EB )
                JJO = MAX(1,FLOOR(YJ))
                ED%EDGE_INTERPOLATION_FACTOR(2) = YJ-JJO
                ED%JJO_2 = JJO
@@ -1768,7 +1776,7 @@ EDGE_DIRECTION_2: SELECT CASE(IEC)
                ED%IIO_2 = IIO
                ED%JJO_2 = JJO
                MM => MESHES(NOM)
-               ZK  = MIN( REAL(MM%KBAR,EB)+ALMOST_ONE , MM%CELLSK(NINT((M%Z(KK)-MM%ZS)*MM%RDZINT))+1._EB )
+               ZK  = MIN( REAL(MM%KBAR,EB)+ONE_M_EPS , MM%CELLSK(NINT((M%Z(KK)-MM%ZS)*MM%RDZINT))+1._EB )
                KKO = MAX(1,FLOOR(ZK))
                ED%EDGE_INTERPOLATION_FACTOR(2) = ZK-KKO
                ED%KKO_2 = KKO
@@ -1776,7 +1784,7 @@ EDGE_DIRECTION_2: SELECT CASE(IEC)
                IF (IOR>0) ED%NOM_1 = -NOM
                IF (IOR<0) ED%NOM_1 =  NOM
                MM => MESHES(NOM)
-               XI  = MIN( REAL(MM%IBAR,EB)+ALMOST_ONE , MM%CELLSI(NINT((M%X(II)-MM%XS)*MM%RDXINT))+1._EB )
+               XI  = MIN( REAL(MM%IBAR,EB)+ONE_M_EPS , MM%CELLSI(NINT((M%X(II)-MM%XS)*MM%RDXINT))+1._EB )
                IIO = MAX(1,FLOOR(XI))
                ED%EDGE_INTERPOLATION_FACTOR(1) = XI-IIO
                ED%IIO_1 = IIO
@@ -1805,7 +1813,7 @@ EDGE_DIRECTION_2: SELECT CASE(IEC)
                IF (IOR<0) ED%NOM_1 =  NOM
                ED%IIO_1 = IIO
                MM => MESHES(NOM)
-               YJ  = MIN( REAL(MM%JBAR,EB)+ALMOST_ONE , MM%CELLSJ(NINT((M%Y(JJ)-MM%YS)*MM%RDYINT))+1._EB )
+               YJ  = MIN( REAL(MM%JBAR,EB)+ONE_M_EPS , MM%CELLSJ(NINT((M%Y(JJ)-MM%YS)*MM%RDYINT))+1._EB )
                JJO = MAX(1,FLOOR(YJ))
                ED%EDGE_INTERPOLATION_FACTOR(1) = YJ-JJO
                ED%JJO_1 = JJO
@@ -1814,7 +1822,7 @@ EDGE_DIRECTION_2: SELECT CASE(IEC)
                IF (IOR>0) ED%NOM_2 = -NOM
                IF (IOR<0) ED%NOM_2 =  NOM
                MM => MESHES(NOM)
-               XI  = MIN( REAL(MM%IBAR,EB)+ALMOST_ONE , MM%CELLSI(NINT((M%X(II)-MM%XS)*MM%RDXINT))+1._EB )
+               XI  = MIN( REAL(MM%IBAR,EB)+ONE_M_EPS , MM%CELLSI(NINT((M%X(II)-MM%XS)*MM%RDXINT))+1._EB )
                IIO = MAX(1,FLOOR(XI))
                ED%EDGE_INTERPOLATION_FACTOR(2) = XI-IIO
                ED%IIO_2 = IIO
