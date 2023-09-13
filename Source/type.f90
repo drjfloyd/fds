@@ -484,6 +484,7 @@ TYPE SPECIES_TYPE
    REAL(EB) :: K_LIQUID                           !< Conductivity of the liquid (W/m/K)
    REAL(EB) :: PR_LIQUID                          !< Prandtl number of the liquid
    REAL(EB) :: THERMOPHORETIC_DIAMETER=0.03E-6_EB !< For use in aerosol deposition (m)
+   REAL(EB) :: ODE_ABS_ERROR                      !< Absolute error for finite rate chemistry
    REAL(EB) :: ODE_REL_ERROR                      !< Relative error for finite rate chemistry
    REAL(EB) :: POLYNOMIAL_TEMP(4)                 !< Temperature bands for user polynomial
    REAL(EB) :: POLYNOMIAL_COEFF(9,3)              !< Coefficients for user polynomial
@@ -559,6 +560,7 @@ TYPE SPECIES_MIXTURE_TYPE
    REAL(EB) :: CONDUCTIVITY_SOLID                  !< Conductivity for aerosol particle (W/m/K)
    REAL(EB) :: H_F = -1.E30_EB                     !< Heat of formation (J/kg)
    REAL(EB) :: H_F_HOC = -1.E30_EB                 !< Heat of formation used in RN%HEAT_OF_COMBUSTION calculation (J/kg)
+   REAL(EB) :: ODE_ABS_ERROR                       !< Absolute error for finite rate chemistry
    REAL(EB) :: ODE_REL_ERROR                       !< Relative error for finite rate chemistry
 
    CHARACTER(LABEL_LENGTH), ALLOCATABLE, DIMENSION(:) :: SPEC_ID  !< Array of component species names
