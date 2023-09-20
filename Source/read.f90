@@ -5002,16 +5002,18 @@ IF (TRIM(ODE_SOLVER)/='null') THEN
       CASE ('RK2')            ; COMBUSTION_ODE_SOLVER = RK2
       CASE ('RK3')            ; COMBUSTION_ODE_SOLVER = RK3
       CASE ('RK2 RICHARDSON') ; COMBUSTION_ODE_SOLVER = RK2_RICHARDSON
-      CASE ('DVODES','DASSL')
+      CASE ('DVODES','DASSL','SDIRK4')
          IF (ODE_SOLVER=='DVODES') THEN
             COMBUSTION_ODE_SOLVER = DVODES_SOLVER
+         ELSEIF (ODE_SOLVER='SDIRK4') 
+            OMBUSTION_ODE_SOLVER = SDIRK4_SOLVER
          ELSE
             COMBUSTION_ODE_SOLVER = DASSL_SOLVER
          ENDIF
          ALLOCATE(YP2ZZ(N_SPECIES))
          DO NS=1,N_TRACKED_SPECIES
             IF (SPECIES_MIXTURE(NS)%SINGLE_SPEC_INDEX < 0) THEN
-               WRITE(MESSAGE,'(A)') 'ERROR: No lumped species can be used with DVODES solver.'
+               WRITE(MESSAGE,'(A)') 'ERROR: No lumped species can be used with DVODES, DASSL, or SDIRK4 solver.'
                CALL SHUTDOWN(MESSAGE) ; RETURN
             ENDIF
             YP2ZZ(SPECIES_MIXTURE(NS)%SINGLE_SPEC_INDEX) = NS
