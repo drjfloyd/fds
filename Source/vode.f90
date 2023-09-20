@@ -1907,7 +1907,7 @@
         KFH = -15, LENIV1 = 33,                                          &
         LENIV2 = 8, LENRV1 = 48, LENRV2 = 1, LIWUSER = 30, LRWUSER = 22, &
         MAXCOR = 3, MAX_ARRAY_SIZE = 900000000, MSBP = 20, MXHNL0 = 10,  &
-        MXNCF = 10, MXSTP0 = 50000
+        MXNCF = 10, MXSTP0 = 5000
 !_______________________________________________________________________
 ! *****LAPACK build change point. Use .TRUE. for LAPACK.
 !     LOGICAL, PARAMETER, PRIVATE :: USE_LAPACK = .TRUE.
