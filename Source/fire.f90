@@ -566,7 +566,7 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
                   WRITE(LU_ERR,*) 'RW:',RWORK(3),RWORK(4),RWORK(7)
                   WRITE(LU_ERR,*) 'IW:',IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
                   COUNTER = COUNTER + 1
-                  IF (COUNTER == 20) STOP
+                  IF (COUNTER == 10) STOP
                   INFO2(1) = 1
                CASE(-2)
                   WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN
