@@ -377,7 +377,7 @@ data.o : prec.o func.o cons.o prop.o
 rcal.o : func.o prec.o cons.o
 mesh.o : prec.o type.o
 func.o : prec.o cons.o type.o mesh.o devc.o
-numerics.o : prec.o func.o
+numerics.o : prec.o func.o cons.o
 gsmv.o : prec.o func.o cons.o mesh.o
 smvv.o : geom.o prec.o func.o cons.o data.o
 turb.o : prec.o func.o cons.o mesh.o
@@ -412,7 +412,7 @@ data.obj : prec.obj func.obj cons.obj prop.obj
 rcal.obj : func.obj prec.obj cons.obj
 mesh.obj : prec.obj type.obj
 func.obj : prec.obj cons.obj type.obj mesh.obj devc.obj
-numerics.obj : prec.obj func.obj
+numerics.obj : prec.obj func.obj cons.obj
 gsmv.obj : prec.obj func.obj cons.obj mesh.obj
 smvv.obj : geom.obj prec.obj func.obj cons.obj data.obj
 turb.obj : prec.obj func.obj cons.obj mesh.obj
