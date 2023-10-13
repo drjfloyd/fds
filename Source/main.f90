@@ -1746,6 +1746,8 @@ IF (MY_RANK==0) THEN
          WRITE(MESSAGE,'(A)') 'STOP: FDS performed a level set analysis only and finished successfully'
       CASE(REALIZABILITY_STOP)
          WRITE(MESSAGE,'(A)') 'ERROR: Unrealizable mass density - FDS stopped'
+      CASE(ODE_STOP)
+         WRITE(MESSAGE,'(A)') 'ERROR: Combustion ODE Solver Failure - FDS stopped'
       CASE DEFAULT
          WRITE(MESSAGE,'(A)') 'null'
    END SELECT

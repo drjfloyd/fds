@@ -57,7 +57,7 @@ IF (.NOT. DVODE_INIT) THEN
       DVODE_INIT = .TRUE.
       INFO2(1) = 0  ! Treat as first call to routine (otherwise will preserve ZZ from prior grid cell)
       INFO2(2) = 1  ! RTOL/ATOL are vectors
-      INFO2(5) = 0  ! User suppplied JAC
+      INFO2(5) = 0  ! User suppplied JAC (DASSL_JAC routine in ths module is not correct. Using DASSL numerical Jacobian
       INFO2(6) = 0  ! Non-banded JAC
       INFO2(10) = 1 ! Solution is non-negative
       LIW = 20+N_TRACKED_SPECIES
@@ -152,6 +152,7 @@ DO K=1,KBAR
                WRITE(LU_ERR,*) SUM(ZZ_GET)
                WRITE(LU_ERR,*) 'ERROR: Unrealizable mass fractions input to COMBUSTION_MODEL'
                STOP_STATUS=REALIZABILITY_STOP
+               RETURN
             ENDIF
          ENDIF
          CALL CHECK_REACTION
@@ -168,6 +169,7 @@ DO K=1,KBAR
                                 TMP(I,J,K),RHO(I,J,K),MU(I,J,K),&
                                 LES_FILTER_WIDTH(I,J,K),DX(I)*DY(J)*DZ(K),IIC=I,JJC=J,KKC=K )
          !***************************************************************************************
+         IF (STOP_STATUS/=NO_STOP) RETURN
          IF (OUTPUT_CHEM_IT) CHEM_SUBIT(I,J,K) = CHEM_SUBIT_TMP
          IF (REAC_SOURCE_CHECK) THEN ! Store special diagnostic quantities
             REAC_SOURCE_TERM(I,J,K,:) = REAC_SOURCE_TERM_TMP
@@ -179,6 +181,7 @@ DO K=1,KBAR
                WRITE(LU_ERR,*) ZZ_GET,SUM(ZZ_GET)
                WRITE(LU_ERR,*) 'ERROR: Unrealizable mass fractions after COMBUSTION_MODEL'
                STOP_STATUS=REALIZABILITY_STOP
+               RETURN
             ENDIF
          ENDIF
          DZZ = ZZ_GET - DZZ
@@ -347,6 +350,7 @@ SUBROUTINE COMBUSTION_MODEL(T,DT,ZZ_GET,Q_OUT,MIX_TIME_OUT,CHI_R_OUT,CHEM_SUBIT_
 USE MATH_FUNCTIONS, ONLY: EVALUATE_RAMP
 USE DVODECONS, ONLY: ODE_MIN_ATOL
 USE PHYSICAL_FUNCTIONS, ONLY: GET_REALIZABLE_MF
+USE COMP_FUNCTIONS, ONLY: SHUTDOWN
 INTEGER, INTENT(IN), OPTIONAL :: IIC,JJC,KKC
 REAL(EB), INTENT(IN) :: T,DT,RHO_IN,MU_IN,DELTA,CELL_VOLUME
 REAL(EB), INTENT(OUT) :: Q_OUT,MIX_TIME_OUT,CHI_R_OUT,REAC_SOURCE_TERM_OUT(N_TRACKED_SPECIES),Q_REAC_OUT(N_REACTIONS)
@@ -361,7 +365,7 @@ REAL(EB) :: A1(1:N_TRACKED_SPECIES),A2(1:N_TRACKED_SPECIES),A4(1:N_TRACKED_SPECI
             TOTAL_MIXED_MASS_1,TOTAL_MIXED_MASS_2,TOTAL_MIXED_MASS_4,TOTAL_MIXED_MASS,&
             ZETA_1,ZETA_2,ZETA_4,D_F,TMP_IN,C_U,DT_SUB_OLD,TNOW2,ERR_EST(N_TRACKED_SPECIES),ERR_TOL(N_TRACKED_SPECIES),ERR_TINY,&
             ZZ_TEMP(1:N_TRACKED_SPECIES),REL_ERR(N_TRACKED_SPECIES),ABS_ERR(N_TRACKED_SPECIES)
-INTEGER :: NR,NS,ITER,TVI,RICH_ITER,TIME_ITER,RICH_ITER_MAX,ITASK=1,ISTATE=1,COUNTER
+INTEGER :: NR,NS,ITER,TVI,RICH_ITER,TIME_ITER,RICH_ITER_MAX,ITASK=1,ISTATE=1,COUNTER,COUNTER2
 DOUBLE PRECISION :: ZZ_DVODE(N_TRACKED_SPECIES)
 INTEGER, PARAMETER :: TV_ITER_MIN=5
 LOGICAL :: TV_FLUCT(1:N_TRACKED_SPECIES),EXTINCT,NO_REACTIONS
@@ -531,13 +535,16 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
                ISTATE = 3
                COUNTER = COUNTER + 1
                IF (COUNTER == 20) THEN
-                  WRITE(LU_ERR,*) 'MXSTEP:',NM0,I0,J0,K0
-                  STOP
+                  WRITE(LU_ERR,*) 'DVODES MXSTEP'
+                  STOP_STATUS = ODE_STOP
+                  RETURN
                ENDIF
                OPTIONS = SET_OPTS(DENSE_J=.TRUE.,ABSERR_VECTOR=ATOL,RELERR_VECTOR=RTOL,USER_SUPPLIED_JACOBIAN=.TRUE.,&
                                   MXSTEP=10000*COUNTER)
             ELSE
-               STOP
+               WRITE(LU_ERR,*) 'DVODES Other Error'
+               STOP_STATUS = ODE_STOP
+               RETURN
             ENDIF
          ENDDO
          ZZ_MIXED = REAL(ZZ_DVODE,EB)
@@ -553,6 +560,7 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
          T1 = 0._EB!T-DT
          T2 = DT!T
          COUNTER = 0
+         COUNTER2 = 0
          INFO2(1) = 0
          DASSL_LOOP: DO
             CALL DDASSL(DASSL_RESID,N_TRACKED_SPECIES,T1,ZZ_MIXED,A1,T2,INFO2,REL_ERR,ABS_ERR,ISTATE,RWORK,LRW,IWORK,LIW,RPAR,&
@@ -561,27 +569,47 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
                CASE(1:)
                   EXIT DASSL_LOOP
                CASE(-1)
-                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN
+                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
                   WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
-                  WRITE(LU_ERR,*) 'RW:',RWORK(3),RWORK(4),RWORK(7)
-                  WRITE(LU_ERR,*) 'IW:',IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
+                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
                   COUNTER = COUNTER + 1
-                  IF (COUNTER == 10) STOP
                   INFO2(1) = 1
+                  IF (COUNTER == 10) THEN
+                     IF (COUNTER2 == 2) THEN
+                        WRITE(LU_ERR,*) 'DASSL MXSTEP'
+                        STOP_STATUS = ODE_STOP
+                        RETURN
+                     ELSE
+                        COUNTER2 = COUNTER2+1
+                        ABS_ERR = ABS_ERR * 10._EB
+                        INFO2(1) = 0
+                        ZZ_MIXED = ZZ_GET
+                        T1 = 0._EB!T-DT
+                        T2 = DT!T
+                        COUNTER = 0
+                        CALL DASSL_YP(ZZ_MIXED,A1)
+                     ENDIF
+                  ENDIF
                CASE(-2)
-                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN
+                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
                   WRITE(LU_ERR,*) 'I RE:',SPECIES_MIXTURE(NS)%ODE_REL_ERROR
                   WRITE(LU_ERR,*) 'I AE:',SPECIES_MIXTURE(NS)%ODE_ABS_ERROR
                   WRITE(LU_ERR,*) 'N RE:',REL_ERR
                   WRITE(LU_ERR,*) 'N AE:',ABS_ERR
-                  WRITE(LU_ERR,*) 'RW:',RWORK(3),RWORK(4),RWORK(7)
-                  WRITE(LU_ERR,*) 'IW:',IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
-                  STOP
+                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
+                  STOP_STATUS = ODE_STOP
+                  RETURN
                CASE DEFAULT
-                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN
-                  WRITE(LU_ERR,*) 'RW:',RWORK(3),RWORK(4),RWORK(7)
-                  WRITE(LU_ERR,*) 'IW:',IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
-                  STOP
+                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
+                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
+                  STOP_STATUS = ODE_STOP
+                  RETURN
             END SELECT
          ENDDO DASSL_LOOP
    END SELECT INTEGRATOR_SELECT
@@ -1332,7 +1360,7 @@ REAL(EB), INTENT (OUT) :: ZZ_JAC(N_TRACKED_SPECIES,N_TRACKED_SPECIES)
 REAL(EB) :: DZ_F,DZZ_TMP,X_Y(N_SPECIES),X_Y_SUM,T1,R1,CJ1,ZZ1,MIN_SPEC(N_TRACKED_SPECIES)
 INTEGER :: I,NS, NS2,I1
 TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
-
+!********************** THIS ROUTINE IS NOT CORRECT USING DASSL NUMERICAL JACOBIAN ROUTINE**************************
 !Prevent unused in compilation
 T1 = T
 R1 = RPAR(1)
@@ -1375,7 +1403,6 @@ WRITE(*,*) I,DZ_F0(I),DZ_F
       DO NS2 = 1, RN%N_SPEC
          ZZ_JAC(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))) = ZZ_JAC(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))) + &
                                                             RN%N_S(NS2) * DZZ_TMP / ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS2)))
-         WRITE(*,*) NS,NS2,RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2)),ZZ_JAC(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))),RN%N_S(NS2),RN%NU_MW_O_MW_F_FR(NS),ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS2)))
       ENDDO
    ENDDO
 ENDDO REACTION_LOOP

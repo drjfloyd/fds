@@ -78,12 +78,16 @@ for i2 in range(n_species):
            h_f = int(h_f * r0 * 100)/100000.
            t_r = t_r2
         else:
-           c_p = gas_list[2][j][0]/t_r**2+gas_list[2][j][1]/t_R+gas_list[2][j][2]+gas_list[2][j][3]*t_r+\
+           c_p = gas_list[2][j][0]/t_r**2+gas_list[2][j][1]/t_r+gas_list[2][j][2]+gas_list[2][j][3]*t_r+\
            gas_list[2][j][4]*t_r**2+gas_list[2][j][5]*t_r**3+gas_list[2][j][6]*t_r**4
-           h_f = -0.5*gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
+           h_f = -gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
            1./3.*gas_list[2][j][4]*t_r**3+0.25*gas_list[2][j][5]*t_r**4+0.2*gas_list[2][j][6]*t_r**5+gas_list[2][j][7]
+           print(c_p,h_f)
            h_f = h_f - c_p * (t_r - t_r2)
+           print(h_f)
            h_f = int(h_f * r0 * 100)/100000.
+           print(h_f)
+           stop()
            t_r = t_r2
      if (temp_bands[j]<t_r):
         if (poly=='NASA7'):
@@ -91,7 +95,7 @@ for i2 in range(n_species):
            1./3.*gas_list[2][j][2]*t_r**3+0.25*gas_list[2][j][3]*t_r**4+0.2*gas_list[2][j][4]*t_r**5+gas_list[2][j][5]
            h_f = int(h_f * r0 * 100)/100000.
         else:
-           h_f = -0.5*gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
+           h_f = -gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
            1./3.*gas_list[2][j][4]*t_r**3.+0.25*gas_list[2][j][5]*t_r**4+0.2*gas_list[2][j][6]*t_r**5+gas_list[2][j][7]
            h_f = int(h_f * r0 * 100)/100000.
      outstr = ''
@@ -110,8 +114,12 @@ rlist=[]
 plist=[]
 three=[]
 efflist=[]
+explist=[]
 for i in range(numreac):
 	rlist.append(list(gas.reaction(i).reactants.items()))
+	explist.append(0)
+	for j in range(len(list(gas.reaction(i).reactants.items()))):
+		explist[i]=explist[i]+list(gas.reaction(i).reactants.items())[j][1]
 	plist.append(list(gas.reaction(i).products.items()))
 	try:
 		rate=gas.reaction(i).rate.input_data['low-P-rate-constant']
@@ -133,11 +141,12 @@ for i in range(numreac):
 
 for i in range(len(rlist)):
 	print(f"&REAC ID='R{i+1}',")
-	print("     REVERSE=T,")
+	if (gas.reaction(i).reversible):
+		print("     REVERSE=T,")
 	print("     RADIATIVE_FRACTION=0,")
 	if (three[i]):
 		print("     THIRD_BODY=T,")
-		print("     A=",A[i]*1E6,",")
+		print("     A=",int(A[i]*10000*1000**(explist[i]))/1E4,",")
 		if (len(efflist[i])>0):
 			effs=str(np.array(efflist[i])[:,0])
 			effn=str(np.array(efflist[i])[:,1])
@@ -146,7 +155,7 @@ for i in range(len(rlist)):
 			print("     THIRD_EFF_ID=",effs,",")
 			print("     THIRD_EFF=",effn,",")
 	else:
-		print("     A=",int(A[i]*1E5)/1E2,",")
+		print("     A=",int(A[i]*10000*1000**(explist[i]-1))/1E4,",")
 	print("     E=",int(Ea[i]*1E6)/1E9,",")
 	if (b[i]!=0): print("     N_T=",b[i],",")
 	rlist2=str(np.array(rlist[i])[:,0])
