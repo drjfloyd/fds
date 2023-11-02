@@ -569,14 +569,14 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
                CASE(1:)
                   EXIT DASSL_LOOP
                CASE(-1)
-                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
-                  WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
-                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
-                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
-                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
                   COUNTER = COUNTER + 1
                   INFO2(1) = 1
                   IF (COUNTER == 10) THEN
+                     WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,COUNTER2,RHO_IN,TMP_IN,DT
+                     WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
+                     WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                     WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                     IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
                      IF (COUNTER2 == 2) THEN
                         WRITE(LU_ERR,*) 'DASSL MXSTEP'
                         STOP_STATUS = ODE_STOP
