@@ -4808,6 +4808,7 @@ REAC_LOOP: DO NR=1,N_REACTIONS
 
    ! Transfer SPEC_ID_NU, SPEC_ID_N, NU, and N_S that were indexed by the order they were read in
    ! to now be indexed by the SMIX or SPEC index
+
    NU_Y = 0._EB
    DO NS=1,RN%N_SMIX
       IF (TRIM(RN%SPEC_ID_NU_READ(NS))=='null') CYCLE
@@ -4817,9 +4818,10 @@ REAC_LOOP: DO NR=1,N_REACTIONS
             NAME_FOUND = .TRUE.
             RN%NU(NS2) = RN%NU(NS2) + RN%NU_READ(NS)
             IF (RN%NU_READ(NS)<0._EB) THEN
-               NU_Y(:) = NU_Y(:) + RN%NU_READ(NS) * SPECIES_MIXTURE(NS2)%VOLUME_FRACTION(:)
+               NU_Y(1:N_SPECIES) = NU_Y(1:N_SPECIES) + RN%NU_READ(NS) * SPECIES_MIXTURE(NS2)%VOLUME_FRACTION(1:N_SPECIES)
             ELSE
-               IF (RN%NU(NS2) >=0._EB) NU_Y(:) = NU_Y(:) + RN%NU_READ(NS) * SPECIES_MIXTURE(NS2)%VOLUME_FRACTION(:)
+               IF (RN%NU(NS2) >=0._EB) &
+                  NU_Y(1:N_SPECIES) = NU_Y(1:N_SPECIES) + RN%NU_READ(NS) * SPECIES_MIXTURE(NS2)%VOLUME_FRACTION(1:N_SPECIES)
             ENDIF
             EXIT
          ENDIF
@@ -4829,6 +4831,8 @@ REAC_LOOP: DO NR=1,N_REACTIONS
          CALL SHUTDOWN(MESSAGE) ; RETURN
       ENDIF
    ENDDO
+   
+   RN%C0_EXP = SUM(NU_Y)
 
    RN%N_SMIX_FR = 0._EB
    RN%N_SMIX_R = 0._EB
@@ -4869,34 +4873,41 @@ REAC_LOOP: DO NR=1,N_REACTIONS
       CALL SHUTDOWN(MESSAGE) ; RETURN
    ENDIF
 
-   RN%C0_EXP = SUM(NU_Y)
-
-   ! Set RN%N_S = NU for reactant species
-   DO NS=1,N_SPECIES
-      IF (NU_Y(NS) < 0._EB) THEN
-         NU_Y(NS) = -NU_Y(NS)
-      ELSE
-         NU_Y(NS) = 0._EB
-      ENDIF
-   ENDDO
-
-   DO NS=1,RN%N_SPEC_READ
-      IF (TRIM(RN%SPEC_ID_N_S_READ(NS))=='null') CYCLE
-      NAME_FOUND = .FALSE.
-      DO NS2=1,N_SPECIES
-         IF (TRIM(RN%SPEC_ID_N_S_READ(NS))==TRIM(SPECIES(NS2)%ID)) THEN
-            NU_Y(NS2) = RN%N_S_READ(NS)
-            NAME_FOUND = .TRUE.
-            EXIT
+   NU_Y = 0._EB
+   IF (RN%N_SPEC_READ > 0) THEN
+      DO NS=1,RN%N_SPEC_READ
+         IF (TRIM(RN%SPEC_ID_N_S_READ(NS))=='null') CYCLE
+         NAME_FOUND = .FALSE.
+         DO NS2=1,N_SPECIES
+            IF (TRIM(RN%SPEC_ID_N_S_READ(NS))==TRIM(SPECIES(NS2)%ID)) THEN
+               NU_Y(NS2) = RN%N_S_READ(NS)
+               NAME_FOUND = .TRUE.
+               EXIT
+            ENDIF
+         ENDDO
+         IF (.NOT. NAME_FOUND) THEN
+            WRITE(MESSAGE,'(A,I0,A,A,A)') &
+               'ERROR(204): REAC ',NR,'. Primitive species ',TRIM(RN%SPEC_ID_N_S_READ(NS)),' not found.'
+            CALL SHUTDOWN(MESSAGE) ; RETURN
          ENDIF
       ENDDO
-      IF (.NOT. NAME_FOUND) THEN
-         WRITE(MESSAGE,'(A,I0,A,A,A)') &
-            'ERROR(204): REAC ',NR,'. Primitive species ',TRIM(RN%SPEC_ID_N_S_READ(NS)),' not found.'
-         CALL SHUTDOWN(MESSAGE) ; RETURN
-      ENDIF
-   ENDDO
-
+   ELSE
+      DO NS=1,RN%N_SMIX
+         IF (TRIM(RN%SPEC_ID_NU_READ(NS))=='null') CYCLE
+         DO NS2=1,N_TRACKED_SPECIES
+            IF (TRIM(RN%SPEC_ID_NU_READ(NS))==TRIM(SPECIES_MIXTURE(NS2)%ID)) THEN
+               IF (SPECIES_MIXTURE(NS2)%SINGLE_SPEC_INDEX < 0) THEN
+                  WRITE(MESSAGE,'(A,I0,A,A,A)') 'ERROR(XXX): REAC ',NR,'. Tracked species ',TRIM(RN%SPEC_ID_NU_READ(NS)),&
+                     ' used in a finite rate reaction without N_S defined is not a primitive species.'
+                  CALL SHUTDOWN(MESSAGE) ; RETURN
+               ENDIF
+               IF (RN%NU_READ(NS)<0._EB) NU_Y(SPECIES_MIXTURE(NS2)%SINGLE_SPEC_INDEX) = -RN%NU_READ(NS)
+               EXIT
+            ENDIF
+         ENDDO
+      ENDDO
+   ENDIF
+   
    RN%N_SPEC=0
    DO NS=1,N_SPECIES
       IF (ABS(NU_Y(NS)) > TWO_EPSILON_EB) RN%N_SPEC = RN%N_SPEC + 1
