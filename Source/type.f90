@@ -629,6 +629,7 @@ TYPE REACTION_TYPE
    REAL(EB) :: HOC_COMPLETE                 !< Complete heat of combustion for two step SIMPLE_CHEMISTRY (J/kg)
    REAL(EB) :: A_PRIME                      !< Adjusted pre-exponential reaction kinetic parameter
    REAL(EB) :: A_IN                         !< Unajusted pre-exponential reaction kinetic parameter
+   REAL(EB) :: A_SI                         !< Pre-exponential reaction kinetic parameter in units of (kmol/m3)^(1-sum(nu))
    REAL(EB) :: E                            !< Activation energy (J/kmol)
    REAL(EB) :: E_IN                         !< User-specified activation energy (J/mol)
    REAL(EB) :: MW_FUEL                      !< Molecular weight of fuel (g/mol)
@@ -694,6 +695,15 @@ TYPE REACTION_TYPE
    LOGICAL, ALLOCATABLE, DIMENSION(:) :: N_S_FLAG !< N_S exponent is an integer
    TYPE(AIT_EXCLUSION_ZONE_TYPE), DIMENSION(MAX_AIT_EXCLUSION_ZONES) :: AIT_EXCLUSION_ZONE  !< Coordinates of auto-ignition zone
    INTEGER :: N_AIT_EXCLUSION_ZONES=0       !< Number of auto-ignition exclusion zones
+   CHARACTER(LABEL_LENGTH) :: REACTYPE='ARRHENIUS' !< Type of reaction in a chemical mechanism. Allowed values are ARRHENIUS, THREE-BODY-ARRHENIUS, FALLOFF-LINDEMANN,  FALLOFF-TROE.
+   REAL(EB) :: A_LOW_PR                      !< Unajusted falloff reaction high pressure pre-exponent parameter. Low pressure A is stored in A_IN
+   REAL(EB) :: E_LOW_PR                      !< Unajusted falloff reaction high pressure activation energy (J/mol). Low pressure E is stored in E_IN
+   REAL(EB) :: N_T_LOW_PR=0._EB              !< Falloff reaction high pressure temperature exponent. Low pressure T is stored in N_T
+   REAL(EB) :: A_TROE                       !< TROE reaction A
+   REAL(EB) :: T1_TROE                      !< TROE reaction T1
+   REAL(EB) :: T2_TROE                      !< TROE reaction T2
+   REAL(EB) :: T3_TROE                      !< TROE reaction T3
+   
 END TYPE REACTION_TYPE
 
 TYPE (REACTION_TYPE), DIMENSION(:), ALLOCATABLE, TARGET :: REACTION

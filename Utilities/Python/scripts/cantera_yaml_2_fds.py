@@ -11,6 +11,10 @@ import math
 
 gas = ct.Solution(sys.argv[1])
 bg = sys.argv[2]
+
+#gas = ct.Solution('./mechanisms/GRIMECH/grimech30.yaml')
+#bg = 'N2'
+
 k_b = 1.380649E-23
 t_r = 298.15
 r0 = 8.314472
@@ -34,6 +38,8 @@ for i2 in range(n_species):
    atoms_list = list(gas.species(i).composition.values())
    sigma = gas.species(i).transport.diameter*1E10
    epsok = gas.species(i).transport.well_depth / k_b
+   #sigma = 2.75*1E10
+   #epsok = 100.0 / k_b
    n_elem = len(atoms_list)
    formula = ''
    for j in range(n_elem):
@@ -44,6 +50,7 @@ for i2 in range(n_species):
    gas.TPX=293.15,101325,gasinit
 
    Pr = gas.cp_mass * gas.viscosity / gas.thermal_conductivity
+   #Pr = 1 
    poly = gas_list[0]
    temp_bands= gas_list[1]
    outstr="&SPEC ID='"+name+"',"
@@ -110,64 +117,142 @@ numreac = len(gas.reactions())
 A=[]
 Ea=[]
 b=[]
+A_lowPr=[]
+Ea_lowPr=[]
+b_lowPr=[]
 rlist=[]
 plist=[]
+reactType=[]
 three=[]
+A_Troe=[]
+T1_Troe=[]
+T2_Troe=[]
+T3_Troe=[]
 efflist=[]
 explist=[]
 for i in range(numreac):
-	rlist.append(list(gas.reaction(i).reactants.items()))
-	explist.append(0)
-	for j in range(len(list(gas.reaction(i).reactants.items()))):
-		explist[i]=explist[i]+list(gas.reaction(i).reactants.items())[j][1]
-	plist.append(list(gas.reaction(i).products.items()))
-	try:
-		rate=gas.reaction(i).rate.input_data['low-P-rate-constant']
-		A.append(rate['A'])
-		Ea.append(rate['Ea'])
-		b.append(rate['b'])
-
-	except (KeyError):
-		rate=gas.reaction(i).rate.input_data['rate-constant']
-		A.append(rate['A'])
-		Ea.append(rate['Ea'])
-		b.append(rate['b'])
-	if gas.reaction(i).reaction_type=='reaction':
-		three.append(False)
-		efflist.append([])
-	else:
-		three.append(True)
-		efflist.append(list(gas.reaction(i).efficiencies.items()))
+    rlist.append(list(gas.reaction(i).reactants.items()))
+    explist.append(0)
+    for j in range(len(list(gas.reaction(i).reactants.items()))):
+        explist[i]=explist[i]+list(gas.reaction(i).reactants.items())[j][1]
+    plist.append(list(gas.reaction(i).products.items()))
+    if gas.reaction(i).reaction_type=='Arrhenius':
+        rate=gas.reaction(i).input_data['rate-constant']
+        A.append(rate['A'])
+        Ea.append(rate['Ea'])
+        b.append(rate['b'])
+        A_lowPr.append([])
+        Ea_lowPr.append([])
+        b_lowPr.append([])
+        reactType.append('ARRHENIUS')
+        three.append(False)
+        efflist.append([])
+        A_Troe.append([])
+        T1_Troe.append([])
+        T2_Troe.append([])
+        T3_Troe.append([])
+    elif gas.reaction(i).reaction_type=='three-body-Arrhenius':
+        rate=gas.reaction(i).input_data['rate-constant']
+        A.append(rate['A'])
+        Ea.append(rate['Ea'])
+        b.append(rate['b'])
+        A_lowPr.append([])
+        Ea_lowPr.append([])
+        b_lowPr.append([])
+        reactType.append('THREE-BODY-ARRHENIUS')
+        three.append(True)
+        efflist.append(list(gas.reaction(i).third_body.efficiencies.items()))
+        A_Troe.append([])
+        T1_Troe.append([])
+        T2_Troe.append([])
+        T3_Troe.append([])
+    elif gas.reaction(i).reaction_type=='falloff-Lindemann':
+        rate=gas.reaction(i).input_data['high-P-rate-constant']
+        A.append(rate['A'])
+        Ea.append(rate['Ea'])
+        b.append(rate['b'])
+        rate=gas.reaction(i).input_data['low-P-rate-constant']
+        A_lowPr.append(rate['A'])
+        Ea_lowPr.append(rate['Ea'])
+        b_lowPr.append(rate['b'])
+        reactType.append('FALLOFF-LINDEMANN')
+        three.append(True)
+        efflist.append(list(gas.reaction(i).third_body.efficiencies.items()))
+        A_Troe.append([])
+        T1_Troe.append([])
+        T2_Troe.append([])
+        T3_Troe.append([])
+    elif gas.reaction(i).reaction_type=='falloff-Troe':
+        rate=gas.reaction(i).input_data['high-P-rate-constant']
+        A.append(rate['A'])
+        Ea.append(rate['Ea'])
+        b.append(rate['b'])
+        rate=gas.reaction(i).input_data['low-P-rate-constant']
+        A_lowPr.append(rate['A'])
+        Ea_lowPr.append(rate['Ea'])
+        b_lowPr.append(rate['b'])
+        reactType.append('FALLOFF-TROE')
+        three.append(True)
+        efflist.append(list(gas.reaction(i).third_body.efficiencies.items()))
+        rate=gas.reaction(i).input_data['Troe']
+        A_Troe.append(rate['A'])
+        T1_Troe.append(rate['T1'])
+        T2_Troe.append(rate['T2'])
+        T3_Troe.append(rate['T3'])
 
 for i in range(len(rlist)):
-	print(f"&REAC ID='R{i+1}',")
-	if (gas.reaction(i).reversible):
-		print("     REVERSE=T,")
-	print("     RADIATIVE_FRACTION=0,")
-	if (three[i]):
-		print("     THIRD_BODY=T,")
-		print("     A=",int(A[i]*10000*1000**(explist[i]))/1E4,",")
-		if (len(efflist[i])>0):
-			effs=str(np.array(efflist[i])[:,0])
-			effn=str(np.array(efflist[i])[:,1])
-			effs=effs.replace('[','').replace(']','').replace("' '","','").replace("\n",",")
-			effn=effn.replace('[','').replace(']','').replace(" ",",").replace("'","").replace("\n",",")
-			print("     THIRD_EFF_ID=",effs,",")
-			print("     THIRD_EFF=",effn,",")
-	else:
-		print("     A=",int(A[i]*10000*1000**(explist[i]-1))/1E4,",")
-	print("     E=",int(Ea[i]*1E6)/1E9,",")
-	if (b[i]!=0): print("     N_T=",b[i],",")
-	rlist2=str(np.array(rlist[i])[:,0])
-	plist2=str(np.array(plist[i])[:,0])
-	rlist2=rlist2.replace('[','').replace(']','').replace("' '","','")
-	plist2=plist2.replace('[','').replace(']','').replace("' '","','")
-	print("     SPEC_ID_NU=",rlist2,",",plist2,",")
-	rlist2=str(np.array(rlist[i])[:,1])
-	plist2=str(np.array(plist[i])[:,1])
-	rlist2=rlist2.replace('[','-').replace(']','').replace(" ",",-").replace("'","")
-	plist2=plist2.replace('[','').replace(']','').replace(" ",",").replace("'","")
-	print("     NU=",rlist2,",",plist2,"/")
+
+    for ri in range(len(rlist[i])):
+        spName1 = rlist[i][ri][0]
+        nu1 = rlist[i][ri][1]
+        for pi in  range(len(plist[i])):
+            spName2 = plist[i][pi][0]
+            nu2 = plist[i][pi][1]
+            if (spName1 == spName2):
+                print(" Reaction with same element both side:", i)
+
+    print(f"&REAC ID='R{i+1}',")
+    print("     REACTYPE='",reactType[i],"',", sep='')
+    if (gas.reaction(i).reversible):
+        print("     REVERSE=T,")
+    print("     RADIATIVE_FRACTION=0,")
+    if reactType[i]=='ARRHENIUS':
+        print("     A=","{:.5e}".format((A[i]*10000*1000**(explist[i]-1))/1E4),",") #Convert (kmol/m3)^(1-efflist) to mol/cm3^(1-efflist)
+    elif reactType[i]=='THREE-BODY-ARRHENIUS':
+        print("     A=","{:.5e}".format((A[i]*10000*1000**(explist[i]))/1E4),",")  #Convert (kmol/m3)^(-efflist) to mol/cm3^(-efflist)
+    elif reactType[i]=='FALLOFF-LINDEMANN' or reactType[i]=='FALLOFF-TROE':
+        print("     A=","{:.5e}".format((A[i]*10000*1000**(explist[i]-1))/1E4),",")  #Convert (kmol/m3)^(1-efflist) to mol/cm3^(1-efflist)
+
+    if (three[i]):
+        print("     THIRD_BODY=T,")
+        if (len(efflist[i])>0):
+            effs=str(np.array(efflist[i])[:,0])
+            effn=str(np.array(efflist[i])[:,1])
+            effs=effs.replace('[','').replace(']','').replace("' '","','").replace("\n",",")
+            effn=effn.replace('[','').replace(']','').replace(" ",",").replace("'","").replace("\n",",")
+            print("     THIRD_EFF_ID=",effs,",")
+            print("     THIRD_EFF=",effn,",")
+    print("     E=",int(Ea[i]*1E6)/1E9,",")         #kJ/mol to J/mol
+    print("     N_T=",b[i],",")
+    if reactType[i]=='FALLOFF-LINDEMANN' or reactType[i]=='FALLOFF-TROE':
+       print("     A_LOW_PR=","{:.5e}".format((A_lowPr[i]*10000*1000**(explist[i]))/1E4),",")
+       print("     E_LOW_PR=",int(Ea_lowPr[i]*1E6)/1E9,",")
+       print("     N_T_LOW_PR=",b_lowPr[i],",")
+    if reactType[i]=='FALLOFF-TROE':
+       print("     A_TROE=",A_Troe[i],",")
+       print("     T1_TROE=",T1_Troe[i],",")
+       print("     T2_TROE=",T2_Troe[i],",")
+       print("     T3_TROE=",T3_Troe[i],",")
+    rlist2=str(np.array(rlist[i])[:,0])
+    plist2=str(np.array(plist[i])[:,0])
+    rlist2=rlist2.replace('[','').replace(']','').replace("' '","','")
+    plist2=plist2.replace('[','').replace(']','').replace("' '","','")
+    print("     SPEC_ID_NU=",rlist2,",",plist2,",")
+    rlist2=str(np.array(rlist[i])[:,1])
+    plist2=str(np.array(plist[i])[:,1])
+    rlist2=rlist2.replace('[','-').replace(']','').replace(" ",",-").replace("'","")
+    plist2=plist2.replace('[','').replace(']','').replace(" ",",").replace("'","")
+    print("     NU=",rlist2,",",plist2,"/")
 
 
 
