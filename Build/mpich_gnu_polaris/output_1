@@ -1,0 +1,5 @@
+Building mpich_gnu_polaris
+SUNDIALS_HOME="/home/isapchp/CODES/sundials-6.6.0/INSTDIR/"
+LFLAGS_SUNDIALS="-L/home/isapchp/CODES/sundials-6.6.0/INSTDIR//lib64 -lsundials_cvode -lsundials_fcvode_mod -lsundials_fnvecserial_mod "
+ftn -c -m64 -O2 -fbacktrace  -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics -cpp -DGITHASH_PP=\"FDS-6.8.0-861-g5c6e304-dirty-FM_2003\" -DGITDATE_PP=\""Fri Oct 13 10:47:46 2023 -0400\"" -DBUILDDATE_PP=\""Dec 06, 2023  20:31:38\"" -DCOMPVER_PP=\""Gnu gfortran 12.2.0"\"   -I"/home/isapchp/CODES/sundials-6.6.0/INSTDIR//fortran"  -fopenmp ../../Source/func.f90
+ftn -c -m64 -O2 -fbacktrace  -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics -cpp -DGITHASH_PP=\"FDS-6.8.0-861-g5c6e304-dirty-FM_2003\" -DGITDATE_PP=\""Fri Oct 13 10:47:46 2023 -0400\"" -DBUILDDATE_PP=\""Dec 06, 2023  20:31:38\"" -DCOMPVER_PP=\""Gnu gfortran 12.2.0"\"   -I"/home/isapchp/CODES/sundials-6.6.0/INSTDIR//fortran"  ../../Source/cvode.f90
