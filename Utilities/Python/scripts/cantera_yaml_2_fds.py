@@ -89,12 +89,8 @@ for i2 in range(n_species):
            gas_list[2][j][4]*t_r**2+gas_list[2][j][5]*t_r**3+gas_list[2][j][6]*t_r**4
            h_f = -gas_list[2][j][0]/t_r+gas_list[2][j][1]*math.log(t_r)+gas_list[2][j][2]*t_r+0.5*gas_list[2][j][3]*t_r**2+\
            1./3.*gas_list[2][j][4]*t_r**3+0.25*gas_list[2][j][5]*t_r**4+0.2*gas_list[2][j][6]*t_r**5+gas_list[2][j][7]
-           print(c_p,h_f)
            h_f = h_f - c_p * (t_r - t_r2)
-           print(h_f)
            h_f = int(h_f * r0 * 100)/100000.
-           print(h_f)
-           stop()
            t_r = t_r2
      if (temp_bands[j]<t_r):
         if (poly=='NASA7'):

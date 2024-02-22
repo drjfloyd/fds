@@ -590,14 +590,14 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
                CASE(1:)
                   EXIT DASSL_LOOP
                CASE(-1)
-                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
-                  WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
-                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
-                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
-                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
                   COUNTER = COUNTER + 1
                   INFO2(1) = 1
                   IF (COUNTER == 10) THEN
+                     WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,COUNTER2,RHO_IN,TMP_IN,DT
+                     WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
+                     WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                     WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                     IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
                      IF (COUNTER2 == 2) THEN
                         WRITE(LU_ERR,*) 'DASSL MXSTEP'
                         STOP_STATUS = ODE_STOP
@@ -1476,7 +1476,7 @@ REACTION_LOOP: DO I=1,N_REACTIONS
          DZ_F = DZ_F*ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
       ENDIF
    ENDDO
-WRITE(*,*) I,DZ_F0(I),DZ_F
+
    IF (RN%N_THIRD > 0) THEN
       X_Y_SUM = 0._EB
       DO NS=1,N_SPECIES
