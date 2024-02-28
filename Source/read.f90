@@ -4689,7 +4689,7 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
    IF (REVERSE) THEN
       N_REVERSE = N_REVERSE + 1
       RN2 => REACTION(N_REACTIONS + N_REVERSE + NEW_REAC)
-      RN2 = RN
+      RN2 = REACTION(NR)
       ! For reverse either negative NU or flip EQUATION over = sign for the reverse reaction
       IF (RN2%EQUATION=='null') THEN
          RN2%NU_READ = -1._EB*RN2%NU_READ
@@ -5141,7 +5141,6 @@ REAC_LOOP: DO NR=1,N_REACTIONS
 ENDDO REAC_LOOP
 
 ! Select integrator
-
 IF (TRIM(ODE_SOLVER)/='null') THEN
    SELECT CASE (TRIM(ODE_SOLVER))
       CASE ('EXPLICIT EULER') ; COMBUSTION_ODE_SOLVER = EXPLICIT_EULER
