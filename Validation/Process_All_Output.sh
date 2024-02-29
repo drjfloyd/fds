@@ -104,6 +104,7 @@ PROCESS NIST_Vent_Study
 PROCESS NRCC_Facade
 PROCESS NRCC_Smoke_Tower
 PROCESS NRL_HAI
+PROCESS OMP_Scaling_Tests
 PROCESS Phoenix_LNG_Fires
 PROCESS Pool_Fires
 PROCESS PRISME
@@ -112,6 +113,7 @@ PROCESS Ranz_Marshall
 PROCESS Restivo_Experiment
 PROCESS Sandia_Methane_Burner
 PROCESS Sandia_Plumes
+PROCESS Scaling_Pyrolysis
 PROCESS Shell_LNG_Fireballs
 PROCESS Sippola_Aerosol_Deposition
 PROCESS Smyth_Slot_Burner

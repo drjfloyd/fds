@@ -2570,6 +2570,9 @@ IF (SIM_MODE/=DNS_MODE) THEN
    ENDDO
    WRITE(LU_OUTPUT,'(A,F8.2)')   '   Turbulent Prandtl Number:     ',PR
    WRITE(LU_OUTPUT,'(A,F8.2)')   '   Turbulent Schmidt Number:     ',SC
+   IF (ANY(SPECIES_MIXTURE(:)%SC_T_USER>0._EB)) &
+        WRITE(LU_OUTPUT,'(A)')   '   Differential turbulent transport specified, see Tracked Species Information'
+
 ENDIF
 
 ! Print out pressure solver information
@@ -2645,6 +2648,8 @@ DO N=1,N_TRACKED_SPECIES
    WRITE(LU_OUTPUT,'(/3X,A)') TRIM(SM%ID)
    WRITE(LU_OUTPUT,'(A,F11.5)')   '   Molecular Weight (g/mol)         ',SM%MW
    WRITE(LU_OUTPUT,'(A,F8.3)')    '   Ambient Density (kg/m^3)         ',SM%MW*P_INF/(TMPA*R0)
+   IF (SM%SC_T_USER>0._EB) &
+      WRITE(LU_OUTPUT,'(A,F8.3)') '   User Turbulent Schmidt Number    ',SM%SC_T_USER
    WRITE(LU_OUTPUT,'(A,F8.3)')    '   Initial Mass Fraction            ',SM%ZZ0
    WRITE(LU_OUTPUT,'(A,ES10.3)')   '   Enthalpy of Formation (J/kg)     ',SM%H_F
    IF (N_REACTIONS > 0) THEN
@@ -8433,7 +8438,7 @@ SOLID_PHASE_SELECT: SELECT CASE(INDX)
          SOLID_PHASE_OUTPUT = SOLID_PHASE_OUTPUT_CTF/CUT_FACE_AREA
       ENDIF
    CASE( 4) ! GAS TEMPERATURE
-      SOLID_PHASE_OUTPUT = TMP(BC%IIG,BC%JJG,BC%KKG) - TMPM
+      SOLID_PHASE_OUTPUT = B1%TMP_G - TMPM
    CASE( 5) ! WALL TEMPERATURE
       SOLID_PHASE_OUTPUT = B1%TMP_F - TMPM
    CASE( 6) ! INSIDE WALL TEMPERATURE
@@ -10858,6 +10863,7 @@ DO IP=1,NLP
    IF (BC%Z<=ZS) CYCLE
    IF (BC%Z>=ZF) CYCLE
    DROPMASS = LP%PWT*LPC%FTPR*LP%RADIUS**3
+   IF (LPC%SOLID_PARTICLE) DROPMASS = LP%PWT*LP%MASS
    WFX(BC%IIG,BC%JJG,BC%KKG) = WFX(BC%IIG,BC%JJG,BC%KKG) + DROPMASS*LP%U*LP%RVC
    WFY(BC%IIG,BC%JJG,BC%KKG) = WFY(BC%IIG,BC%JJG,BC%KKG) + DROPMASS*LP%V*LP%RVC
    WFZ(BC%IIG,BC%JJG,BC%KKG) = WFZ(BC%IIG,BC%JJG,BC%KKG) + DROPMASS*LP%W*LP%RVC
