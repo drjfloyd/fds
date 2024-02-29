@@ -101,7 +101,7 @@ endif # MKLROOT test
 
 
 ifdef SUNDIALS_HOME # This assumes the SUNDIALS library is available.
-   FFLAGS_SUNDIALS = -I"${SUNDIALS_HOME}/fortran"
+   FFLAGS_SUNDIALS = -DWITH_SUNDIALS -I"${SUNDIALS_HOME}/fortran"
    LFLAGS_SUNDIALS = -L${SUNDIALS_HOME}/lib64 -lsundials_cvode -lsundials_fcvode_mod -lsundials_fnvecserial_mod 
 endif
 
@@ -363,8 +363,8 @@ ompi_gnu_osx_dv : setup $(obj_mpi)
 $(info LFLAGSMKL_GNU_OPENMPI="$(LFLAGSMKL_GNU_OPENMPI)")
 $(info FOPENMPFLAGS="$(FOPENMPFLAGS)")
 
-#mpich_gnu_polaris : FFLAGS = -m64 -O2 -fbacktrace  -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSMKL_GNU_OPENMPI) $(GFORTRAN_OPTIONS) $(FFLAGS_SUNDIALS) 
-mpich_gnu_polaris : FFLAGS = -m64 -O0 -std=f2018 -ggdb -Wall -Wcharacter-truncation -Wno-target-lifetime -fcheck=all -fbacktrace -ffpe-trap=invalid,zero,overflow -frecursive -ffpe-summary=none -fall-intrinsics $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSMKL_GNU_OPENMPI) $(GFORTRAN_OPTIONS) $(FFLAGS_SUNDIALS) 
+mpich_gnu_polaris : FFLAGS = -m64 -O2 -fbacktrace  -std=f2018 -frecursive -ffpe-summary=none -fall-intrinsics $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSMKL_GNU_OPENMPI) $(GFORTRAN_OPTIONS) $(FFLAGS_SUNDIALS) 
+#mpich_gnu_polaris : FFLAGS = -m64 -O0 -std=f2018 -ggdb -Wall -Wcharacter-truncation -Wno-target-lifetime -fcheck=all -fbacktrace -ffpe-trap=invalid,zero,overflow -frecursive -ffpe-summary=none -fall-intrinsics $(GITINFOGNU) $(GNU_COMPINFO) $(FFLAGSMKL_GNU_OPENMPI) $(GFORTRAN_OPTIONS) $(FFLAGS_SUNDIALS) 
 mpich_gnu_polaris : LFLAGSMKL = $(LFLAGSMKL_GNU_OPENMPI) $(LFLAGS_SUNDIALS) 
 mpich_gnu_polaris : FCOMPL = ftn
 mpich_gnu_polaris : FOPENMPFLAGS = -fopenmp
