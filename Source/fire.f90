@@ -10,8 +10,9 @@ USE SOOT_ROUTINES, ONLY: SOOT_SURFACE_OXIDATION
 !USE NUMERICS_ROUTINES, ONLY : DDASSL, JAC
 USE NUMERICS_ROUTINES, ONLY : DDASSL
 USE DVODE_F90_M
+#ifdef WITH_SUNDIALS
 USE CVODE_INTERFACE
-
+#endif
 IMPLICIT NONE (TYPE,EXTERNAL)
 
 
@@ -72,7 +73,6 @@ IF (.NOT. DVODE_INIT) THEN
       ALLOCATE(RWORK(LRW))
       RWORK = 0._EB
    ELSEIF (COMBUSTION_ODE_SOLVER == CVODE_SOLVER) THEN
-      WRITE(LU_ERR,*) "ODE_SOLVER=CVODE"
       DVODE_INIT = .TRUE.
       ALLOCATE(ATOL(N_TRACKED_SPECIES))
       ALLOCATE(RTOL(N_TRACKED_SPECIES))
@@ -724,52 +724,56 @@ ENDIF
 
 END SUBROUTINE COMBUSTION_MODEL
 
-! -----------------------------------------------------------------------------------
-! CVODE: CALL CVODE_INTERFACE AFTER CONVERTING MASS FRACTION TO MOLAR CONCENTRATION.
-! DURING RETURN REVERT BACK THE MOLAR CONCENTRATION TO MASS FRACTION.  
-! -----------------------------------------------------------------------------------
+!> \call cvode_interface after converting mass fraction to molar concentration.
+!> \during return revert back the molar concentration to mass fraction. 
+!> \param ZZ species mass fraction array
+!> \param TMP_IN is the temperature
+!> \param PR_IN is the pressure
+!> \param TCUR is the start time in seconds
+!> \param TEND is the end time in seconds
+!> \param GLOBAL_ODE_REL_ERROR is the relative error for all the species (REAL_EB)
+!> \param ATOL is the absolute error tolerance array for the species (REAL_EB)
+
 SUBROUTINE CVODE(ZZ, TMP_IN, PRES_IN,  TCUR,TEND, GLOBAL_ODE_REL_ERROR, ATOL)
-  USE PHYSICAL_FUNCTIONS, ONLY : GET_ENTHALPY, GET_SENSIBLE_ENTHALPY, GET_MOLECULAR_WEIGHT, GET_TEMPERATURE
+USE PHYSICAL_FUNCTIONS, ONLY : GET_ENTHALPY, GET_SENSIBLE_ENTHALPY, GET_MOLECULAR_WEIGHT, GET_TEMPERATURE
 
-  IMPLICIT NONE
+REAL(EB), INTENT(INOUT) :: ZZ(N_TRACKED_SPECIES)
+REAL(EB), INTENT(IN) :: ATOL(N_TRACKED_SPECIES)
+REAL(EB), INTENT(IN) :: TMP_IN, PRES_IN, TCUR, TEND, GLOBAL_ODE_REL_ERROR
 
-  REAL(EB), INTENT(INOUT) :: ZZ(N_TRACKED_SPECIES)
-  REAL(EB), INTENT(IN) :: ATOL(N_TRACKED_SPECIES)
-  REAL(EB), INTENT(IN) :: TMP_IN, PRES_IN, TCUR, TEND, GLOBAL_ODE_REL_ERROR
+REAL(EB) :: CC(N_TRACKED_SPECIES)
+REAL(EB) :: MW, RHO_IN, RHO_OUT
+INTEGER :: NS
 
-  REAL(EB) :: CC(N_TRACKED_SPECIES)
-  REAL(EB) :: MW, RHO_IN, RHO_OUT, SUMZZ
-  INTEGER :: NS
+CALL GET_MOLECULAR_WEIGHT(ZZ,MW)
+RHO_IN = PRES_IN*MW/R0/TMP_IN ! [PR]= Pa, [MW] = g/mol, [R0]= J/K/kmol, [TMP]=K, [RHO]= kg/m3 
 
-  CALL GET_MOLECULAR_WEIGHT(ZZ,MW)
-  RHO_IN = PRES_IN*MW/R0/TMP_IN ! [PR]= Pa, [MW] = g/mol, [R0]= J/K/kmol, [TMP]=K, [RHO]= kg/m3 
+! Convert to concentration
+CC = 0._EB
+DO NS =1,N_TRACKED_SPECIES
+  CC(NS) = RHO_IN*ZZ(NS)/SPECIES_MIXTURE(NS)%MW  ! [RHO]= kg/m3, [MW] = gm/mol = kg/kmol, [CC] = kmol/m3
+ENDDO   
 
-  ! Convert to concentration
-  CC = 0._EB
-  DO NS =1,N_TRACKED_SPECIES
-     CC(NS) = RHO_IN*ZZ(NS)/SPECIES_MIXTURE(NS)%MW  ! [RHO]= kg/m3, [MW] = gm/mol = kg/kmol, [CC] = kmol/m3
-  ENDDO   
-  CALL  CVODE_SERIAL(CC,TMP_IN,PRES_IN, TCUR,TEND, GLOBAL_ODE_REL_ERROR, ATOL)
+#ifdef WITH_SUNDIALS
+CALL  CVODE_SERIAL(CC,TMP_IN,PRES_IN, TCUR,TEND, GLOBAL_ODE_REL_ERROR, ATOL)
+#endif
 
-  ! Convert back to mass fraction
-  RHO_OUT = 0._EB
-  DO NS =1,N_TRACKED_SPECIES
-     RHO_OUT = RHO_OUT+CC(NS)*SPECIES_MIXTURE(NS)%MW
-  ENDDO   
-  DO NS =1,N_TRACKED_SPECIES
-     ZZ(NS) = CC(NS)*SPECIES_MIXTURE(NS)%MW/RHO_OUT  
-  ENDDO  
+! Convert back to mass fraction
+RHO_OUT = 0._EB
+DO NS =1,N_TRACKED_SPECIES
+  RHO_OUT = RHO_OUT+CC(NS)*SPECIES_MIXTURE(NS)%MW
+ENDDO   
+DO NS =1,N_TRACKED_SPECIES
+  ZZ(NS) = CC(NS)*SPECIES_MIXTURE(NS)%MW/RHO_OUT  
+ENDDO  
 
-  ! Check for negative mass fraction, and rescale to accomodate negative values
-  SUMZZ = 0._EB
-  DO NS=1,N_TRACKED_SPECIES
-    IF (ZZ(NS) .LT. 0._EB) THEN
-       ZZ(NS) = 0._EB
-    ENDIF
-    SUMZZ = SUMZZ + ZZ(NS)
-  ENDDO
-  ZZ(:) = ZZ(:)/SUMZZ
+! Check for negative mass fraction, and rescale to accomodate negative values
+WHERE(ZZ<0._EB) ZZ=0._EB
+ZZ = ZZ / SUM(ZZ)
+
 END SUBROUTINE CVODE
+
+
 
 SUBROUTINE CHECK_AUTO_IGNITION(EXTINCT,TMP_IN,AIT,IIC,JJC,KKC,REAC_INDEX)
 
