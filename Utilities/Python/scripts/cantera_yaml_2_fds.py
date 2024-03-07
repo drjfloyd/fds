@@ -50,7 +50,7 @@ for i2 in range(n_species):
    gas.TPX=293.15,101325,gasinit
 
    Pr = gas.cp_mass * gas.viscosity / gas.thermal_conductivity
-   #Pr = 1 
+   #Pr = 1
    poly = gas_list[0]
    temp_bands= gas_list[1]
    outstr="&SPEC ID='"+name+"',"
@@ -193,7 +193,10 @@ for i in range(numreac):
         rate=gas.reaction(i).input_data['Troe']
         A_Troe.append(rate['A'])
         T1_Troe.append(rate['T1'])
-        T2_Troe.append(rate['T2'])
+        if rate['T1'] in rate:
+            T2_Troe.append(rate['T2'])
+        else:
+            T2_Troe.append(-2E20)
         T3_Troe.append(rate['T3'])
 
 for i in range(len(rlist)):
@@ -220,7 +223,6 @@ for i in range(len(rlist)):
         print("     A=","{:.5e}".format((A[i]*10000*1000**(explist[i]-1))/1E4),",")  #Convert (kmol/m3)^(1-efflist) to mol/cm3^(1-efflist)
 
     if (three[i]):
-        print("     THIRD_BODY=T,")
         if (len(efflist[i])>0):
             effs=str(np.array(efflist[i])[:,0])
             effn=str(np.array(efflist[i])[:,1])
@@ -237,7 +239,8 @@ for i in range(len(rlist)):
     if reactType[i]=='FALLOFF-TROE':
        print("     A_TROE=",A_Troe[i],",")
        print("     T1_TROE=",T1_Troe[i],",")
-       print("     T2_TROE=",T2_Troe[i],",")
+       if T2_Troe[i] > -1E20:
+           print("     T2_TROE=",T2_Troe[i],",")
        print("     T3_TROE=",T3_Troe[i],",")
     rlist2=str(np.array(rlist[i])[:,0])
     plist2=str(np.array(plist[i])[:,0])
