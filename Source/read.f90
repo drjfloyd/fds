@@ -4429,7 +4429,7 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
          IF (L_TMP) THEN
             SIMPLE_FUEL_DEFINED(NR) = .TRUE.
             IF (ANY(ATOM_COUNTS(2:5)>0._EB) .OR. ANY(ATOM_COUNTS(9:)>0._EB)) THEN
-               WRITE(MESSAGE,'(A)') 'ERROR(191): Fuel FORMULA for SIMPLE_CHEMISTRY can only contain C,H,O, and N.'
+               WRITE(MESSAGE,'(A,I0,A)') 'ERROR(191): REAC ',NR,' Fuel FORMULA for SIMPLE_CHEMISTRY can only contain C,H,O, and N.'
                CALL SHUTDOWN(MESSAGE) ; RETURN
             ELSE
                C = ATOM_COUNTS(6)
@@ -4438,7 +4438,8 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
                N = ATOM_COUNTS(7)
             ENDIF
             IF (C<=TWO_EPSILON_EB .AND. H<=TWO_EPSILON_EB) THEN
-               WRITE(MESSAGE,'(A)') 'ERROR(192): Specify fuel chemistry using C and/or H when using simple chemistry'
+               WRITE(MESSAGE,'(A,I0,A)') 'ERROR(192): REAC ',NR,&
+                                         ' Specify fuel chemistry using C and/or H when using simple chemistry'
                CALL SHUTDOWN(MESSAGE) ; RETURN
             ENDIF
          ENDIF
@@ -4453,19 +4454,19 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
          IF (FUEL_C_TO_CO_FRACTION >= 0._EB .AND. FUEL_C_TO_CO_FRACTION <= 1._EB) THEN
             RN%FUEL_C_TO_CO_FRACTION = FUEL_C_TO_CO_FRACTION
          ELSE
-            WRITE(MESSAGE,'(A)') 'ERROR(193): FUEL_C_TO_CO_FRACTION must be between 0 and 1.'
+            WRITE(MESSAGE,'(A,I0,A)') 'ERROR(193): REAC ',NR,' FUEL_C_TO_CO_FRACTION must be between 0 and 1.'
             CALL SHUTDOWN(MESSAGE) ; RETURN
          ENDIF
          IF (FUEL_H_TO_H2_FRACTION >= 0._EB .AND. FUEL_H_TO_H2_FRACTION <= 1._EB) THEN
             RN%FUEL_H_TO_H2_FRACTION = FUEL_H_TO_H2_FRACTION
          ELSE
-            WRITE(MESSAGE,'(A)') 'ERROR(194): FUEL_H_TO_H2O_FRACTION must be between 0 and 1.'
+            WRITE(MESSAGE,'(A,I0,A)') 'ERROR(194): REAC ',NR,' FUEL_H_TO_H2O_FRACTION must be between 0 and 1.'
             CALL SHUTDOWN(MESSAGE) ; RETURN
          ENDIF
          IF (FUEL_N_TO_HCN_FRACTION >= 0._EB .AND. FUEL_N_TO_HCN_FRACTION <= 1._EB) THEN
             RN%FUEL_N_TO_HCN_FRACTION = FUEL_N_TO_HCN_FRACTION
          ELSE
-            WRITE(MESSAGE,'(A)') 'ERROR(195): FUEL_N_TO_HCN_FRACTION must be between 0 and 1.'
+            WRITE(MESSAGE,'(A,I0,A)') 'ERROR(195): REAC ',NR,' FUEL_N_TO_HCN_FRACTION must be between 0 and 1.'
             CALL SHUTDOWN(MESSAGE) ; RETURN
          ENDIF
       ENDIF
@@ -4521,22 +4522,44 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
    RN%RAMP_CHI_R                = RAMP_CHI_R
    RN%SOOT_YIELD                = SOOT_YIELD
    RN%THIRD_BODY                = THIRD_BODY
-   RN%REACTYPE                  = REACTYPE
-
    
-   IF ( REACTYPE == 'FALLOFF-LINDEMANN' .OR. REACTYPE == 'FALLOFF-TROE') THEN
-      RN%A_LOW_PR = A_LOW_PR
-      RN%E_LOW_PR = E_LOW_PR*1000._EB ! Convert from J/mol to J/kmol
-      RN%N_T_LOW_PR = N_T_LOW_PR
-   ENDIF
-
-   IF ( REACTYPE == 'FALLOFF-TROE') THEN
-      RN%A_TROE = A_TROE
-      RN%T1_TROE = T1_TROE
-      RN%T2_TROE = T2_TROE
-      RN%T3_TROE = T3_TROE
-   ENDIF
-
+   IF (COMBUSTION_ODE_SOLVER>RK2_RICHARDSON .AND. REACTYPE== 'ARRHENIUS-TYPE' .AND. RN%THIRD_BODY) &
+      REACTYPE='THREE-BODY-ARRHENIUS'
+   
+   SELECT CASE (REACTYPE)
+      CASE('FALLOFF-LINDEMANNN')
+         RN%REACTYPE = FALLOFF_LINDEMANN_TYPE
+         RN%A_LOW_PR = A_LOW_PR
+         RN%E_LOW_PR = E_LOW_PR*1000._EB ! Convert from J/mol to J/kmol
+         IF (A_LOW_PR < 0._EB .OR. E_LOW_PR < -1.E20_EB) THEN
+            WRITE(MESSAGE,'(A,I0,A)') 'ERROR(XXX): REAC ',NR,' FALLOFF-LINDEMANN reactions must have A_LOW_PR amd E_LOW_PR.'
+            CALL SHUTDOWN(MESSAGE) ; RETURN
+         ENDIF
+         RN%N_T_LOW_PR = N_T_LOW_PR
+         RN%THIRD_BODY = .TRUE.
+      CASE('FALLOFF-TROE')
+         RN%REACTYPE = FALLOFF_TROE_TYPE
+         RN%A_LOW_PR = A_LOW_PR
+         RN%E_LOW_PR = E_LOW_PR*1000._EB ! Convert from J/mol to J/kmol
+         RN%N_T_LOW_PR = N_T_LOW_PR
+         IF (A_LOW_PR < 0._EB .OR. E_LOW_PR < -1.E20_EB .OR. A_TROE < -1.E20_EB .OR. &
+             T1_TROE < -1.E20_EB .OR. T3_TROE < -1.E20_EB) THEN
+            WRITE(MESSAGE,'(A,I0,A)') 'ERROR(XXX): REAC ',NR,&
+                                      ' FALLOFF-TROE reactions must have A_LOW_PR, E_LOW_PR, A_TROE, T1_TROE, and T3_TROE.'
+            CALL SHUTDOWN(MESSAGE) ; RETURN
+         ENDIF
+         RN%A_TROE = A_TROE
+         RN%RT1_TROE = 1._EB/T1_TROE
+         RN%T2_TROE = T2_TROE
+         RN%RT3_TROE = 1._EB/T3_TROE
+         RN%THIRD_BODY = .TRUE.
+      CASE('THREE-BODY-ARRHENIUS')
+         RN%REACTYPE = THREE_BODY_ARRHENIUS_TYPE
+         RN%THIRD_BODY = .TRUE.
+      CASE DEFAULT
+         RN%REACTYPE = ARRHENIUS_TYPE
+   END SELECT     
+   
    IF (RN%RAMP_CHI_R/='null') CALL GET_RAMP_INDEX(RN%RAMP_CHI_R,'TIME',RN%RAMP_CHI_R_INDEX)
 
    IF (RN%A_IN<0._EB .AND. RN%E<0._EB .AND. .NOT.RN%REVERSE) THEN
@@ -4632,13 +4655,13 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
          ENDIF
       ENDDO
 
-      IF (RN%REACTYPE=='THREE-BODY-ARRHENIUS') THEN
+      IF (RN%REACTYPE==THREE_BODY_ARRHENIUS_TYPE) THEN
          RN%A_SI = RN%A_IN*(1000._EB)**(-SUMNU)  ![kmol/m3]^(-sum(nu)). Here 1000 is for conversion from mol/cm3 to kmol/m3
       ELSE
          RN%A_SI = RN%A_IN*(1000._EB)**(1-SUMNU) ![kmol/m3]^(1-sum(nu))
       ENDIF
 
-      IF ( REACTYPE == 'FALLOFF-LINDEMANN' .OR. REACTYPE == 'FALLOFF-TROE') THEN
+      IF (RN%REACTYPE == FALLOFF_LINDEMANN_TYPE .OR. RN%REACTYPE == FALLOFF_TROE_TYPE) THEN
          RN%A_LOW_PR = RN%A_LOW_PR*(1000._EB)**(-SUMNU)
       ENDIF   
    ELSE SIMPLE_IF
@@ -4781,6 +4804,7 @@ RADIATIVE_FRACTION          = -1._EB
 RAMP_CHI_R                  = 'null'
 REAC_ATOM_ERROR             = 1.E-4_EB
 REAC_MASS_ERROR             = 1.E-4_EB
+REACTYPE                    = 'ARRHENIUS-TYPE'
 REVERSE                     = .FALSE.
 SOOT_YIELD                  = 0.0_EB
 SPEC_ID_NU                  = 'null'
@@ -4789,8 +4813,12 @@ THIRD_BODY                  = .FALSE.
 THIRD_EFF_ID                = 'null'
 THIRD_EFF                   = -1._EB
 A_LOW_PR                    = -1._EB
-E_LOW_PR                    = -1._EB
+E_LOW_PR                    = -2.E20_EB
 N_T_LOW_PR                  = 0._EB
+A_TROE                      = -2.E20_EB
+T1_TROE                     = -2.E20_EB
+T2_TROE                     = -2.E20_EB
+T3_TROE                     = -2.E20_EB
 
 END SUBROUTINE SET_REAC_DEFAULTS
 

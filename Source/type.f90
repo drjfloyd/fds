@@ -729,14 +729,14 @@ TYPE REACTION_TYPE
    LOGICAL, ALLOCATABLE, DIMENSION(:) :: N_S_FLAG !< N_S exponent is an integer
    TYPE(AIT_EXCLUSION_ZONE_TYPE), DIMENSION(MAX_AIT_EXCLUSION_ZONES) :: AIT_EXCLUSION_ZONE  !< Coordinates of auto-ignition zone
    INTEGER :: N_AIT_EXCLUSION_ZONES=0       !< Number of auto-ignition exclusion zones
-   CHARACTER(LABEL_LENGTH) :: REACTYPE='ARRHENIUS' !< Type of reaction in a chemical mechanism. 
-   REAL(EB) :: A_LOW_PR                      !< Unajusted falloff reaction high pressure pre-exponent parameter. 
-   REAL(EB) :: E_LOW_PR                      !< Unajusted falloff reaction high pressure activation energy (J/mol). 
-   REAL(EB) :: N_T_LOW_PR=0._EB              !< Falloff reaction high pressure temperature exponent. 
+   INTEGER :: REACTYPE                      !< Type of reaction in a chemical mechanism. 
+   REAL(EB) :: A_LOW_PR                     !< Unajusted falloff reaction high pressure pre-exponent parameter. 
+   REAL(EB) :: E_LOW_PR                     !< Unajusted falloff reaction high pressure activation energy (J/mol). 
+   REAL(EB) :: N_T_LOW_PR=0._EB             !< Falloff reaction high pressure temperature exponent. 
    REAL(EB) :: A_TROE                       !< TROE reaction A
-   REAL(EB) :: T1_TROE                      !< TROE reaction T1
+   REAL(EB) :: RT1_TROE                     !< TROE reaction 1/T1
    REAL(EB) :: T2_TROE                      !< TROE reaction T2
-   REAL(EB) :: T3_TROE                      !< TROE reaction T3
+   REAL(EB) :: RT3_TROE                     !< TROE reaction 1/T3
    
 END TYPE REACTION_TYPE
 

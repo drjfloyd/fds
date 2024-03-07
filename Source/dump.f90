@@ -2847,6 +2847,21 @@ IF (N_REACTIONS>0) THEN
                      WRITE(LU_OUTPUT,'(6X,A,1X,F12.6)') SPECIES(NN)%ID,RN%THIRD_EFF(NN)
                ENDDO
             ENDIF
+            IF (RN%REACTYPE==FALLOFF_TROE_TYPE .OR. RN%REACTYPE==FALLOFF_LINDEMANN_TYPE) THEN
+               WRITE(LU_OUTPUT,'(/6X,A)') 'Falloff Reaction'
+               IF (RN%REACTYPE==FALLOFF_TROE_TYPE) WRITE(LU_OUTPUT,'(6X,A)') 'Troe Falloff'
+               IF (RN%REACTYPE==FALLOFF_LINDEMANN_TYPE) WRITE(LU_OUTPUT,'(6X,A)') 'LINDEMANN Falloff'
+               WRITE(LU_OUTPUT,'(6X,A)') 'Low pressure pre-exponential:           ',RN%A_LOW_PR
+               WRITE(LU_OUTPUT,'(6X,A)') 'Low pressure activation energy (J/mol): ',RN%E_LOW_PR
+               WRITE(LU_OUTPUT,'(6X,A)') 'Low pressure temperature exponent       ',RN%N_T_LOW_PR
+            ENDIF
+            IF (RN%REACTYPE==FALLOFF_TROE_TYPE) THEN
+               WRITE(LU_OUTPUT,'(6X,A)') 'TROE A:                                 ',RN%A_TROE
+               WRITE(LU_OUTPUT,'(6X,A)') 'TROE T1 (K):                            ',1._EB/RN%RT1_TROE
+               IF (RN%T2_TROE > -1.E20_EB) &
+               WRITE(LU_OUTPUT,'(6X,A)') 'TROE T2 (K):                            ',RN%T2_TROE
+               WRITE(LU_OUTPUT,'(6X,A)') 'TROE T3 (K):                            ',1._EB/RN%RT3_TROE
+            ENDIF
          ENDIF
       ENDIF
 

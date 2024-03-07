@@ -1030,7 +1030,8 @@ LOGICAL, INTENT(OUT) :: NO_REACTIONS
 INTEGER, INTENT(IN) :: KINETICS
 INTEGER, INTENT(IN), OPTIONAL :: PRIORITY
 REAL(EB) :: DZ_F,YY_PRIMITIVE(1:N_SPECIES),MW,DT_TMP(1:N_TRACKED_SPECIES),DT_MIN,DT_LOC,&
-            ZZ_TMP(1:N_TRACKED_SPECIES),ZZ_NEW(1:N_TRACKED_SPECIES),Q_REAC_TMP(1:N_REACTIONS),AA,X_Y(1:N_SPECIES),X_Y_SUM
+            ZZ_TMP(1:N_TRACKED_SPECIES),ZZ_NEW(1:N_TRACKED_SPECIES),Q_REAC_TMP(1:N_REACTIONS),AA,X_Y(1:N_SPECIES),X_Y_SUM,&
+            K_INF,K_0,P_RI,FCENT,C_I
 INTEGER :: I,NS,OUTER_IT
 LOGICAL :: REACTANTS_PRESENT
 INTEGER, PARAMETER :: INFINITELY_FAST=1,FINITE_RATE=2
@@ -1104,7 +1105,8 @@ KINETICS_SELECT: SELECT CASE(KINETICS)
             ! efficiencies are generally species with high expected mass fractions which should not have large absolute changes.
             ! We can make a constant term for each reaction to hold A T^N_T e^-(E/RT) * Gibbs * Third body
             IF (DZ_F0(I) < 0._EB) THEN
-               DZ_F0(I) = RN%A_PRIME*RHO_0**RN%RHO_EXPONENT*TMP_0**RN%N_T*EXP(-RN%E*RRTMP0)
+               K_INF = RN%A_PRIME*RHO_0**RN%RHO_EXPONENT*TMP_0**RN%N_T*EXP(-RN%E*RRTMP0)
+               DZ_F0(I) = K_INF
                IF (RN%THIRD_BODY) THEN
                   IF (RN%N_THIRD <=0) THEN
                      IF (MOLPCM3 < 0._EB) THEN
@@ -1112,6 +1114,13 @@ KINETICS_SELECT: SELECT CASE(KINETICS)
                         MOLPCM3 = RHO_0/MW*0.001_EB ! mol/cm^3
                      ENDIF
                      DZ_F0(I) = DZ_F0(I)*MOLPCM3
+                  ENDIF
+                  IF (RN%REACTYPE==FALLOFF_LINDEMANN_TYPE .OR. RN%REACTYPE==FALLOFF_TROE_TYPE) THEN
+                     K_0 = RN%A_LOW_PR*TMP_0**(RN%N_T_LOW_PR)*EXP(-RN%E_LOW_PR*RRTMP0)
+                     P_RI = K_0/K_INF
+                     FCENT = CALC_FCENT(TMP_0,P_RI,I)
+                     C_I = P_RI/(1._EB+P_RI)*FCENT
+                     DZ_F0(I) = DZ_F0(I)*C_I                     
                   ENDIF
                ENDIF
                IF (RN%REVERSE) THEN ! compute equilibrium constant
@@ -1180,7 +1189,7 @@ SUBROUTINE DVODES_PRECALC(ZZ_OLD,RHO_0,TMP_0)
 
 USE PHYSICAL_FUNCTIONS, ONLY : GET_MASS_FRACTION_ALL,GET_SPECIFIC_GAS_CONSTANT,GET_MOLECULAR_WEIGHT
 REAL(EB),INTENT(IN) :: ZZ_OLD(N_TRACKED_SPECIES),RHO_0,TMP_0
-REAL(EB) :: KG,MW
+REAL(EB) :: KG,MW,K_INF,K_0,P_RI,FCENT,C_I
 INTEGER :: I!, NS
 TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
 
@@ -1190,7 +1199,8 @@ MW = -1._EB
 
 DO I=1,N_REACTIONS
    RN=>REACTION(I)
-   DZ_F0(I) = RN%A_PRIME*RHO_0**RN%RHO_EXPONENT*TMP_0**RN%N_T*EXP(-RN%E*RRTMP0)
+   K_INF = RN%A_PRIME*RHO_0**RN%RHO_EXPONENT*TMP_0**RN%N_T*EXP(-RN%E*RRTMP0)
+   DZ_F0(I) = K_INF
    IF (RN%THIRD_BODY) THEN
       IF (MW < 0._EB) THEN
          CALL GET_MOLECULAR_WEIGHT(ZZ_OLD,MW)
@@ -1198,6 +1208,13 @@ DO I=1,N_REACTIONS
       ENDIF
       IF (RN%N_THIRD <=0) THEN
          DZ_F0(I) = DZ_F0(I) * MOLPCM3
+      ENDIF
+      IF(RN%REACTYPE==FALLOFF_LINDEMANN_TYPE .OR. RN%REACTYPE==FALLOFF_TROE_TYPE ) THEN
+         K_0 = RN%A_LOW_PR*TMP_0**(RN%N_T_LOW_PR)*EXP(-RN%E_LOW_PR*RRTMP0)
+         P_RI = K_0/K_INF
+         FCENT = CALC_FCENT(TMP_0,P_RI,I)
+         C_I = P_RI/(1._EB+P_RI)*FCENT
+         DZ_F0(I) = DZ_F0(I) * C_I
       ENDIF
    ENDIF
    IF(RN%REVERSE) THEN ! compute equilibrium constant
@@ -1967,6 +1984,40 @@ SPEC_LOOP: DO NS = 1, N_TRACKED_SPECIES
 ENDDO SPEC_LOOP
 
 END SUBROUTINE CONDENSATION_EVAPORATION
+
+
+!> \brief Calculate fall-off function 
+!> \param TMP is the current temperature.
+!> \param P_RI is the reduced pressure
+!> \param RN is the reaction
+
+REAL(EB) FUNCTION CALC_FCENT(TMP, P_RI, I)
+REAL(EB), INTENT(IN) :: TMP, P_RI
+INTEGER, INTENT(IN) :: I
+TYPE(REACTION_TYPE), POINTER :: RN => NULL()
+REAL(EB) :: LOGFCENT, C, N, LOGPRC
+REAL(EB), PARAMETER :: D=0.14_EB
+
+RN=>REACTION(I)
+IF(RN%REACTYPE==FALLOFF_TROE_TYPE) THEN
+   IF (RN%T2_TROE <-1.E20_EB) THEN
+      LOGFCENT = LOG10(MAX((1 - RN%A_TROE)*EXP(-TMP*RN%RT3_TROE) + &
+                 RN%A_TROE*EXP(-TMP*RN%RT1_TROE),TWO_EPSILON_EB))
+   ELSE
+      LOGFCENT = LOG10(MAX((1 - RN%A_TROE)*EXP(-TMP*RN%RT3_TROE) + &
+                 RN%A_TROE*EXP(-TMP*RN%RT1_TROE) + EXP(-RN%T2_TROE/TMP),TWO_EPSILON_EB))
+   ENDIF
+   C = -0.4_EB - 0.67_EB*LOGFCENT
+   N = 0.75_EB - 1.27_EB*LOGFCENT
+   LOGPRC = LOG10(MAX(P_RI, TWO_EPSILON_EB)) + C
+   CALC_FCENT = 10._EB**(LOGFCENT/(1._EB + (LOGPRC/(N - D*LOGPRC))**2))
+ELSE
+   CALC_FCENT = 1._EB  !FALLOFF-LINDEMANNN
+ENDIF
+
+RETURN
+
+END FUNCTION CALC_FCENT
 
 END MODULE FIRE
 
