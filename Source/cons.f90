@@ -27,12 +27,10 @@ INTEGER, PARAMETER :: GAS_SPECIES=2              !< Flag for SPECIES\%MODE indic
 INTEGER, PARAMETER :: AEROSOL_SPECIES=3          !< Flag for SPECIES\%MODE indicating an aerosol species
 
 INTEGER, PARAMETER :: EXPLICIT_EULER=1           !< Flag for COMBUSTION_ODE_SOLVER: explicit first-order Euler
-INTEGER, PARAMETER :: RK2=2                      !< Flag for COMBUSTION_ODE_SOLVER: second-order Runge-Kutta
-INTEGER, PARAMETER :: RK3=3                      !< Flag for COMBUSTION_ODE_SOLVER: third-order Runge-Kutta
-INTEGER, PARAMETER :: RK2_RICHARDSON=4           !< Flag for COMBUSTION_ODE_SOLVER: second-order Runge-Kutta, Richardson extrap.
-INTEGER, PARAMETER :: DVODES_SOLVER=5            !< Flag for COMBUSTION_ODE_SOLVER: DVODES
-INTEGER, PARAMETER :: DASSL_SOLVER=6             !< Flag for COMBUSTION_ODE_SOLVER: DASSL
-INTEGER, PARAMETER :: CVODE_SOLVER=7             !< Flag for COMBUSTION_ODE_SOLVER: SUNDIALS CVODE
+INTEGER, PARAMETER :: RK2_RICHARDSON=2           !< Flag for COMBUSTION_ODE_SOLVER: second-order Runge-Kutta, Richardson extrap.
+INTEGER, PARAMETER :: DVODES_SOLVER=3            !< Flag for COMBUSTION_ODE_SOLVER: DVODES
+INTEGER, PARAMETER :: DASSL_SOLVER=4             !< Flag for COMBUSTION_ODE_SOLVER: DASSL
+INTEGER, PARAMETER :: CVODE_SOLVER=5             !< Flag for COMBUSTION_ODE_SOLVER: SUNDIALS CVODE
 
 INTEGER, PARAMETER :: EXTINCTION_1=1             !< Flag for EXTINCT_MOD (EXTINCTION MODEL 1)
 INTEGER, PARAMETER :: EXTINCTION_2=2             !< Flag for EXTINCT_MOD (EXTINCTION MODEL 2)
@@ -446,6 +444,7 @@ REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: MU_RSQMW_Z
 REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: D_Z          !< D_Z(I,J) Diffusivity (m^2/s) of lumped species J at temp I (K)
 REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: G_F_Z        !< CP_Z(I,J) Gibbs free energy (J/kg) of lumped species J at temp I (K)
 REAL(EB), ALLOCATABLE, DIMENSION(:,:) :: H_SENS_Z     !< H_SENS(I,J) Sensible enthalpy (J/kg) of lumped species J at temp I (K)
+REAL(EB) :: DZZ_CLIP                                  !< Value for processing DZZ in combustion
 
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: MWR_Z,RSQ_MW_Z
 CHARACTER(LABEL_LENGTH) :: EXTINCTION_MODEL='null'
