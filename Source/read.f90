@@ -2930,9 +2930,9 @@ PRIMITIVE_LOOP: DO N1=1,N_SPECIES - N_COPY_PRIMITIVE
       SOOT_O_FRACTION = SS%ATOMS(8)/SUM(SS%ATOMS)
    ENDIF
    IF (.NOT.SS%LISTED) THEN
-      !WRITE(MESSAGE,'(A,A,A)') 'WARNING: SPEC ',TRIM(ID),' is not in the table of pre-defined species. '// &
-      !                         'Any unassigned SPEC variables in the input were assigned the properties of nitrogen.'
-      !IF (MY_RANK==0) WRITE(LU_ERR,'(A)') TRIM(MESSAGE)
+      WRITE(MESSAGE,'(A,A,A)') 'WARNING: SPEC ',TRIM(ID),' is not in the table of pre-defined species. '// &
+                               'Any unassigned SPEC variables in the input were assigned the properties of nitrogen.'
+      IF (MY_RANK==0) WRITE(LU_ERR,'(A)') TRIM(MESSAGE)
    ENDIF
 
    IF (SS%REFERENCE_ENTHALPY > -1.E21_EB .OR. SS%H_F > -1.E21_EB .OR. SS%SPECIFIC_HEAT > 0._EB) SS%EXPLICIT_H_F = .TRUE.
