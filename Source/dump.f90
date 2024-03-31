@@ -3697,11 +3697,11 @@ TNOW = CURRENT_TIME()
 CALL GET_DATE_ISO_8601(DATE)
 CALL CPU_TIME(CPUTIME)
 IF (ABS(T)<=999.99999_EB) THEN
-   WRITE(LU_STEPS,'(I7,",",A,",",E10.3,",",F10.5,",",E12.5)') ICYC,TRIM(DATE),DT,T,CPUTIME - CPU_TIME_START
+   WRITE(LU_STEPS,'(I8,",",A,",",E10.3,",",F10.5,",",E12.5)') ICYC,TRIM(DATE),DT,T,CPUTIME - CPU_TIME_START
 ELSEIF (ABS(T)>999.99999_EB .AND. ABS(T)<=99999.999_EB) THEN
-   WRITE(LU_STEPS,'(I7,",",A,",",E10.3,",",F10.3,",",E12.5)') ICYC,TRIM(DATE),DT,T,CPUTIME - CPU_TIME_START
+   WRITE(LU_STEPS,'(I8,",",A,",",E10.3,",",F10.3,",",E12.5)') ICYC,TRIM(DATE),DT,T,CPUTIME - CPU_TIME_START
 ELSE
-   WRITE(LU_STEPS,'(I7,",",A,",",E10.3,",",F10.1,",",E12.5)') ICYC,TRIM(DATE),DT,T,CPUTIME - CPU_TIME_START
+   WRITE(LU_STEPS,'(I8,",",A,",",E10.3,",",F10.1,",",E12.5)') ICYC,TRIM(DATE),DT,T,CPUTIME - CPU_TIME_START
 ENDIF
 
 ! Write abridged output to the .err file
@@ -3709,26 +3709,26 @@ ENDIF
 IF (ABS(TIME_SHRINK_FACTOR-1._EB) < TWO_EPSILON_EB) THEN
 
    IF (ABS(T)<=0.0001) THEN
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.5,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.5,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
    ELSEIF (ABS(T)>0.0001 .AND. ABS(T) <=0.001) THEN
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.4,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.4,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
    ELSEIF (ABS(T)>0.001 .AND. ABS(T)<=0.01) THEN
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.3,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.3,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
    ELSE
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.2,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.2,A)')  'Time Step:',ICYC,', Simulation Time:',T,' s'
    ENDIF
 ELSE
 
    STIME = T_BEGIN + (T-T_BEGIN) * TIME_SHRINK_FACTOR
    DTS = DT * TIME_SHRINK_FACTOR
    IF (ABS(STIME)<=0.0001) THEN
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.5,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.5,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
    ELSEIF (ABS(STIME)>0.0001 .AND. ABS(STIME) <=0.001) THEN
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.4,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.4,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
    ELSEIF (ABS(STIME)>0.001 .AND. ABS(STIME)<=0.01) THEN
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.3,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.3,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
    ELSE
-      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I7,A,F10.2,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
+      WRITE(SIMPLE_OUTPUT_ERR,'(1X,A,I8,A,F10.2,A)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,' s'
    ENDIF
 
 ENDIF
@@ -3748,19 +3748,19 @@ IF (SUPPRESS_DIAGNOSTICS) THEN
 IF (ABS(TIME_SHRINK_FACTOR-1._EB) < TWO_EPSILON_EB) THEN
 
       IF (ABS(T)<=0.0001) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.6,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.6,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
             ' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSEIF (ABS(T)>0.0001 .AND. ABS(T) <=0.001) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.5,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.5,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
             ' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSEIF (ABS(T)>0.001 .AND. ABS(T)<=0.01) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.4,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.4,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
             ' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSEIF (ABS(T)>0.01 .AND. ABS(T)<=0.1) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.3,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.3,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
             ' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSE
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.2,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.2,A,F8.5,A,I0)')  'Time Step:',ICYC,', Simulation Time:',T,' s, Step Size:',DT,&
             ' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ENDIF
 
@@ -3769,19 +3769,19 @@ IF (ABS(TIME_SHRINK_FACTOR-1._EB) < TWO_EPSILON_EB) THEN
    ELSE
 
       IF (ABS(STIME)<=0.0001) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.6,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.6,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
             ' s, Scaled Step Size:',DTS,' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSEIF (ABS(STIME)>0.0001 .AND. ABS(STIME) <=0.001) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.5,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.5,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
             ' s, Scaled Step Size:',DTS,' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSEIF (ABS(STIME)>0.001 .AND. ABS(STIME)<=0.01) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.4,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.4,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
             ' s, Scaled Step Size:',DTS,' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSEIF (ABS(STIME)>0.01 .AND. ABS(STIME)<=0.1) THEN
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.3,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.3,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
             ' s, Scaled Step Size:',DTS,' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ELSE
-         WRITE(SIMPLE_OUTPUT,'(1X,A,I7,A,F10.2,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
+         WRITE(SIMPLE_OUTPUT,'(1X,A,I8,A,F10.2,A,F8.5,A,I0)')  'Time Step:',ICYC,', Scaled Simulation Time:',STIME,&
             ' s, Scaled Step Size:',DTS,' s, Pressure Iterations: ',PRESSURE_ITERATIONS
       ENDIF
    ENDIF
@@ -3791,7 +3791,7 @@ ENDIF
 ! Detailed diagnostics to the .out file
 
 CALL GET_DATE(DATE)
-WRITE(LU_OUTPUT,'(7X,A,I7,3X,A)') 'Time Step ',ICYC,TRIM(DATE)
+WRITE(LU_OUTPUT,'(7X,A,I8,3X,A)') 'Time Step ',ICYC,TRIM(DATE)
 IF (ABS(TIME_SHRINK_FACTOR-1._EB) < TWO_EPSILON_EB) THEN
    IF (ABS(T)<=0.0001) THEN
       WRITE(LU_OUTPUT,150) DT,T
@@ -4014,10 +4014,12 @@ REAL(FB) :: STIME
 INTEGER  :: ISOOFFSET,DATAFLAG,I,J,K,N,ERROR, HAVE_ISO2
 REAL(EB), POINTER, DIMENSION(:,:,:) :: QUANTITY,QUANTITY2, B,S
 REAL(FB) :: ISO_CENX, ISO_CENY, ISO_CENZ
+REAL(FB) :: ZZ
 REAL(EB) :: TIME_FACTOR
 REAL(FB) :: ISO_LEVEL(1)
 INTEGER ::  ISO_NLEVEL
 INTEGER :: II, JJ, KK
+
 STIME = REAL(T_BEGIN + (T-T_BEGIN)*TIME_SHRINK_FACTOR,FB)
 DATAFLAG = 1
 DRY=.FALSE.
@@ -4120,9 +4122,14 @@ ISOF_LOOP: DO N=1,N_ISOF
 
       IF (IS%DEBUG) THEN
          DO K=0,KBAR+1
+            IF (K.EQ.KBAR+1) THEN
+               ZZ = 2.0_FB*ZPLT(KBAR) - ZPLT(KBAR-1)
+            ELSE
+               ZZ = ZPLT(K)
+            ENDIF
             DO J=0,JBAR+1
                DO I=0,IBAR+1
-                  QQ2(I,J,K,1) = ZPLT(MIN(K,KBAR))
+                  QQ2(I,J,K,1) = ZZ
                ENDDO
             ENDDO
          ENDDO
@@ -7167,7 +7174,10 @@ IND_SELECT: SELECT CASE(IND)
    CASE(15)  ! MIXING TIME
       GAS_PHASE_OUTPUT_RES = MIX_TIME(II,JJ,KK)
    CASE(16)  ! ABSORPTION COEFFICIENT
-      GAS_PHASE_OUTPUT_RES = KAPPA_GAS(II,JJ,KK)
+      III = MAX(1,MIN(II,IBAR))
+      JJJ = MAX(1,MIN(JJ,JBAR))
+      KKK = MAX(1,MIN(KK,KBAR))
+      GAS_PHASE_OUTPUT_RES = KAPPA_GAS(III,JJJ,KKK)
    CASE(17)  ! VISCOSITY
       GAS_PHASE_OUTPUT_RES = MU(II,JJ,KK)
    CASE(18)  ! INTEGRATED INTENSITY
@@ -7343,7 +7353,10 @@ IND_SELECT: SELECT CASE(IND)
       GAS_PHASE_OUTPUT_RES = -0.5_EB*(RHO(II,JJ,KK)+RHO(II,JJ,KK+1))*FVZ_D(II,JJ,KK)
 
    CASE(64)  ! EFFECTIVE FLAME TEMPERATURE
-      IF (CHI_R(II,JJ,KK)*Q(II,JJ,KK)>QR_CLIP) THEN
+      III = MAX(1,MIN(II,IBAR))
+      JJJ = MAX(1,MIN(JJ,JBAR))
+      KKK = MAX(1,MIN(KK,KBAR))
+      IF (CHI_R(III,JJJ,KKK)*Q(II,JJ,KK)>QR_CLIP) THEN
          GAS_PHASE_OUTPUT_RES = TMP(II,JJ,KK)*RTE_SOURCE_CORRECTION_FACTOR**0.25_EB - TMPM
       ELSE
          GAS_PHASE_OUTPUT_RES = TMP(II,JJ,KK) - TMPM
@@ -8126,7 +8139,10 @@ IND_SELECT: SELECT CASE(IND)
       ZHAT = ZC(KK) - WF_MMS*T
       GAS_PHASE_OUTPUT_RES = VD2D_MMS_H_3(XHAT,ZHAT,T)
    CASE(502)  ! CHI_R
-      GAS_PHASE_OUTPUT_RES = CHI_R(II,JJ,KK)
+      III = MAX(1,MIN(II,IBAR))
+      JJJ = MAX(1,MIN(JJ,JBAR))
+      KKK = MAX(1,MIN(KK,KBAR))
+      GAS_PHASE_OUTPUT_RES = CHI_R(III,JJJ,KKK)
    CASE(504)  ! CFL 1
       IF (CELL(CELL_INDEX(II,JJ,KK))%SOLID) THEN
          GAS_PHASE_OUTPUT_RES = 0._EB
@@ -8400,10 +8416,10 @@ INTEGER, INTENT(IN), OPTIONAL :: OPT_WALL_INDEX,OPT_LP_INDEX,OPT_CFACE_INDEX,OPT
                                  OPT_NODE_INDEX,OPT_PROF_INDEX
 INTEGER, INTENT(IN) :: INDX,Y_INDEX,Z_INDEX,PART_INDEX,NM
 REAL(EB) :: Q_CON,RHOSUM,VOLSUM,MFT,ZZ_GET(1:N_TRACKED_SPECIES),Y_SPECIES,DEPTH,UN,H_S,RHO_D_DYDN,U_CELL,V_CELL,W_CELL,&
-            LTMP,ATMP,CTMP,H_W_EFF,X0,X1,XC0,XC1,TMP_BAR,VOL,DVOL,DN,PRESS,&
+            LTMP,ATMP,CTMP,H_W_EFF,X0,VOL,DN,PRESS,&
             NVEC(3),PVEC(3),TAU_IJ(3,3),VEL_CELL(3),VEL_WALL(3),MU_WALL,RHO_WALL,FVEC(3),SVEC(3),TVEC1(3),TVEC2(3),&
             PR1,PR2,Z1,Z2,RADIUS,CUT_FACE_AREA,SOLID_PHASE_OUTPUT_CTF,AAA,BBB,CCC,ALP,BET,GAM,MMM,DTMP
-INTEGER :: II1,II2,IIG,JJG,KKG,NN,IWX,SURF_INDEX,I,J,II,JJ,KK,NWP,IOR,M_INDEX,ICC,IND1,IND2,IC2,ITMP,ICF,JCF,NFACE,NR
+INTEGER :: II1,II2,IIG,JJG,KKG,NN,IWX,SURF_INDEX,I,J,NWP,M_INDEX,ICC,IND1,IND2,IC2,ITMP,ICF,JCF,NFACE,NR
 CHARACTER(LABEL_LENGTH) :: MATL_ID='null'
 TYPE(BOUNDARY_PROP1_TYPE), POINTER :: B1=>NULL()
 TYPE(BOUNDARY_PROP2_TYPE), POINTER :: B2=>NULL()
@@ -8923,60 +8939,6 @@ SOLID_PHASE_SELECT: SELECT CASE(INDX)
          Y_SPECIES = 1._EB
       ENDIF
       SOLID_PHASE_OUTPUT = RHO(BC%IIG,BC%JJG,BC%KKG)*Y_SPECIES
-
-   CASE(62) ! SOLID CELL TEMPERATURE
-
-      IF (SF%THERMAL_BC_INDEX/=THERMALLY_THICK) RETURN
-      !              X(II-1)      X(II)      X(IIG-1)
-      !                XC1         XC0        //|
-      !     |           |    II     |         //| <= 3D CELL INDEX, VOL=XC1-XC0
-      !     |     o     |     o     |     o   //| <= WALL CELL (WC)
-      !     |.................................//| <= ONE_D%X, dx
-      !
-      !     TMP_BAR = 1/VOL * INT_XC0^XC1 ONE_D%TMP * dx
-
-      II  = DV%I(1)
-      JJ  = DV%J(1)
-      KK  = DV%K(1)
-      IIG = BC%IIG
-      JJG = BC%JJG
-      KKG = BC%KKG
-      IOR = BC%IOR
-      NWP = SUM(ONE_D%N_LAYER_CELLS)
-
-      SELECT CASE(IOR)
-         CASE (1)
-            XC0 = X(IIG-1) - X(II)
-            XC1 = X(IIG-1) - X(II-1)
-         CASE (-1)
-            XC0 = X(II-1)  - X(IIG)
-            XC1 = X(II)    - X(IIG)
-         CASE (2)
-            XC0 = Y(JJG-1) - Y(JJ)
-            XC1 = Y(JJG-1) - Y(JJ-1)
-         CASE (-2)
-            XC0 = Y(JJ-1)  - Y(JJG)
-            XC1 = Y(JJ)    - Y(JJG)
-         CASE (3)
-            XC0 = Z(KKG-1) - Z(KK)
-            XC1 = Z(KKG-1) - Z(KK-1)
-         CASE (-3)
-            XC0 = Z(KK-1)  - Z(KKG)
-            XC1 = Z(KK)    - Z(KKG)
-      END SELECT
-
-      TMP_BAR = 0._EB
-      VOL = 0._EB
-      DO I=1,NWP
-         X0 = ONE_D%X(I-1); IF (X0>XC1) EXIT
-         X1 = ONE_D%X(I)  ; IF (X1<XC0) CYCLE
-         DVOL = MIN(X1,XC1) - MAX(X0,XC0)
-         TMP_BAR = TMP_BAR + ONE_D%TMP(I) * DVOL
-         VOL = VOL + DVOL
-      ENDDO
-      IF (VOL>TWO_EPSILON_EB) TMP_BAR = TMP_BAR/VOL
-
-      SOLID_PHASE_OUTPUT = TMP_BAR - TMPM
 
    CASE(63) ! THERMAL WALL UNITS
       IF ((PRESENT(OPT_WALL_INDEX).OR.PRESENT(OPT_CFACE_INDEX)) .AND. ASSOCIATED(B2)) THEN
