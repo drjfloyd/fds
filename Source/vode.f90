@@ -2508,7 +2508,7 @@
         CHARACTER (80) :: MSG
 ! ..
 ! .. Intrinsic Functions ..
-        INTRINSIC ALLOCATED, IABS, MAX, MINVAL, PRESENT, SIGN, SIZE
+        INTRINSIC ALLOCATED, ABS, MAX, MINVAL, PRESENT, SIGN, SIZE
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT SET_NORMAL_OPTS
 ! ..
@@ -2631,7 +2631,7 @@
         END IF
 
 !       Check for errors in MF.
-        MFA = IABS(MF)
+        MFA = ABS(MF)
         MOSS = MFA/100
         METH = (MFA-100*MOSS)/10
         MITER = MFA - 100*MOSS - 10*METH
@@ -3522,7 +3522,7 @@
         END IF
 
 !       Check for errors in MF.
-        MFA = IABS(MF)
+        MFA = ABS(MF)
         MOSS = MFA/100
         METH = (MFA-100*MOSS)/10
         MITER = MFA - 100*MOSS - 10*METH
@@ -4523,7 +4523,7 @@
         CHARACTER (80) :: MSG
 ! ..
 ! .. Intrinsic Functions ..
-        INTRINSIC ALLOCATED, IABS, MAX, MINVAL, PRESENT, SIGN, SIZE
+        INTRINSIC ALLOCATED, ABS, MAX, MINVAL, PRESENT, SIGN, SIZE
 ! ..
 ! .. FIRST EXECUTABLE STATEMENT SET_OPTS
 ! ..
@@ -4752,7 +4752,7 @@
      END IF
 
 !    Check for errors in MF.
-     MFA = IABS(MF)
+     MFA = ABS(MF)
      MOSS = MFA/100
      METH = (MFA-100*MOSS)/10
      MITER = MFA - 100*MOSS - 10*METH
@@ -5607,16 +5607,16 @@
           IF (ABS(RJ)<=ZERO) GOTO 30
           Y(J) = YPJ
           CALL DFN(NEQ,T,Y,FPTEMP)
-          DO 20 I = 1, NEQ
+          DO I = 1, NEQ
 !           Estimate the Jacobian element.
             AIJ = ABS(FPTEMP(I)-FTEMP(I))/RJ
-            IF ((AIJ<=EMIN) .AND. (I/=J)) GOTO 20
+            IF ((AIJ<=EMIN) .AND. (I/=J)) CYCLE
 !           Need more storage for JA.
             IF (K>JADIM) GOTO 10
             JMIN = K
             JA(K) = I
             K = K + 1
-20        CONTINUE
+          ENDDO 
           JP1 = J + 1
           IA(JP1) = K
           Y(J) = YJSAVE
@@ -9830,17 +9830,17 @@
         DO NG = 1, MAXG
           IGP(NG) = NCOL
           INCL(1:N) = 0
-          DO 20 J = 1, N
+          DO J = 1, N
 !           Reject column J if it is already in a group.
-            IF (JDONE(J)==1) GOTO 20
+            IF (JDONE(J)==1) CYCLE
             KMIN = IA(J)
             KMAX = IA(J+1) - 1
-            DO 10 K = KMIN, KMAX
+            DO K = KMIN, KMAX
 !           Reject column J if it overlaps any column already
 !           in this group.
               I = JA(K)
-              IF (INCL(I)==1) GOTO 20
-10          END DO
+              IF (INCL(I)==1) CYCLE
+            END DO
 !           Accept column J into group NG.
             JGP(NCOL) = J
             NCOL = NCOL + 1
@@ -9849,7 +9849,7 @@
               I = JA(K)
               INCL(I) = 1
             END DO
-20        END DO
+          ENDDO
 !         Stop if this group is empty (grouping is complete).
           IF (NCOL==IGP(NG)) GOTO 30
         END DO

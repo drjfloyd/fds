@@ -4751,8 +4751,6 @@ REAC_READ_LOOP: DO NR=1,N_REACTIONS
       ENDIF
    ENDIF SIMPLE_IF
 
-
-
    IF (REVERSE) THEN
       N_REVERSE = N_REVERSE + 1
       RN2 => REACTION(N_REACTIONS + N_REVERSE + NEW_REAC)
@@ -4871,7 +4869,6 @@ TYPE (REACTION_TYPE), POINTER :: RN=>NULL(),RN2=>NULL()
 
 IF (N_REACTIONS <=0) RETURN
 
-
 ! The following information is what the user would have entered into the input file in the more general case
 DO NR=1,N_REACTIONS
    RN => REACTION(NR)
@@ -4913,7 +4910,6 @@ DO NR=1,N_REACTIONS
       ENDIF
    ENDIF SIMPLE_CHEM_IF
 ENDDO
-
 
 REAC_LOOP: DO NR=1,N_REACTIONS
 
@@ -4965,8 +4961,6 @@ REAC_LOOP: DO NR=1,N_REACTIONS
    ENDDO
    
    RN%C0_EXP = SUM(NU_Y)
-
-
    
    RN%N_SMIX_FR = 0._EB
    RN%N_SMIX_R = 0._EB
@@ -5057,7 +5051,6 @@ REAC_LOOP: DO NR=1,N_REACTIONS
    ALLOCATE(RN%N_S_INT(RN%N_SPEC))
    ALLOCATE(RN%N_S_FLAG(RN%N_SPEC))
 
-
    NS2 = 0
    DO NS=1,N_SPECIES
       IF (ABS(NU_Y(NS)) > TWO_EPSILON_EB) THEN
@@ -5073,7 +5066,6 @@ REAC_LOOP: DO NR=1,N_REACTIONS
          ENDIF
       ENDIF
    ENDDO
-
 
    ! Normalize the stoichiometric coefficients by that of the fuel.
    RN%NU_FUEL_0 = -RN%NU(RN%FUEL_SMIX_INDEX)
@@ -5182,8 +5174,6 @@ REAC_LOOP: DO NR=1,N_REACTIONS
       ENDIF
    ENDDO
 
-
-
    NS2 = 0
    DO NS=1,N_TRACKED_SPECIES
       IF (RN%NU(NS) < 0._EB) THEN
@@ -5191,7 +5181,6 @@ REAC_LOOP: DO NR=1,N_REACTIONS
          RN%REACTANT_INDEX(NS2) = NS
       ENDIF
    ENDDO
-
    
    ! Set THIRD_BODY efficiencies
    IF (RN%N_THIRD>0) THEN
@@ -5222,19 +5211,19 @@ IF (TRIM(ODE_SOLVER)/='null') THEN
    SELECT CASE (TRIM(ODE_SOLVER))
       CASE ('EXPLICIT EULER') ; COMBUSTION_ODE_SOLVER = EXPLICIT_EULER
       CASE ('RK2 RICHARDSON') ; COMBUSTION_ODE_SOLVER = RK2_RICHARDSON
-      CASE ('CVODE')
+      CASE ('DVODES','CVODE','DASSL')
          N_FIXED_CHEMISTRY_SUBSTEPS = 1
+         IF (ODE_SOLVER=='DVODES') THEN
+            COMBUSTION_ODE_SOLVER = DVODE_SOLVER
+         ELSEIF (ODE_SOLVER=='CVODE') THEN
 #ifndef WITH_SUNDIALS
-         WRITE(MESSAGE,'(A)') "ERROR requesting CVODE_SOLVER, Sundials not installed."
-         CALL SHUTDOWN(MESSAGE) ; RETURN  
+            WRITE(MESSAGE,'(A)') "ERROR requesting CVODE_SOLVER, Sundials not installed."
+            CALL SHUTDOWN(MESSAGE) ; RETURN  
 #endif
-         COMBUSTION_ODE_SOLVER = CVODE_SOLVER
-         DO NS=1,N_TRACKED_SPECIES
-            IF (SPECIES_MIXTURE(NS)%SINGLE_SPEC_INDEX < 0) THEN
-               WRITE(MESSAGE,'(A)') 'ERROR(zzz): No lumped species can be used with CVODE solver.'
-               CALL SHUTDOWN(MESSAGE) ; RETURN
-            ENDIF
-         ENDDO
+            COMBUSTION_ODE_SOLVER = CVODE_SOLVER
+         ELSE
+            COMBUSTION_ODE_SOLVER = DASSL_SOLVER
+         ENDIF
          ALLOCATE(YP2ZZ(N_SPECIES))
          DO NS=1,N_TRACKED_SPECIES
             IF (SPECIES_MIXTURE(NS)%SINGLE_SPEC_INDEX < 0) THEN
@@ -5242,7 +5231,7 @@ IF (TRIM(ODE_SOLVER)/='null') THEN
                CALL SHUTDOWN(MESSAGE) ; RETURN
             ENDIF
             YP2ZZ(SPECIES_MIXTURE(NS)%SINGLE_SPEC_INDEX) = NS
-         ENDDO        
+         ENDDO
       CASE DEFAULT
          WRITE(MESSAGE,'(A)') 'ERROR(209): Name of ODE_SOLVER is not recognized.'
          CALL SHUTDOWN(MESSAGE) ; RETURN

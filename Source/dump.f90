@@ -2777,6 +2777,10 @@ IF (N_REACTIONS>0) THEN
          ODE_SOLVER = 'RK2 RICHARDSON'
       CASE (CVODE_SOLVER)
          ODE_SOLVER = 'CVODE'
+      CASE (DVODE_SOLVER)
+         ODE_SOLVER = 'DVODE'
+      CASE (DASSL_SOLVER)
+         ODE_SOLVER = 'DASSL'
    END SELECT
 
    WRITE(LU_OUTPUT,'(/3X,A)')    'Solver Details:  '

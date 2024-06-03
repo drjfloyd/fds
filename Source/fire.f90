@@ -7,6 +7,8 @@ USE GLOBAL_CONSTANTS
 USE MESH_POINTERS
 USE COMP_FUNCTIONS, ONLY: CURRENT_TIME
 USE SOOT_ROUTINES, ONLY: SOOT_SURFACE_OXIDATION
+USE NUMERICS_ROUTINES, ONLY : DDASSL
+USE DVODE_F90_M
 #ifdef WITH_SUNDIALS
 USE CVODE_INTERFACE
 #endif
@@ -17,10 +19,14 @@ IMPLICIT NONE (TYPE,EXTERNAL)
 PRIVATE
 
 REAL(EB), ALLOCATABLE, DIMENSION(:) :: DZ_F0
-REAL(EB) :: RRTMP0,MOLPCM3
-DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:) :: ATOL,RTOL
+REAL(EB) :: RRTMP0,MOLPCM3,RPAR(1)
+DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:) :: ATOLD,RTOLD
+REAL(EB), ALLOCATABLE, DIMENSION(:) :: ATOL,RTOL,RWORK
 LOGICAL :: CVODE_INIT=.FALSE.
-INTEGER :: I0,J0,K0,NM0
+INTEGER :: INFO2(15)=0,IPAR(1),LIW,LRW,I0,J0,K0,NM0
+INTEGER, ALLOCATABLE, DIMENSION(:) :: IWORK,BOUNDED_COMPONENTS
+TYPE (VODE_OPTS) :: OPTIONS
+
 
 PUBLIC COMBUSTION,COMBUSTION_BC,CONDENSATION_EVAPORATION,GET_FLAME_TEMPERATURE
 
@@ -43,8 +49,25 @@ CALL POINT_TO_MESH(NM)
 ! Set CVODES options
 IF (.NOT. CVODE_INIT) THEN
    CVODE_INIT = .TRUE.
-   ALLOCATE(ATOL(N_TRACKED_SPECIES))
-   ALLOCATE(RTOL(N_TRACKED_SPECIES))
+   IF (COMBUSTION_ODE_SOLVER == DVODE_SOLVER) THEN
+      ALLOCATE(ATOLD(N_TRACKED_SPECIES))
+      ALLOCATE(RTOLD(N_TRACKED_SPECIES))
+   ELSEIF (COMBUSTION_ODE_SOLVER == DASSL_SOLVER) THEN
+      INFO2(1) = 0  ! Treat as first call to routine (otherwise will preserve ZZ from prior grid cell)
+      INFO2(2) = 1  ! RTOL/ATOL are vectors
+      INFO2(5) = 0  ! User suppplied JAC (DASSL_JAC routine in ths module is not correct. Using DASSL numerical Jacobian
+      INFO2(6) = 0  ! Non-banded JAC
+      INFO2(10) = 1 ! Solution is non-negative
+      LIW = 20+N_TRACKED_SPECIES
+      ALLOCATE(IWORK(LIW))
+      IWORK = 0
+      LRW = 40+9*N_TRACKED_SPECIES+(3*N_TRACKED_SPECIES+1)*N_TRACKED_SPECIES
+      ALLOCATE(RWORK(LRW))
+      RWORK = 0._EB
+   ELSEIF (COMBUSTION_ODE_SOLVER == CVODE_SOLVER) THEN
+      ALLOCATE(ATOL(N_TRACKED_SPECIES))
+      ALLOCATE(RTOL(N_TRACKED_SPECIES))
+   ENDIF
 ENDIF
 
 Q     = 0._EB
@@ -330,8 +353,9 @@ REAL(EB) :: A1(1:N_TRACKED_SPECIES),A2(1:N_TRACKED_SPECIES),A4(1:N_TRACKED_SPECI
             Q_REAC_SUM(1:N_REACTIONS),Q_SUM_CHI_R,CHI_R_SUM,TIME_RAMP_FACTOR,&
             TOTAL_MIXED_MASS_1,TOTAL_MIXED_MASS_2,TOTAL_MIXED_MASS_4,TOTAL_MIXED_MASS,&
             ZETA_1,ZETA_2,ZETA_4,D_F,TMP_IN,C_U,DT_SUB_OLD,TNOW2,ERR_EST(N_TRACKED_SPECIES),ERR_TOL(N_TRACKED_SPECIES),ERR_TINY,&
-            ZZ_TEMP(1:N_TRACKED_SPECIES)
-INTEGER :: NR,NS,ITER,TVI,RICH_ITER,TIME_ITER,RICH_ITER_MAX
+            ZZ_TEMP(1:N_TRACKED_SPECIES),REL_ERR(N_TRACKED_SPECIES),ABS_ERR(N_TRACKED_SPECIES)
+INTEGER :: NR,NS,ITER,TVI,RICH_ITER,TIME_ITER,RICH_ITER_MAX,ITASK=1,ISTATE=1,COUNTER,COUNTER2
+DOUBLE PRECISION :: ZZ_DVODE(N_TRACKED_SPECIES)
 INTEGER, PARAMETER :: TV_ITER_MIN=5
 LOGICAL :: TV_FLUCT(1:N_TRACKED_SPECIES),EXTINCT,NO_REACTIONS
 DOUBLE PRECISION :: T1,T2
@@ -476,6 +500,44 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
             ENDIF
          ENDIF
          ZETA_0     = ZETA
+      CASE (DVODE_SOLVER)
+         Q_REAC_SUB = 0._EB
+         DT_SUB = DT
+         ZZ_DVODE = DBLE(ZZ_MIXED)
+         DO NS =1,N_TRACKED_SPECIES
+            RTOLD(NS) = DBLE(SPECIES_MIXTURE(NS)%ODE_REL_ERROR)
+            ATOLD(NS) = DBLE(SPECIES_MIXTURE(NS)%ODE_ABS_ERROR)
+         ENDDO
+         OPTIONS = SET_OPTS(DENSE_J=.TRUE.,ABSERR_VECTOR=ATOLD,RELERR_VECTOR=RTOLD,USER_SUPPLIED_JACOBIAN=.TRUE.,MXSTEP=10000)!,&
+!                            CONSTRAINED=BOUNDED_COMPONENTS,CLOWER=LOWER_BOUND,CUPPER=UPPER_BOUND)
+         CALL DVODES_PRECALC(ZZ_MIXED,RHO_IN,TMP_IN)
+         T1 = 0.D0
+         T2 = DBLE(DT)
+         ISTATE=1
+         COUNTER = 1
+         DO
+            CALL DVODE_F90(DVODE_Y,N_TRACKED_SPECIES,ZZ_DVODE,T1,T2,ITASK,ISTATE,OPTIONS,J_FCN=DVODE_JAC)
+            IF (ISTATE == 2) EXIT
+            WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN
+            WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
+            WRITE(LU_ERR,*) 'ZZ_NOW:',ZZ_DVODE
+            IF (ISTATE == -1) THEN
+               ISTATE = 3
+               COUNTER = COUNTER + 1
+               IF (COUNTER == 20) THEN
+                  WRITE(LU_ERR,*) 'DVODES MXSTEP'
+                  STOP_STATUS = ODE_STOP
+                  RETURN
+               ENDIF
+               OPTIONS = SET_OPTS(DENSE_J=.TRUE.,ABSERR_VECTOR=ATOL,RELERR_VECTOR=RTOL,USER_SUPPLIED_JACOBIAN=.TRUE.,&
+                                  MXSTEP=10000*COUNTER)
+            ELSE
+               WRITE(LU_ERR,*) 'DVODES Other Error'
+               STOP_STATUS = ODE_STOP
+               RETURN
+            ENDIF
+         ENDDO
+         ZZ_MIXED = REAL(ZZ_DVODE,EB)
       CASE (CVODE_SOLVER)
          T1 = T - DT
          T2 = T
@@ -484,6 +546,70 @@ INTEGRATION_LOOP: DO TIME_ITER = 1,MAX_CHEMISTRY_SUBSTEPS
          ENDDO
          CALL  CVODE(ZZ_MIXED,TMP_IN,PRES_IN, T1,T2, GLOBAL_ODE_REL_ERROR, ATOL)
          Q_REAC_SUB = 0._EB
+      CASE (DASSL_SOLVER)
+         Q_REAC_SUB = 0._EB
+         DT_SUB = DT
+         DO NS =1,N_TRACKED_SPECIES
+            REL_ERR(NS) = SPECIES_MIXTURE(NS)%ODE_REL_ERROR
+            ABS_ERR(NS) = SPECIES_MIXTURE(NS)%ODE_ABS_ERROR
+         ENDDO
+         CALL DVODES_PRECALC(ZZ_MIXED,RHO_IN,TMP_IN)
+         CALL DASSL_YP(ZZ_MIXED,A1)
+         T1 = 0._EB!T-DT
+         T2 = DT!T
+         COUNTER = 0
+         COUNTER2 = 0
+         INFO2(1) = 0
+         DASSL_LOOP: DO
+            CALL DDASSL(DASSL_RESID,N_TRACKED_SPECIES,T1,ZZ_MIXED,A1,T2,INFO2,REL_ERR,ABS_ERR,ISTATE,RWORK,LRW,IWORK,LIW,RPAR,&
+                        IPAR,DASSL_JAC)
+            SELECT CASE(ISTATE)
+               CASE(1:)
+                  EXIT DASSL_LOOP
+               CASE(-1)
+                  COUNTER = COUNTER + 1
+                  INFO2(1) = 1
+                  IF (COUNTER == 10) THEN
+                     WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,COUNTER2,RHO_IN,TMP_IN,DT
+                     WRITE(LU_ERR,*) 'ZZ_IN:',ZZ_MIXED
+                     WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                     WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                     IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
+                     IF (COUNTER2 == 2) THEN
+                        WRITE(LU_ERR,*) 'DASSL MXSTEP'
+                        STOP_STATUS = ODE_STOP
+                        RETURN
+                     ELSE
+                        COUNTER2 = COUNTER2+1
+                        ABS_ERR = ABS_ERR * 10._EB
+                        INFO2(1) = 0
+                        ZZ_MIXED = ZZ_GET
+                        T1 = 0._EB!T-DT
+                        T2 = DT!T
+                        COUNTER = 0
+                        CALL DASSL_YP(ZZ_MIXED,A1)
+                     ENDIF
+                  ENDIF
+               CASE(-2)
+                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
+                  WRITE(LU_ERR,*) 'I RE:',SPECIES_MIXTURE(NS)%ODE_REL_ERROR
+                  WRITE(LU_ERR,*) 'I AE:',SPECIES_MIXTURE(NS)%ODE_ABS_ERROR
+                  WRITE(LU_ERR,*) 'N RE:',REL_ERR
+                  WRITE(LU_ERR,*) 'N AE:',ABS_ERR
+                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
+                  STOP_STATUS = ODE_STOP
+                  RETURN
+               CASE DEFAULT
+                  WRITE(LU_ERR,*) 'ISTATE:',ISTATE,NM0,I0,J0,K0,COUNTER,RHO_IN,TMP_IN,DT
+                  WRITE(LU_ERR,*) 'RW (H,T,last H):',RWORK(3),RWORK(4),RWORK(7)
+                  WRITE(LU_ERR,*) 'IW (Next Order,Last Order,Steps,Res Calls,PD Calls:',&
+                                  IWORK(7),IWORK(8),IWORK(11),IWORK(12),IWORK(13),IWORK(14),IWORK(15)
+                  STOP_STATUS = ODE_STOP
+                  RETURN
+            END SELECT
+         ENDDO DASSL_LOOP
    END SELECT INTEGRATOR_SELECT
 
    CALL GET_REALIZABLE_MF(ZZ_MIXED)
@@ -1032,6 +1158,349 @@ KINETICS_SELECT: SELECT CASE(KINETICS)
 END SELECT KINETICS_SELECT
 
 END SUBROUTINE REACTION_RATE
+
+
+
+
+!> \brief Computes terms that stay constant during DVODES integration
+!>
+!> \param RHO_0 Current cell density (kg/m3)
+!> \param TMP_0 Cell temperature (K)
+
+SUBROUTINE DVODES_PRECALC(ZZ_OLD,RHO_0,TMP_0)
+
+USE PHYSICAL_FUNCTIONS, ONLY : GET_MASS_FRACTION_ALL,GET_SPECIFIC_GAS_CONSTANT,GET_MOLECULAR_WEIGHT
+REAL(EB),INTENT(IN) :: ZZ_OLD(N_TRACKED_SPECIES),RHO_0,TMP_0
+REAL(EB) :: KG,MW,K_INF,K_0,P_RI,FCENT,C_I
+INTEGER :: I!, NS
+TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
+
+RRTMP0 = 1._EB/(R0*TMP_0)
+MOLPCM3 = -1._EB
+MW = -1._EB
+
+DO I=1,N_REACTIONS
+   RN=>REACTION(I)
+   K_INF = RN%A_PRIME*RHO_0**RN%RHO_EXPONENT*TMP_0**RN%N_T*EXP(-RN%E*RRTMP0)
+   DZ_F0(I) = K_INF
+   IF (RN%THIRD_BODY) THEN
+      IF (MW < 0._EB) THEN
+         CALL GET_MOLECULAR_WEIGHT(ZZ_OLD,MW)
+         MOLPCM3 = RHO_0/MW*0.001_EB ! mol/cm^3
+      ENDIF
+      IF (RN%N_THIRD <=0) THEN
+         DZ_F0(I) = DZ_F0(I) * MOLPCM3
+      ENDIF
+      IF(RN%REACTYPE==FALLOFF_LINDEMANN_TYPE .OR. RN%REACTYPE==FALLOFF_TROE_TYPE ) THEN
+         K_0 = RN%A_LOW_PR*TMP_0**(RN%N_T_LOW_PR)*EXP(-RN%E_LOW_PR*RRTMP0)
+         P_RI = K_0/K_INF
+         FCENT = CALC_FCENT(TMP_0,P_RI,I)
+         C_I = P_RI/(1._EB+P_RI)*FCENT
+         DZ_F0(I) = DZ_F0(I) * C_I
+      ENDIF
+   ENDIF
+   IF(RN%REVERSE) THEN ! compute equilibrium constant
+      IF (MW < 0._EB) THEN
+         CALL GET_MOLECULAR_WEIGHT(ZZ_OLD,MW)
+         MOLPCM3 = RHO_0/MW*0.001_EB ! mol/cm^3
+      ENDIF
+      KG = EXP(RN%DELTA_G(MIN(I_MAX_TEMP,NINT(TMP_0)))/TMP_0)*MOLPCM3**RN%C0_EXP
+      DZ_F0(I) = DZ_F0(I)*KG
+   ENDIF
+ENDDO
+
+
+!WRITE(LU_ERR, *)"DVODE PRECALC--------"
+!DO I=1,N_REACTIONS
+!   WRITE(LU_ERR,'(A,2I5,2E15.7)')"DVODE-PRECALC: I, N_REACTIONS, MOLPCM3, DZ_F0(I)="&
+!   ,I, N_REACTIONS, MOLPCM3, DZ_F0(I)
+!ENDDO
+
+END SUBROUTINE DVODES_PRECALC
+
+
+!> \brief Computes y'=f(y,t) for the vode solver.
+!>
+!> \param N number of elements in ZZ_OLD and DZZ
+!> \param T current time (s)
+!> \param  ZZ_OLD Current tracked species mass fractions
+!> \param  DZZ Tracked species time rate of change
+
+SUBROUTINE DVODE_Y(N,T,ZZ_OLD,DZZ)
+USE DVODECONS
+INTEGER, INTENT (IN) :: N
+DOUBLE PRECISION, INTENT (IN) :: T,ZZ_OLD(N)
+DOUBLE PRECISION, INTENT (OUT) :: DZZ(N)
+REAL(EB) :: DZ_F,ZZ_TMP(1:N_TRACKED_SPECIES),X_Y(1:N_SPECIES),X_Y_SUM,T1,MIN_SPEC(N_TRACKED_SPECIES)
+INTEGER :: I,NS
+TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
+
+T1      = REAL(T,EB) !Prevent unused in compilation
+ZZ_TMP = REAL(ZZ_OLD,EB)
+DZZ = 0.D0
+MIN_SPEC = SPECIES_MIXTURE%ODE_REL_ERROR*ZZ_MIN_GLOBAL
+
+REACTION_LOOP: DO I=1,N_REACTIONS
+   RN => REACTION(I)
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_TMP(RN%NU_INDEX(NS)) < MIN_SPEC(NS)) CYCLE REACTION_LOOP
+   ENDDO
+   ! dZ/dt, FDS Tech Guide, Eq. (5.38)
+   DZ_F = DZ_F0(I)
+   DO NS=1,RN%N_SPEC
+      IF (ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS))) < MIN_SPEC(YP2ZZ(RN%N_S_INDEX(NS)))) THEN
+         CYCLE REACTION_LOOP
+      ELSE
+         DZ_F = DZ_F*ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
+      ENDIF
+   ENDDO
+   IF (RN%THIRD_BODY) THEN
+      IF (RN%N_THIRD > 0) THEN
+         X_Y_SUM = 0._EB
+         DO NS=1,N_SPECIES
+            X_Y(NS) = ZZ_OLD(NS)/SPECIES(NS)%MW
+            X_Y_SUM = X_Y_SUM + X_Y(NS)
+            X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+         ENDDO
+         DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+      ENDIF
+   ENDIF
+   DO NS=1,RN%N_SMIX_FR
+      DZZ(RN%NU_INDEX(NS)) = DZZ(RN%NU_INDEX(NS)) + DBLE(RN%NU_MW_O_MW_F_FR(NS)*DZ_F)
+   ENDDO
+ENDDO REACTION_LOOP
+
+
+!WRITE(LU_ERR, *)"DVODE RHS--------"
+!DO NS=1,N_TRACKED_SPECIES
+!   WRITE(LU_ERR,'(A,2I5,E15.7)')"DVODE-RHS: NS, N_TRACKED_SPECIES, DZZ(NS)="&
+!   ,NS, N_TRACKED_SPECIES, DZZ(NS)
+!ENDDO
+END SUBROUTINE DVODE_Y
+
+
+!> \brief Computes the Jacobian of f(y,t) for the vode solver.
+!>
+!> \param NEQ Number of rows
+!> \param T Time (s), not used here but needed for DVODES call
+!> \param ZZ_OLD Input values for Y
+!> \param ML For banded solver, not used here but needed for DVODES call
+!> \param MU For banded solver, not used here but needed for DVODES call
+!> \param DZZ Jacobian output
+!> \param NRPD Number of columns
+
+SUBROUTINE DVODE_JAC(NEQ,T,ZZ_OLD,ML,MU,DZZ,NRPD)
+USE DVODECONS
+INTEGER, INTENT (IN) :: NEQ,ML,MU,NRPD
+DOUBLE PRECISION, INTENT (IN) :: T,ZZ_OLD(NEQ)
+DOUBLE PRECISION, INTENT (OUT) :: DZZ(NRPD,NEQ)
+REAL(EB) :: DZ_F,DZZ_TMP,ZZ_TMP(N_TRACKED_SPECIES),X_Y(N_SPECIES),X_Y_SUM,T1,MIN_SPEC(N_TRACKED_SPECIES)
+INTEGER :: I,NS, NS2,ML1,MU1
+TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
+
+T1  = REAL(T,EB) !Prevent unused in compilation
+MU1 = MU !Prevent unused in compilation
+ML1 = ML !Prevent unused in compilation
+ZZ_TMP(1:N_TRACKED_SPECIES) = REAL(ZZ_OLD(1:N_TRACKED_SPECIES),EB)
+DZZ = 0.D0
+MIN_SPEC = SPECIES_MIXTURE%ODE_REL_ERROR*ZZ_MIN_GLOBAL
+REACTION_LOOP: DO I=1,N_REACTIONS
+   RN => REACTION(I)
+!   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_TMP(RN%NU_INDEX(NS)) < MIN_SPEC(NS)) CYCLE REACTION_LOOP
+   ENDDO
+   ! dZ/dt, FDS Tech Guide, Eq. (5.38)
+   DZ_F = DZ_F0(I)
+   DO NS=1,RN%N_SPEC
+      IF (ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS))) < MIN_SPEC(YP2ZZ(RN%N_S_INDEX(NS)))) THEN
+         CYCLE REACTION_LOOP
+      ELSE
+         DZ_F = DZ_F*ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
+      ENDIF
+   ENDDO
+   IF (RN%N_THIRD > 0) THEN
+      X_Y_SUM = 0._EB
+      DO NS=1,N_SPECIES
+         X_Y(NS) = ZZ_TMP(NS)/SPECIES(NS)%MW
+         X_Y_SUM = X_Y_SUM + X_Y(NS)
+         X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+      ENDDO
+      DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+   ENDIF
+
+   DZZ_TMP = 0._EB
+   DO NS=1,RN%N_SMIX_FR
+      DZZ_TMP = RN%NU_MW_O_MW_F_FR(NS)*DZ_F
+      DO NS2 = 1, RN%N_SPEC
+         DZZ(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))) = DZZ(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))) + &
+            DBLE(RN%N_S(NS2) * DZZ_TMP / ZZ_TMP(YP2ZZ(RN%N_S_INDEX(NS2)) ))
+      ENDDO
+   ENDDO
+ENDDO REACTION_LOOP
+
+!WRITE(LU_ERR, *)"DVODE JAC--------"
+!DO NS=1,N_TRACKED_SPECIES
+!   DO NS2 = 1, N_TRACKED_SPECIES
+!      WRITE(LU_ERR,'(A,2I5,E15.7)')"DVODE-JAC: NS,NS2, &
+!      DZZ(NS,NS2)="&
+!      ,NS,NS2,DZZ(NS,NS2)
+!   ENDDO  
+!ENDDO
+
+
+END SUBROUTINE DVODE_JAC
+
+
+!> \brief Computes y' for the DASSL solver.
+!>
+!> \param  ZZ_OLD Current tracked species mass fractions
+!> \param  DZZ Tracked species time rate of change
+
+SUBROUTINE DASSL_YP(ZZ_OLD,DZZ)
+USE DVODECONS
+DOUBLE PRECISION, INTENT (IN) :: ZZ_OLD(N_TRACKED_SPECIES)
+DOUBLE PRECISION, INTENT (OUT) :: DZZ(N_TRACKED_SPECIES)
+REAL(EB) :: DZ_F,X_Y(1:N_SPECIES),X_Y_SUM,MIN_SPEC(N_TRACKED_SPECIES)
+INTEGER :: I,NS
+TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
+
+DZZ = 0.D0
+MIN_SPEC = SPECIES_MIXTURE%ODE_REL_ERROR*ZZ_MIN_GLOBAL
+REACTION_LOOP: DO I=1,N_REACTIONS
+   RN => REACTION(I)
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_OLD(RN%NU_INDEX(NS)) < MIN_SPEC(RN%NU_INDEX(NS))) CYCLE REACTION_LOOP
+   ENDDO
+   ! Check for species with concentration exponents
+   DZ_F = DZ_F0(I)
+   DO NS=1,RN%N_SPEC
+      IF (ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS))) < MIN_SPEC(RN%NU_INDEX(NS))) THEN
+         CYCLE REACTION_LOOP
+      ELSE
+         ! dZ/dt, FDS Tech Guide, Eq. (5.38)
+         DZ_F = DZ_F*ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
+      ENDIF
+   ENDDO
+
+   IF (RN%N_THIRD > 0) THEN
+      X_Y_SUM = 0._EB
+      DO NS=1,N_SPECIES
+         X_Y(NS) = ZZ_OLD(NS)/SPECIES(NS)%MW
+         X_Y_SUM = X_Y_SUM + X_Y(NS)
+         X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+      ENDDO
+      DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+   ENDIF
+
+   DO NS=1,RN%N_SMIX_FR
+      DZZ(RN%NU_INDEX(NS)) = DZZ(RN%NU_INDEX(NS)) + RN%NU_MW_O_MW_F_FR(NS)*DZ_F
+   ENDDO
+ENDDO REACTION_LOOP
+
+END SUBROUTINE DASSL_YP
+
+
+!> \brief Computes the residual for the DASSL solver.
+!>
+!> \param T Current time (s). Not used but needed for DASSL call.
+!> \param ZZ_OLD Tracked species at T.
+!> \param ZZ_P_OLD Tracked species time rate of change at T.
+!> \param ZZ_RESID Tracked species residual at T.
+!> \param IRES Output flag for error condition. Not used but needed for DASSL call.
+!> \param RPAR Real parameter arrays. Not used but needed for DASSL call.
+!> \param IPAR Integer parameter arrays. Not used but needed for DASSL call.
+
+SUBROUTINE DASSL_RESID(T,ZZ_OLD,ZZ_P_OLD,ZZ_RESID,IRES,RPAR,IPAR)
+USE DVODECONS
+
+REAL(EB),INTENT(IN) :: T,ZZ_OLD(*),ZZ_P_OLD(*),RPAR(*)
+INTEGER, INTENT(IN) :: IPAR(*)
+INTEGER, INTENT(INOUT) :: IRES
+REAL(EB), INTENT(OUT) :: ZZ_RESID(*)
+REAL(EB) :: ZZ_P_NEW(N_TRACKED_SPECIES),ZZ_IN(N_TRACKED_SPECIES),R1,T1
+INTEGER :: I1
+
+! Avoid unused compilation error
+IRES = IRES
+T1 = T
+R1 = RPAR(1)
+I1 = IPAR(1)
+
+ZZ_IN(1:N_TRACKED_SPECIES) = ZZ_OLD(1:N_TRACKED_SPECIES)
+CALL DASSL_YP(ZZ_IN,ZZ_P_NEW)
+ZZ_RESID(1:N_TRACKED_SPECIES) = ZZ_P_OLD(1:N_TRACKED_SPECIES) - ZZ_P_NEW(1:N_TRACKED_SPECIES)
+
+END SUBROUTINE DASSL_RESID
+
+
+!> \brief Computes the Jacobian of f(y,t) for the DASSL solver.
+!>
+!> \param T Current time (s). Not used but needed for DASSL call.
+!> \param ZZ_OLD Tracked species at T.
+!> \param ZZ_P_OLD Tracked species time rate of change at T.
+!> \param ZZ_JAC Tracked species Jacobian at T.
+!> \param IRES Output flag for error condition. Not used but needed for DASSL call.
+!> \param RPAR Real parameter arrays. Not used but needed for DASSL call.
+!> \param IPAR Integer parameter arrays. Not used but needed for DASSL call.
+SUBROUTINE DASSL_JAC(T,ZZ_OLD,ZZ_P_OLD,ZZ_JAC,CJ,RPAR,IPAR)
+USE DVODECONS
+INTEGER, INTENT (IN) :: IPAR(1)
+REAL(EB), INTENT (IN) :: T,CJ,ZZ_OLD(N_TRACKED_SPECIES),ZZ_P_OLD(N_TRACKED_SPECIES),RPAR(1)
+REAL(EB), INTENT (OUT) :: ZZ_JAC(N_TRACKED_SPECIES,N_TRACKED_SPECIES)
+REAL(EB) :: DZ_F,DZZ_TMP,X_Y(N_SPECIES),X_Y_SUM,T1,R1,CJ1,ZZ1,MIN_SPEC(N_TRACKED_SPECIES)
+INTEGER :: I,NS, NS2,I1
+TYPE(REACTION_TYPE), POINTER :: RN=>NULL()
+!********************** THIS ROUTINE IS NOT CORRECT USING DASSL NUMERICAL JACOBIAN ROUTINE**************************
+!Prevent unused in compilation
+T1 = T
+R1 = RPAR(1)
+I1 = IPAR(1)
+CJ1 = CJ
+ZZ1 = ZZ_P_OLD(1)
+
+ZZ_JAC = 0._EB
+MIN_SPEC = SPECIES_MIXTURE%ODE_REL_ERROR*ZZ_MIN_GLOBAL
+REACTION_LOOP: DO I=1,N_REACTIONS
+   RN => REACTION(I)
+   ! Check for consumed species
+   DO NS=1,RN%N_SMIX_FR
+      IF (RN%NU_MW_O_MW_F_FR(NS) < 0._EB .AND. ZZ_OLD(RN%NU_INDEX(NS)) < MIN_SPEC(RN%NU_INDEX(NS))) CYCLE REACTION_LOOP
+   ENDDO
+   ! Check for species with concentration exponents
+   DZ_F = DZ_F0(I)
+   DO NS=1,RN%N_SPEC
+      IF (ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS))) < MIN_SPEC(RN%NU_INDEX(NS))) THEN
+         CYCLE REACTION_LOOP
+      ELSE
+         ! dZ/dt, FDS Tech Guide, Eq. (5.38)
+         DZ_F = DZ_F*ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS)))**RN%N_S(NS)
+      ENDIF
+   ENDDO
+
+   IF (RN%N_THIRD > 0) THEN
+      X_Y_SUM = 0._EB
+      DO NS=1,N_SPECIES
+         X_Y(NS) = ZZ_OLD(NS)/SPECIES(NS)%MW
+         X_Y_SUM = X_Y_SUM + X_Y(NS)
+         X_Y(NS) = X_Y(NS)*RN%THIRD_EFF(NS)
+      ENDDO
+      DZ_F = DZ_F * MOLPCM3 * SUM(X_Y)/X_Y_SUM
+   ENDIF
+
+   DZZ_TMP = 0._EB
+   DO NS=1,RN%N_SMIX_FR
+      DZZ_TMP = RN%NU_MW_O_MW_F_FR(NS)*DZ_F
+      DO NS2 = 1, RN%N_SPEC
+         ZZ_JAC(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))) = ZZ_JAC(RN%NU_INDEX(NS),YP2ZZ(RN%N_S_INDEX(NS2))) + &
+                                                            RN%N_S(NS2) * DZZ_TMP / ZZ_OLD(YP2ZZ(RN%N_S_INDEX(NS2)))
+      ENDDO
+   ENDDO
+ENDDO REACTION_LOOP
+
+END SUBROUTINE DASSL_JAC
 
 
 !> \brief Compute adiabatic flame tmperature for reaction mixture
