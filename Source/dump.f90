@@ -2608,7 +2608,11 @@ SELECT CASE(PRES_FLAG)
    CASE(FFT_FLAG);    WRITE(LU_OUTPUT,'(3X,A,28X,A)') 'Solver:',    'FFT'
    CASE(GLMAT_FLAG);  WRITE(LU_OUTPUT,'(3X,A,26X,A)') 'Solver:',  'GLMAT'
    CASE(UGLMAT_FLAG); WRITE(LU_OUTPUT,'(3X,A,25X,A)') 'Solver:', 'UGLMAT'
-   CASE(ULMAT_FLAG);  WRITE(LU_OUTPUT,'(3X,A,26X,A)') 'Solver:',  'ULMAT'
+   CASE(ULMAT_FLAG)
+      SELECT CASE(ULMAT_SOLVER_LIBRARY)
+         CASE(MKL_PARDISO_FLAG); WRITE(LU_OUTPUT,'(3X,A,26X,A)') 'Solver:',  'ULMAT with MKL PARDISO'
+         CASE(HYPRE_FLAG);       WRITE(LU_OUTPUT,'(3X,A,26X,A)') 'Solver:',  'ULMAT with HYPRE'
+      END SELECT
 END SELECT
 WRITE(LU_OUTPUT,'(3X,A,ES10.3)' ) 'Velocity tolerance (m/s):   ',VELOCITY_TOLERANCE
 WRITE(LU_OUTPUT,'(3X,A,ES10.3)' ) 'Press eqn res tol (1/s^2):  ',PRESSURE_TOLERANCE
@@ -3854,7 +3858,7 @@ WRITE(LU_OUTPUT,*)
            6X,' Max divergence: ',E9.2,' at (',I0,',',I0,',',I0,')'/ &
            6X,' Min divergence: ',E9.2,' at (',I0,',',I0,',',I0,')')
 133 FORMAT(6X,' Max div. error: ',E9.2,' at (',I0,',',I0,',',I0,')')
-230 FORMAT(6X,' Max VN number:  ',E9.2,' at (',I0,',',I0,',',I0,')')
+230 FORMAT(6X,' Max VN number : ',E9.2,' at (',I0,',',I0,',',I0,')')
 119 FORMAT(6X,' Total Heat Release Rate:      ',F13.3,' kW')
 120 FORMAT(6X,' Radiation Loss to Boundaries: ',F13.3,' kW')
 141 FORMAT(6X,' No. of Lagrangian Particles:  ',I0)
@@ -8117,7 +8121,7 @@ IND_SELECT: SELECT CASE(IND)
    CASE(253)  ! ZONE PRESSURE SOLVER TYPE
       GAS_PHASE_OUTPUT_RES = REAL(PRES_FLAG,EB)
       IF (PRES_FLAG==ULMAT_FLAG) THEN
-         IF (ZONE_MESH(PRESSURE_ZONE(II,JJ,KK))%USE_FFT) THEN
+         IF (ZONE_MESH(ZONE_MESH(PRESSURE_ZONE(II,JJ,KK))%CONNECTED_ZONE_PARENT)%USE_FFT) THEN
             GAS_PHASE_OUTPUT_RES = REAL(FFT_FLAG,EB)
          ELSE
             ! uses PARDISO solver per mesh zone
@@ -9003,7 +9007,7 @@ SOLID_PHASE_SELECT: SELECT CASE(INDX)
          ! find cut-cell adjacent to CFACE
          IND1 = CFA%CUT_FACE_IND1
          IND2 = CFA%CUT_FACE_IND2
-         CALL GET_UVWGAS_CFACE(U_CELL,V_CELL,W_CELL,IND1,IND2)
+         CALL GET_UVWGAS_CFACE(U_CELL,V_CELL,W_CELL,IND1,IND2,U,V,W,PREDFCT=1._EB)
          CALL GET_MUDNS_CFACE(MU_WALL,IND1,IND2)
          ICC = CUT_FACE(IND1)%CELL_LIST(2,LOW_IND,IND2)
          IIG = CUT_CELL(ICC)%IJK(1)
